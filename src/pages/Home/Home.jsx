@@ -363,7 +363,7 @@ const Home = () => {
                   className="btn-outline btn-lg"
                   onClick={() => navigate("/signup")}
                 >
-                  Get Started
+                  14 Days Free Trial
                 </button>
               </div>
               <div className="hero-social-proof">
