@@ -363,7 +363,7 @@ const Home = () => {
                   className="btn-outline btn-lg"
                   onClick={() => navigate("/signup")}
                 >
-                  14 Days Free Trial
+                  Get Started
                 </button>
               </div>
               <div className="hero-social-proof">
@@ -686,7 +686,12 @@ const Home = () => {
             >
               Start Your Free Trial<span className="landing_btn-arrow">→</span>
             </button>
-            <button className="landing_btn-cta-outline">Schedule Demo</button>
+            <button
+              className="landing_btn-cta-outline"
+              onClick={() => navigate("/schedule-demo")}
+            >
+              Schedule Demo
+            </button>
           </div>
           <p className="landing_cta-note">
             No credit card required • 7 days free trial • Cancel anytime

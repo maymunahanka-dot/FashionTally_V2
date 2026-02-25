@@ -16,6 +16,7 @@ import { Dashboard } from "./pages/Dashboard/Dashboard";
 import Subscription from "./pages/Subscription/Subscription";
 import { SubscriptionDemo } from "./components/SubscriptionDemo";
 import SubscriptionCallback from "./pages/SubscriptionCallback/SubscriptionCallback";
+import ScheduleDemo from "./pages/ScheduleDemo/ScheduleDemo";
 import Loading from "./components/Loading/Loading";
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/cookie-policy" element={<CookiePolicy />} />
+      <Route path="/schedule-demo" element={<ScheduleDemo />} />
       <Route
         path="/login"
         element={!currentUser ? <NewLogin /> : <Navigate to="/dashboard" />}

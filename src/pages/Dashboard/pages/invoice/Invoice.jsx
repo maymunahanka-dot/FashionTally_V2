@@ -876,19 +876,7 @@ const Invoice = () => {
           (imgProperties.height * pdfWidth) / imgProperties.width;
 
         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-        /* ===========================
-         iPHONE FIX (IMPORTANT)
-         =========================== */
-
-        const blob = pdf.output("blob");
-        const url = URL.createObjectURL(blob);
-
-        // iOS requires open instead of save()
-        window.open(url, "_blank");
-
-        // Cleanup URL after some time
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
       } finally {
         if (root) root.unmount();
         document.body.removeChild(tempContainer);

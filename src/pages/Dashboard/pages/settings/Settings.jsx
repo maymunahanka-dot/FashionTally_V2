@@ -344,9 +344,7 @@ const Settings = () => {
       {/* Header */}
       <div className="sett_settings_header">
         <div className="sett_header_content">
-          <h1 className="sett_settings_title">
-            Manage Your Customer Relationship
-          </h1>
+          <h1 className="sett_settings_title">Settings</h1>
           <div className="sett_header_actions">
             {logoutError && (
               <div className="sett_logout_error">{logoutError}</div>
