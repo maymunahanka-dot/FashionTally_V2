@@ -7,12 +7,12 @@
 
 export const SUBSCRIPTION_PRICING = {
   starter: {
-    monthly: 4000,
-    yearly: 40000, // 10 months price
+    monthly: 5000,
+    yearly: 50000, // 10 months price
   },
   growth: {
-    monthly: 8000,
-    yearly: 80000, // 10 months price
+    monthly: 10000,
+    yearly: 100000, // 10 months price
   },
   professional: {
     monthly: 15000,
