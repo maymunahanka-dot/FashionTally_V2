@@ -86,15 +86,15 @@ const Finances = () => {
             id: doc.id,
             title: data.description || "Transaction",
             type: data.type === "Income" ? "Sales" : "Purchase",
-            date: data.date?.toDate()
-              ? data.date.toDate().toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-              : new Date().toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                }),
+            date: (() => {
+              let d = data.date;
+              if (!d) return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+              if (typeof d.toDate === "function") d = d.toDate();
+              else if (d._seconds !== undefined) d = new Date(d._seconds * 1000);
+              else d = new Date(d);
+              return isNaN(d) ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            })(),
             category: data.category || "Other",
             amount: data.amount || 0,
             isIncome: data.type === "Income",
@@ -105,8 +105,8 @@ const Finances = () => {
               data.reference || `TXN-${doc.id.slice(-6).toUpperCase()}`,
             status: "completed",
             notes: data.notes || "",
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
+            createdAt: data.createdAt?.toDate?.() ?? (data.createdAt?._seconds ? new Date(data.createdAt._seconds * 1000) : new Date(data.createdAt || Date.now())),
+            updatedAt: data.updatedAt?.toDate?.() ?? (data.updatedAt?._seconds ? new Date(data.updatedAt._seconds * 1000) : new Date(data.updatedAt || Date.now())),
             // Store original data for editing
             originalData: data,
           };
