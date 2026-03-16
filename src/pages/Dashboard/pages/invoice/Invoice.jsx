@@ -6,7 +6,7 @@ import {
   Eye,
   Download,
   Share2,
-  Check,
+  Pencil,
   Trash2,
   FileText,
 } from "lucide-react";
@@ -1153,7 +1153,7 @@ const Invoice = () => {
                   className="inv_action_btn inv_check_btn"
                   onClick={() => handleEditInvoice(invoice)}
                 >
-                  <Check size={16} />
+                  <Pencil size={16} />
                 </button>
                 <button
                   className="inv_action_btn inv_delete_btn"

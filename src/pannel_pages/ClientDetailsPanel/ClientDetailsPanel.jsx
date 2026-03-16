@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Calendar, Mail, Phone, Package } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Package, Pencil } from "lucide-react";
 import {
   ClientOverview,
   ClientMeasurements,
@@ -12,6 +12,7 @@ import "./ClientDetailsPanel.css";
 const ClientDetailsPanel = ({
   client,
   onClose,
+  onEditClient,
   onOpenAddDesign,
   onDesignClick,
   onCreateInvoice,
@@ -75,6 +76,14 @@ const ClientDetailsPanel = ({
       <div className="client_details_header">
         <button className="client_details_back_btn" onClick={onClose}>
           <ArrowLeft size={20} />
+        </button>
+        <button
+          className="client_details_edit_btn"
+          onClick={() => onEditClient && onEditClient(client)}
+          title="Edit Client"
+        >
+          <Pencil size={16} />
+          Edit
         </button>
       </div>
 

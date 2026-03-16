@@ -5,7 +5,7 @@ import {
   Eye,
   Download,
   Share,
-  Check,
+  Pencil,
   Trash2,
   AlertCircle,
 } from "lucide-react";
@@ -241,7 +241,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
                   Share
                 </button>
                 <button className="invoice_u_action_btn check">
-                  <Check size={16} />
+                  <Pencil size={16} />
                 </button>
                 <button className="invoice_u_action_btn delete">
                   <Trash2 size={16} />

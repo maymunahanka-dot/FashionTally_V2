@@ -30,6 +30,7 @@ const ClientsManagement = () => {
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showAddClient, setShowAddClient] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
   const [showAddDesign, setShowAddDesign] = useState(false);
   const [showDesignDetails, setShowDesignDetails] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState(null);
@@ -139,6 +140,12 @@ const ClientsManagement = () => {
   const handleCloseClientDetails = () => {
     setShowClientDetails(false);
     setSelectedClient(null);
+  };
+
+  const handleEditClient = (client) => {
+    setEditingClient(client);
+    setShowClientDetails(false);
+    setShowAddClient(true);
   };
 
   // Design panel handlers
@@ -366,14 +373,18 @@ const ClientsManagement = () => {
         />
       </div>
 
-      {/* Add Client Panel */}
+      {/* Add / Edit Client Panel */}
       <SlideInMenu
         isShow={showAddClient}
-        onClose={() => setShowAddClient(false)}
+        onClose={() => { setShowAddClient(false); setEditingClient(null); }}
         position="rightt"
         width="480px"
       >
-        <AddClientPanel onClose={() => setShowAddClient(false)} />
+        <AddClientPanel
+          onClose={() => { setShowAddClient(false); setEditingClient(null); }}
+          editMode={!!editingClient}
+          clientData={editingClient}
+        />
       </SlideInMenu>
 
       {/* Client Details Panel */}
@@ -386,6 +397,7 @@ const ClientsManagement = () => {
         <ClientDetailsPanel
           client={selectedClient}
           onClose={handleCloseClientDetails}
+          onEditClient={handleEditClient}
           onOpenAddDesign={handleOpenAddDesign}
           onDesignClick={handleDesignClick}
           onCreateInvoice={handleCreateInvoice}

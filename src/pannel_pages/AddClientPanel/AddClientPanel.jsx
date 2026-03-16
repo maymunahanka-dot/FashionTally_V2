@@ -3,6 +3,7 @@ import { ArrowLeft, User, Mail, Phone, FileText, Info } from "lucide-react";
 import {
   doc,
   setDoc,
+  updateDoc,
   query,
   collection,
   where,
@@ -15,14 +16,14 @@ import Input from "../../components/Input/Input";
 import "./AddClientPanel.css";
 import { X } from "lucide-react";
 
-const AddClientPanel = ({ onClose }) => {
+const AddClientPanel = ({ onClose, editMode = false, clientData = null }) => {
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    address: "",
-    status: "Active",
-    notes: "",
+    fullName: editMode && clientData ? clientData.name || "" : "",
+    email: editMode && clientData ? clientData.email || "" : "",
+    phone: editMode && clientData ? clientData.phone || "" : "",
+    address: editMode && clientData ? clientData.address || "" : "",
+    status: editMode && clientData ? clientData.status || "Active" : "Active",
+    notes: editMode && clientData ? clientData.notes || "" : "",
   });
 
   const [errors, setErrors] = useState({});
@@ -84,59 +85,64 @@ const AddClientPanel = ({ onClose }) => {
     setErrors({});
 
     try {
-      // Get effective email (main admin's email for team members)
       const effectiveEmail = getEffectiveUserEmail(user);
-
-      // Clean phone for storage
       const cleanedPhone = formData.phone
         .replace(/\s+/g, "")
         .replace(/[-()+]/g, "");
 
-      // Generate a tenant-scoped ID to avoid cross-tenant collisions
-      const makeClientId = (email, phone) =>
-        `${encodeURIComponent(email)}__${phone}`;
-      const tenantDocId = makeClientId(effectiveEmail, cleanedPhone);
-
-      // Check for duplicate phone numbers for the same tenant
-      const dupQuery = query(
-        collection(db, "fashiontally_clients"),
-        where("userEmail", "==", effectiveEmail),
-        where("phone", "==", cleanedPhone)
-      );
-      const dupSnap = await getDocs(dupQuery);
-
-      if (!dupSnap.empty) {
-        setErrors({
-          phone: "You already have a client with this phone number",
+      if (editMode && clientData) {
+        // --- EDIT MODE: update existing client document ---
+        const clientRef = doc(db, "fashiontally_clients", clientData.id);
+        await updateDoc(clientRef, {
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: cleanedPhone,
+          address: formData.address.trim() || "",
+          status: formData.status,
+          notes: formData.notes.trim() || "",
+          updatedAt: new Date(),
         });
-        setIsSubmitting(false);
-        return;
+      } else {
+        // --- CREATE MODE: check duplicate then create ---
+        const makeClientId = (email, phone) =>
+          `${encodeURIComponent(email)}__${phone}`;
+        const tenantDocId = makeClientId(effectiveEmail, cleanedPhone);
+
+        const dupQuery = query(
+          collection(db, "fashiontally_clients"),
+          where("userEmail", "==", effectiveEmail),
+          where("phone", "==", cleanedPhone)
+        );
+        const dupSnap = await getDocs(dupQuery);
+
+        if (!dupSnap.empty) {
+          setErrors({
+            phone: "You already have a client with this phone number",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const clientData = {
+          name: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phone: cleanedPhone,
+          address: formData.address.trim() || "",
+          status: formData.status,
+          notes: formData.notes.trim() || "",
+          userEmail: effectiveEmail,
+          tailorId: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          totalSpent: 0,
+          lastOrder: null,
+          hasMeasurements: false,
+          measurementsUpdatedAt: null,
+        };
+
+        await setDoc(doc(db, "fashiontally_clients", tenantDocId), clientData);
       }
 
-      // Prepare client data
-      const clientData = {
-        name: formData.fullName.trim(),
-        email: formData.email.trim(),
-        phone: cleanedPhone,
-        address: formData.address.trim() || "",
-        status: formData.status,
-        notes: formData.notes.trim() || "",
-        userEmail: effectiveEmail,
-        tailorId: "", // Keep for backward compatibility
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        totalSpent: 0,
-        lastOrder: null,
-        hasMeasurements: false,
-        measurementsUpdatedAt: null,
-      };
-
-      // Add new client with tenant-scoped document ID
-      await setDoc(doc(db, "fashiontally_clients", tenantDocId), clientData);
-
-      console.log("Client added successfully:", clientData);
-
-      // Reset form
       setFormData({
         fullName: "",
         email: "",
@@ -148,8 +154,8 @@ const AddClientPanel = ({ onClose }) => {
 
       onClose();
     } catch (error) {
-      console.error("Error adding client:", error);
-      setErrors({ submit: "Failed to add client. Please try again." });
+      console.error("Error saving client:", error);
+      setErrors({ submit: "Failed to save client. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -169,7 +175,7 @@ const AddClientPanel = ({ onClose }) => {
         <button className="add_client_back_btn" onClick={onClose}>
           <X size={24} />
         </button>
-        <h2 className="add_client_title">Add New Client</h2>
+        <h2 className="add_client_title">{editMode ? "Edit Client" : "Add New Client"}</h2>
       </div>
 
       {/* Form */}
@@ -313,10 +319,11 @@ const AddClientPanel = ({ onClose }) => {
           disabled={isSubmitting}
         >
           <FileText size={20} />
-          {isSubmitting ? "Saving..." : "Save Client"}
+          {isSubmitting ? "Saving..." : editMode ? "Save Changes" : "Save Client"}
         </button>
 
-        {/* Next Steps Info */}
+        {/* Next Steps Info - only shown when creating */}
+        {!editMode && (
         <div className="add_client_next_steps">
           <div className="add_client_next_steps_header">
             <Info size={16} className="add_client_info_icon" />
@@ -327,6 +334,7 @@ const AddClientPanel = ({ onClose }) => {
             and create invoices from their profile.
           </p>
         </div>
+        )}
       </form>
     </div>
   );
