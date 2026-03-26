@@ -189,6 +189,8 @@ export default function SubscriptionPage() {
       });
 
       if (result.success) {
+        // Save plan name so callback page can use it
+        localStorage.setItem("pending_plan", selectedPlan.name);
         // Redirect to Cash on Rails payment page
         window.location.href = result.paymentLink;
       } else {
