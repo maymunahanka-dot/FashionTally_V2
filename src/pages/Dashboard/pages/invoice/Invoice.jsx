@@ -651,6 +651,40 @@ const Invoice = () => {
             </p>
           </div>
         )}
+
+        {/* Payment Details */}
+        <div style={{ paddingTop: "24px", borderTop: "1px solid #d1d5db" }}>
+          <h4
+            style={{
+              fontWeight: "bold",
+              fontSize: "14px",
+              marginBottom: "12px",
+              margin: "0 0 12px 0",
+            }}
+          >
+            Payment Details
+          </h4>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "16px",
+            }}
+          >
+            <div>
+              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>Bank Name</p>
+              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{company.bankName}</p>
+            </div>
+            <div>
+              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>Account Number</p>
+              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{company.accountNumber}</p>
+            </div>
+            <div>
+              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>Account Name</p>
+              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{company.accountName}</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
@@ -794,6 +828,9 @@ const Invoice = () => {
           logoUrl: data.logoUrl || "",
           primaryColor: data.primaryColor || "#1f2937",
           secondaryColor: data.secondaryColor || "#666666",
+          bankName: data.bankName || "------",
+          accountNumber: data.accountNumber || "------",
+          accountName: data.accountName || "------",
         };
       } else {
         const userRef = doc(db, "fashiontally_users", effectiveEmail);
@@ -809,6 +846,9 @@ const Invoice = () => {
             logoUrl: "",
             primaryColor: "#1f2937",
             secondaryColor: "#666666",
+            bankName: "------",
+            accountNumber: "------",
+            accountName: "------",
           };
         }
       }
