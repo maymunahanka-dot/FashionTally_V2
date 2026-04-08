@@ -844,6 +844,9 @@ const Home = () => {
             <p className="copyright">
               © 2025 FashionTally. All rights reserved.
             </p>
+            <p className="powered_by">
+              Powered by TALLY AFRICA LTD
+            </p>
             <div className="footer-legal">
               <a href="/privacy-policy">Privacy Policy</a>
               <a href="/terms-of-service">Terms of Service</a>

@@ -1,8 +1,8 @@
-/* Schedule Demo Page - Using Global Theme with Gold Accent */
+/* Schedule Demo Page - Using Global Theme with Green Accent */
 
 .schedule-demo-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fef9e7 0%, #ffffff 50%, #fef9e7 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #f0fdf4 100%);
   padding: 2rem 1rem;
   transition: background 0.3s ease;
 }
@@ -50,7 +50,7 @@
 }
 
 .schedule-demo-icon {
-  color: #d4af37;
+  color: #16988d;
 }
 
 .schedule-demo-title {
@@ -83,8 +83,8 @@
 .schedule-demo-card-header {
   padding: 2rem;
   text-align: center;
-  background: linear-gradient(135deg, #d4af37, #c5a028, #b8941f);
-  color: #000;
+  background: linear-gradient(135deg, #11887e, #16988d, #13887e);
+  color: #fff;
 }
 
 .schedule-demo-card-title {
@@ -131,7 +131,7 @@
 }
 
 .schedule-demo-section-title svg {
-  color: #d4af37;
+  color: #16988d;
 }
 
 .schedule-demo-grid {
@@ -173,8 +173,8 @@
 .schedule-demo-date-input:focus,
 .schedule-demo-textarea:focus {
   outline: none;
-  border-color: #d4af37;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  border-color: #16988d;
+  box-shadow: 0 0 0 3px rgba(22, 152, 141, 0.1);
 }
 
 .schedule-demo-textarea {
@@ -226,7 +226,7 @@
 
 .schedule-demo-footer-btn:hover {
   background-color: var(--hover-bg);
-  border-color: #d4af37;
+  border-color: #16988d;
 }
 
 .schedule-demo-footer-btn-ghost {

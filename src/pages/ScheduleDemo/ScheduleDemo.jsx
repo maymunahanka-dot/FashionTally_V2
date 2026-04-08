@@ -342,6 +342,9 @@ const ScheduleDemo = () => {
               Back to Home
             </button>
           </div>
+          <p className="schedule-demo-powered-by">
+            Powered by TALLY AFRICA LTD
+          </p>
         </div>
       </div>
     </div>

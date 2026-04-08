@@ -55,7 +55,7 @@ const contactMethods = [
   {
     title: "Email Us",
     description: "Reach out for support, sales, or general inquiries",
-    contact: "support@fashiontally.com",
+    contact: "fashiontallyy@gmail.com",
     availability: "24/7",
     responseTime: "Within 24hrs",
     action: "Send Email",
@@ -99,7 +99,7 @@ const contactMethods = [
   {
     title: "LinkedIn",
     description: "Professional network and business updates",
-    contact: "@fashiontally",
+    contact: "fashiontally",
     availability: "Daily posts",
     responseTime: "DMs open",
     action: "Visit LinkedIn",
@@ -849,6 +849,9 @@ const Contact = () => {
           <div className="contact_footer-bottom">
             <p className="contact_copyright">
               © 2025 FashionTally. All rights reserved.
+            </p>
+            <p className="contact_powered_by">
+              Powered by TALLY AFRICA LTD
             </p>
             <div className="contact_footer-legal">
               <a href="/privacy-policy">Privacy Policy</a>

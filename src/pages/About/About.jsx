@@ -419,6 +419,9 @@ const About = () => {
             <p className="about_copyright">
               © 2025 FashionTally. All rights reserved.
             </p>
+            <p className="about_powered_by">
+              Powered by TALLY AFRICA LTD
+            </p>
             <div className="about_footer-legal">
               <a href="/privacy-policy">Privacy Policy</a>
               <a href="/terms-of-service">Terms of Service</a>
