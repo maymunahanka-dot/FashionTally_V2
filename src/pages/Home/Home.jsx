@@ -845,7 +845,7 @@ const Home = () => {
               © 2025 FashionTally. All rights reserved.
             </p>
             <p className="powered_by">
-              Powered by TALLY AFRICA LTD
+              Product of <span style={{ color: "#c9a227", fontWeight: 600 }}>TALLY</span> AFRICA LTD
             </p>
             <div className="footer-legal">
               <a href="/privacy-policy">Privacy Policy</a>

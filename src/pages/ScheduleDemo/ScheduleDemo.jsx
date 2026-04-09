@@ -343,7 +343,7 @@ const ScheduleDemo = () => {
             </button>
           </div>
           <p className="schedule-demo-powered-by">
-            Powered by TALLY AFRICA LTD
+            Product of <span style={{ color: "#c9a227", fontWeight: 600 }}>TALLY</span> AFRICA LTD
           </p>
         </div>
       </div>

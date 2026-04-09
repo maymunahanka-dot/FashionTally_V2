@@ -851,7 +851,7 @@ const Contact = () => {
               © 2025 FashionTally. All rights reserved.
             </p>
             <p className="contact_powered_by">
-              Powered by TALLY AFRICA LTD
+              Product of <span style={{ color: "#c9a227", fontWeight: 600 }}>TALLY</span> AFRICA LTD
             </p>
             <div className="contact_footer-legal">
               <a href="/privacy-policy">Privacy Policy</a>
