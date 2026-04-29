@@ -48,7 +48,7 @@ function App() {
 
   return (
     <>
-      <WhatsAppTest/>
+      {/* <WhatsAppTest/> */}
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
