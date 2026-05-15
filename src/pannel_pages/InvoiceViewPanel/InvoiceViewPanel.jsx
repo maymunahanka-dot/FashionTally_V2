@@ -177,6 +177,8 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
         discountAmount: invoice.discountAmount || 0,
         taxAmount: invoice.taxAmount || 0,
         total: invoice.amount || 0,
+        amountPaid: invoice.amountPaid || 0,
+        balanceDue: invoice.balanceDue ?? invoice.amount ?? 0,
         notes: invoice.notes || "No additional notes",
         paymentDetails: paymentDetails,
         paymentMethod: invoice.paymentMethod || "Cash",
@@ -200,6 +202,8 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
         discountAmount: 0,
         taxAmount: 0,
         total: 0,
+        amountPaid: 0,
+        balanceDue: 0,
         notes: "No additional notes",
         paymentDetails: paymentDetails,
         paymentMethod: "Cash",
@@ -550,20 +554,25 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
               borderBottom: "2px solid #d1d5db",
               padding: "12px 16px",
               display: "flex",
-              gap: "64px",
+              flexDirection: "column",
+              gap: "8px",
               backgroundColor: "#f9fafb",
             }}
           >
-            <span style={{ fontWeight: "bold" }}>Balance Due</span>
-            <span
-              style={{
-                width: "160px",
-                textAlign: "right",
-                fontWeight: "bold",
-              }}
-            >
-              ₦{data.total.toLocaleString()}
-            </span>
+            {data.status === "Partially Paid" && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ fontWeight: "bold", color: "#16a34a" }}>Amount Paid</span>
+                <span style={{ fontWeight: "bold", color: "#16a34a" }}>
+                  ₦{(data.amountPaid || 0).toLocaleString()}
+                </span>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontWeight: "bold", fontSize: "16px" }}>Balance Due</span>
+              <span style={{ fontWeight: "bold", fontSize: "16px", color: data.status === "Partially Paid" ? "#dc2626" : "#1f2937" }}>
+                ₦{(data.balanceDue ?? data.total).toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -918,6 +927,18 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
             <span className="inv_l_total_label">Total:</span>
             <span className="inv_l_total_value inv_l_grand_total_amount">
               {formatCurrency(invoiceData.total)}
+            </span>
+          </div>
+          {invoiceData.status === "Partially Paid" && (
+            <div className="inv_l_total_row" style={{ color: "#16a34a" }}>
+              <span className="inv_l_total_label">Amount Paid:</span>
+              <span className="inv_l_total_value">{formatCurrency(invoiceData.amountPaid)}</span>
+            </div>
+          )}
+          <div className="inv_l_total_row inv_l_balance_due">
+            <span className="inv_l_total_label">Balance Due:</span>
+            <span className="inv_l_total_value inv_l_grand_total_amount">
+              {formatCurrency(invoiceData.balanceDue)}
             </span>
           </div>
         </div>

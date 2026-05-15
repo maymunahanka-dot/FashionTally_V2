@@ -90,6 +90,8 @@ const Invoice = () => {
             subtotal: data.subtotal,
             discountAmount: data.discountAmount || 0,
             taxAmount: data.taxAmount || 0,
+            amountPaid: data.amountPaid || 0,
+            balanceDue: data.balanceDue ?? data.amount ?? 0,
             status: data.status,
             paymentMethod: data.paymentMethod,
             createdDate: toDate(data.createdDate),
@@ -246,23 +248,25 @@ const Invoice = () => {
   };
 
   // Filter invoices based on search and status
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredInvoices = invoices
+    .filter((invoice) => {
+      const matchesSearch =
+        invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "paid" && invoice.status === "Paid") ||
-      (filterStatus === "pending" && invoice.status === "Unpaid") ||
-      (filterStatus === "overdue" &&
-        invoice.status === "Unpaid" &&
-        invoice.dueDate &&
-        invoice.dueDate < new Date());
+      const matchesStatus =
+        filterStatus === "all" ||
+        (filterStatus === "paid" && invoice.status === "Paid") ||
+        (filterStatus === "pending" && invoice.status === "Unpaid") ||
+        (filterStatus === "overdue" &&
+          invoice.status === "Unpaid" &&
+          invoice.dueDate &&
+          invoice.dueDate < new Date());
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
   const handleFilterSelect = (status) => {
     setFilterStatus(status);
@@ -609,20 +613,25 @@ const Invoice = () => {
               borderBottom: "2px solid #d1d5db",
               padding: "12px 16px",
               display: "flex",
-              gap: "64px",
+              flexDirection: "column",
+              gap: "8px",
               backgroundColor: "#f9fafb",
             }}
           >
-            <span style={{ fontWeight: "bold" }}>Balance Due</span>
-            <span
-              style={{
-                width: "160px",
-                textAlign: "right",
-                fontWeight: "bold",
-              }}
-            >
-              ₦{data.amount?.toLocaleString()}
-            </span>
+            {data.status === "Partially Paid" && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ fontWeight: "bold", color: "#16a34a" }}>Amount Paid</span>
+                <span style={{ fontWeight: "bold", color: "#16a34a" }}>
+                  ₦{(data.amountPaid || 0).toLocaleString()}
+                </span>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontWeight: "bold", fontSize: "16px" }}>Balance Due</span>
+              <span style={{ fontWeight: "bold", fontSize: "16px", color: data.status === "Partially Paid" ? "#dc2626" : "#1f2937" }}>
+                ₦{(data.balanceDue ?? data.amount)?.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1162,6 +1171,11 @@ const Invoice = () => {
                   <div className="inv_invoice_amount">
                     {formatCurrency(invoice.amount)}
                   </div>
+                  {invoice.status === "Partially Paid" && (
+                    <div className="inv_invoice_balance">
+                      Balance: {formatCurrency(invoice.balanceDue)}
+                    </div>
+                  )}
                   <div
                     className={`inv_status_badge ${(invoice.status ?? "")
                       .toLowerCase()

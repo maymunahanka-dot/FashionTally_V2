@@ -183,13 +183,29 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border-primary);
+}
+
+.create_invoice_summary_row:last-child {
+  border-bottom: none;
 }
 
 .create_invoice_summary_total {
-  border-top: 1px solid var(--border-primary);
+  border-top: 2px solid var(--border-primary);
+  border-bottom: none;
   margin-top: 0.5rem;
   padding-top: 1rem;
   transition: border-color 0.3s ease;
+}
+
+.create_invoice_summary_partial {
+  border-bottom: 1px dashed var(--border-primary);
+}
+
+.create_invoice_summary_balance {
+  border-top: none;
+  padding-top: 0.5rem;
+  margin-top: 0;
 }
 
 .create_invoice_summary_label {
@@ -210,6 +226,37 @@
   font-size: 1.125rem;
   color: var(--success-color);
   font-weight: 700;
+}
+
+.create_invoice_balance_amount {
+  font-size: 1rem;
+  color: var(--error-color);
+  font-weight: 700;
+}
+
+.create_invoice_amount_paid_input {
+  width: 130px;
+  padding: 0.4rem 0.75rem;
+  border: 1.5px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: right;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.create_invoice_amount_paid_input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(22, 152, 141, 0.1);
+}
+
+.create_invoice_amount_paid_input::-webkit-inner-spin-button,
+.create_invoice_amount_paid_input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* Submit Button */

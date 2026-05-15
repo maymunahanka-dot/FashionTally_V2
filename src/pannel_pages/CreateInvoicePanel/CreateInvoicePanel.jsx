@@ -29,6 +29,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [status, setStatus] = useState("Unpaid");
+  const [amountPaid, setAmountPaid] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [taxRate, setTaxRate] = useState(7.5);
   const [items, setItems] = useState([
@@ -84,6 +85,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
       setNotes(selectedInvoice.notes || "");
       setPaymentMethod(selectedInvoice.paymentMethod || "Cash");
       setStatus(selectedInvoice.status || "Unpaid");
+      setAmountPaid(selectedInvoice.amountPaid || 0);
       setDiscount(selectedInvoice.discount || 0);
       setTaxRate(7.5); // Always fixed at 7.5%
       setRecordAsIncome(false); // Don't record as income when editing
@@ -416,6 +418,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
         discountAmount,
         taxAmount,
         amount: total,
+        amountPaid: status === "Partially Paid" ? parseFloat(amountPaid) || 0 : status === "Paid" ? total : 0,
+        balanceDue: status === "Partially Paid" ? total - (parseFloat(amountPaid) || 0) : status === "Paid" ? 0 : total,
         notes: notes.trim(),
         userEmail: getEffectiveUserEmail(user),
         createdAt: selectedInvoice?.createdAt || new Date(),
@@ -728,6 +732,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
             />
           </div>
         </div>
+
+        {/* Amount Paid is shown inside the summary section below */}
 
         {/* Items Section */}
         <div className="create_invoice_section">
@@ -1070,6 +1076,27 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
               {formatCurrency(calculateTotal())}
             </span>
           </div>
+          {status === "Partially Paid" && (
+            <>
+              <div className="create_invoice_summary_row create_invoice_summary_partial">
+                <span className="create_invoice_summary_label">Amount Paid</span>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  min={0}
+                  className="create_invoice_amount_paid_input"
+                />
+              </div>
+              <div className="create_invoice_summary_row create_invoice_summary_total create_invoice_summary_balance">
+                <span className="create_invoice_summary_label">Balance Due</span>
+                <span className="create_invoice_summary_value create_invoice_balance_amount">
+                  {formatCurrency(Math.max(0, calculateTotal() - (parseFloat(amountPaid) || 0)))}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Error Display */}

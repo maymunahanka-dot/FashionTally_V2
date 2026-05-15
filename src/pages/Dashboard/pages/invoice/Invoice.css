@@ -407,6 +407,18 @@
   font-size: 0.75rem;
 }
 
+.inv_status_badge.partiallypaid {
+  background-color: rgba(234, 179, 8, 0.15);
+  color: #b45309;
+}
+
+.inv_invoice_balance {
+  font-size: 0.78rem;
+  color: #b45309;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 /* Invoice Actions */
 .inv_invoice_actions {
   display: flex;
