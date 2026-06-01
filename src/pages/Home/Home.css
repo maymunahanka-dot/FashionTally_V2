@@ -1665,6 +1665,23 @@
   transform: rotate(360deg) scale(1.1);
 }
 
+.appstore-button {
+  background: #000000;
+  border-color: #444;
+}
+
+.appstore-button:hover {
+  background: #1a1a1a;
+}
+
+.store-buttons-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .playstore-text {
   display: flex;
   flex-direction: column;
