@@ -97,10 +97,10 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
         )
       );
       setDesignStyleName(
-        initialData.title || initialData.originalData?.name || ""
+        initialData.title || initialData.originalData?.garmentDescription || initialData.originalData?.name || ""
       );
-      setFabricType(initialData.originalData?.materials?.[0] || "fabric");
-      setQuantity("8");
+      setFabricType(initialData.originalData?.fabric || initialData.originalData?.materials?.[0] || "");
+      setQuantity(String(initialData.originalData?.quantity || initialData.quantity || "1"));
       // Convert measurements object to array format
       const existingMeasurements =
         initialData.measurements ||
@@ -135,12 +135,15 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
       );
       setDepositPaid(
         String(
-          initialData.depositPaid ||
+          initialData.deposit ||
+            initialData.originalData?.deposit ||
+            initialData.depositPaid ||
             initialData.originalData?.depositPaid ||
             "0"
         )
       );
       setSpecialInstructions(
+        initialData.specialInstructions || initialData.originalData?.specialInstructions ||
         initialData.description || initialData.originalData?.description || ""
       );
       // Load additional items
@@ -511,43 +514,51 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
       // Prepare the order data in tally-main format
       const orderData = {
         name: designStyleName,
+        garmentDescription: designStyleName,
+        garmentType: mapOrderTypeToCategory(orderType),
         category: mapOrderTypeToCategory(orderType),
-        status: "Active", // Active = In Progress in UI
+        status: editMode ? (initialData?.originalData?.status || "pending") : "pending",
         description: specialInstructions || "",
+        specialInstructions: specialInstructions || "",
         price: totalPrice,
         basePrice: parseFloat(basePrice) || 0,
         additionalItems: preparedAdditionalItems,
+        deposit: parseFloat(depositPaid) || 0,
         depositPaid: parseFloat(depositPaid) || 0,
+        balance: calculateBalance(),
         balanceDue: calculateBalance(),
-        dueDate: deliveryDate ? new Date(deliveryDate) : null,
-        clientId: client || "",
+        paymentStatus: parseFloat(depositPaid) > 0 ? "partial" : "unpaid",
+        quantity: parseFloat(quantity) || 1,
+        dueDate: deliveryDate || "",
+        orderDate: deliveryDate || "",
+        clientId: client || clientPhone || "",
         clientName: clientName || "",
         clientEmail: clientEmail || "",
         clientPhone: clientPhone || "",
-        clientBio: "",
+        color: "",
+        fabric: fabricType || "",
         measurements: prepareMeasurementsForDatabase(measurements),
         materials: fabricType ? [fabricType] : [],
         images: [],
-        nextOfKin: {},
+        notes: specialInstructions || "",
         userEmail: getEffectiveUserEmail(user),
-        tailorId: "", // Keep for backward compatibility
-        createdAt:
-          editMode && initialData?.originalData?.createdAt
-            ? initialData.originalData.createdAt
-            : new Date(),
-        updatedAt: new Date(),
+        tailorId: getEffectiveUserEmail(user),
+        updatedAt: new Date().toISOString(),
       };
 
       if (editMode && initialData?.id) {
         // Update existing order
         await updateDoc(
-          doc(db, "fashiontally_designs", initialData.id),
-          orderData
+          doc(db, "fashiontally_orders", initialData.id),
+          { ...orderData, updatedAt: new Date().toISOString() }
         );
         console.log("Order updated successfully");
       } else {
         // Create new order
-        await addDoc(collection(db, "fashiontally_designs"), orderData);
+        await addDoc(collection(db, "fashiontally_orders"), {
+          ...orderData,
+          createdAt: new Date().toISOString(),
+        });
         console.log("Order created successfully");
       }
 

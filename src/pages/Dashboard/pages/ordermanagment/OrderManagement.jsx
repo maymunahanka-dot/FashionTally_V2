@@ -44,11 +44,10 @@ const OrderManagement = () => {
     // Get effective email (main admin's email for team members)
     const effectiveEmail = getEffectiveUserEmail(user);
 
-    // Set up the query to filter by effective user's email
+    // Set up the query — supports both tailorId (legacy) and userEmail fields
     const ordersQuery = query(
-      collection(db, "fashiontally_designs"),
-      where("userEmail", "==", effectiveEmail),
-      orderBy("createdAt", "desc")
+      collection(db, "fashiontally_orders"),
+      where("tailorId", "==", effectiveEmail)
     );
 
     // Set up real-time listener
@@ -57,48 +56,44 @@ const OrderManagement = () => {
       (snapshot) => {
         const ordersData = snapshot.docs.map((doc) => {
           const data = doc.data();
+
+          const parseDate = (val) => {
+            if (!val) return new Date();
+            if (val?.toDate) return val.toDate();
+            return new Date(val);
+          };
+
           return {
             id: doc.id,
-            title: data.name || "Untitled Order",
+            title: data.garmentDescription || data.name || "Untitled Order",
             price: data.price || 0,
-            date: data.createdAt?.toDate
-              ? data.createdAt.toDate().toLocaleDateString()
-              : data.createdAt
-              ? new Date(data.createdAt).toLocaleDateString()
-              : new Date().toLocaleDateString(),
+            date: parseDate(data.createdAt).toLocaleDateString(),
             status: mapStatusToUI(data.status),
-            icon: getCategoryIcon(data.category),
+            icon: getCategoryIcon(data.garmentType || data.category),
             client: {
               name: data.clientName || "No Client",
               phone: data.clientPhone || "",
               email: data.clientEmail || "",
             },
-            // Store original data for editing
             originalData: data,
-            createdAt: data.createdAt?.toDate
-              ? data.createdAt.toDate()
-              : data.createdAt
-              ? new Date(data.createdAt)
-              : new Date(),
-            dueDate: data.dueDate?.toDate
-              ? data.dueDate.toDate()
-              : data.dueDate
-              ? new Date(data.dueDate)
-              : null,
-            category: data.category || "Others",
-            description: data.description || "",
+            createdAt: parseDate(data.createdAt),
+            dueDate: data.dueDate ? new Date(data.dueDate) : null,
+            category: data.garmentType || data.category || "Others",
+            description: data.garmentDescription || data.description || "",
             measurements: data.measurements || {},
             images: data.images || [],
             clientId: data.clientId || "",
-            clientBio: data.clientBio || "",
-            nextOfKin: data.nextOfKin || {},
-            // Add additional items fields
-            basePrice: data.basePrice || 0,
-            additionalItems: data.additionalItems || [],
-            depositPaid: data.depositPaid || 0,
-            balanceDue: data.balanceDue || 0,
+            basePrice: data.price || 0,
+            deposit: data.deposit || data.depositPaid || 0,
+            balance: data.balance || data.balanceDue || 0,
+            quantity: data.quantity || 1,
+            paymentStatus: data.paymentStatus || "",
+            specialInstructions: data.specialInstructions || data.notes || "",
           };
         });
+
+        // Sort newest first in JS since we removed orderBy
+        ordersData.sort((a, b) => b.createdAt - a.createdAt);
 
         setOrders(ordersData);
         setLoading(false);
@@ -115,11 +110,20 @@ const OrderManagement = () => {
 
   // Map database status to UI status
   const mapStatusToUI = (dbStatus) => {
-    switch (dbStatus) {
-      case "Active":
+    switch (dbStatus?.toLowerCase()) {
+      case "active":
+      case "in progress":
         return "In Progress";
-      case "Archived":
+      case "archived":
+      case "completed":
         return "Completed";
+      case "pending":
+        return "Pending";
+      case "partial":
+      case "pending payment":
+        return "Pending Payment";
+      case "cancelled":
+        return "Cancelled";
       default:
         return "Pending";
     }

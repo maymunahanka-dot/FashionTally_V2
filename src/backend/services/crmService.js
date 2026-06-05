@@ -203,7 +203,7 @@ export const getOrders = async (userEmail) => {
       return [];
     }
 
-    // Orders are stored in fashiontally_designs collection (as seen in OrderManagement.jsx)
+    // Orders are now stored in fashiontally_designs collection
     const q = query(
       collection(db, "fashiontally_designs"),
       where("userEmail", "==", userEmail)
