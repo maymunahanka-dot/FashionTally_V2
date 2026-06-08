@@ -7,7 +7,7 @@ import Input from "../../../components/Input";
 import Button from "../../../components/button/Button";
 import OTPVerificationModal from "../../../components/OTPVerificationModal/OTPVerificationModal";
 import toast from "react-hot-toast";
-import { sendWhatsAppOTP } from "../../../backend/services/whatsapp.service";
+import { sendOTP, generateOTP } from "../../../utils/emailService";
 
 const Step1PersonalInfo = ({
   formData,
@@ -65,23 +65,28 @@ const Step1PersonalInfo = ({
 
   const handleNext = async () => {
     if (validateStep1()) {
+      const otp = generateOTP();
+      setGeneratedOTP(otp);
       setShowOTPModal(true);
       setIsSendingOTP(true);
 
       try {
-        // Send OTP via WhatsApp — returns the generated OTP
-        const result = await sendWhatsAppOTP(formData.phone);
+        const result = await sendOTP({
+          mail: formData.email,
+          name: formData.name,
+          otp,
+        });
 
         if (result.success) {
-          setGeneratedOTP(result.otp);
-          toast.success("OTP sent to your WhatsApp!");
-          console.log("✅ WhatsApp OTP sent successfully");
+          toast.success("OTP sent to your email!");
+          console.log("✅ OTP sent successfully");
         } else {
           throw new Error(result.error || "Failed to send OTP");
         }
       } catch (error) {
-        console.error("❌ Error sending WhatsApp OTP:", error);
+        console.error("❌ Error sending OTP:", error);
         toast.error("Failed to send OTP. Please try again.");
+        console.log("🔐 Generated OTP (fallback):", otp);
       } finally {
         setIsSendingOTP(false);
       }
@@ -276,8 +281,8 @@ const Step1PersonalInfo = ({
         title="Verify Your Account"
         message={
           isSendingOTP
-            ? "Sending verification code via WhatsApp..."
-            : `We've sent a verification code to your WhatsApp (${formData.phone}). Please enter it below.`
+            ? "Sending verification code..."
+            : `We've sent a verification code to ${formData.email}. Please enter it below.`
         }
         otpLength={6}
       />
