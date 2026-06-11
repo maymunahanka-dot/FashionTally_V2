@@ -219,7 +219,7 @@ const OrderManagement = () => {
             className="o_m_ipolsbbb"
           />
         </div>
-        <h2 className="o_m_stats_period">December 2025</h2>
+        {/* <h2 className="o_m_stats_period">December 2025</h2> */}
         <div className="o_m_order_stats">
           <div className="o_m_stat_card">
             <div className="o_m_stat_content">
