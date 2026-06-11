@@ -203,26 +203,19 @@ export const getOrders = async (userEmail) => {
       return [];
     }
 
-    // Orders are now stored in fashiontally_designs collection
+    // Orders are stored in fashiontally_designs collection
     const q = query(
       collection(db, "fashiontally_designs"),
       where("userEmail", "==", userEmail)
     );
 
-    console.log(
-      "📦 Executing orders query on fashiontally_designs collection..."
-    );
     const snapshot = await getDocs(q);
-    const ordersData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const allDocs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-    console.log(
-      "✅ Orders fetched from fashiontally_designs:",
-      ordersData.length,
-      ordersData
-    );
+    // Include orders (type === "order") and legacy records with no type
+    const ordersData = allDocs.filter((d) => !d.type || d.type === "order");
+
+    console.log("✅ Orders fetched:", ordersData.length);
     return ordersData;
   } catch (error) {
     console.error("❌ Error fetching orders:", error);
@@ -502,10 +495,10 @@ export const getDesigns = async (userEmail) => {
     const q = query(designsCollection, where("userEmail", "==", userEmail));
 
     const snapshot = await getDocs(q);
-    const designsData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const allDocs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    // Include designs (type === "design") and legacy records with no type
+    const designsData = allDocs.filter((d) => !d.type || d.type === "design");
 
     // Sort by createdAt in JavaScript (descending order)
     designsData.sort((a, b) => {
@@ -553,8 +546,9 @@ export const addDesign = async (designData, userEmail) => {
 
     const designWithMetadata = {
       ...designData,
+      type: "design",
       userEmail: userEmail,
-      tailorId: userEmail, // Keep for backward compatibility
+      tailorId: userEmail,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };

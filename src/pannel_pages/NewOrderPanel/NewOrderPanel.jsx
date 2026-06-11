@@ -513,10 +513,12 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
 
       // Prepare the order data in tally-main format
       const orderData = {
+        type: "order",
         name: designStyleName,
         garmentDescription: designStyleName,
         garmentType: mapOrderTypeToCategory(orderType),
         category: mapOrderTypeToCategory(orderType),
+        orderType: orderType,
         status: editMode ? (initialData?.originalData?.status || "pending") : "pending",
         description: specialInstructions || "",
         specialInstructions: specialInstructions || "",
@@ -549,16 +551,13 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
       if (editMode && initialData?.id) {
         // Update existing order
         await updateDoc(
-          doc(db, "fashiontally_orders", initialData.id),
-          { ...orderData, updatedAt: new Date().toISOString() }
+          doc(db, "fashiontally_designs", initialData.id),
+          orderData
         );
         console.log("Order updated successfully");
       } else {
         // Create new order
-        await addDoc(collection(db, "fashiontally_orders"), {
-          ...orderData,
-          createdAt: new Date().toISOString(),
-        });
+        await addDoc(collection(db, "fashiontally_designs"), orderData);
         console.log("Order created successfully");
       }
 

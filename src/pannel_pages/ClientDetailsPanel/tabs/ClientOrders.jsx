@@ -25,10 +25,10 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
         // Get effective email (main admin's email for team members)
         const effectiveEmail = getEffectiveUserEmail(user);
 
-        // Query orders from fashiontally_orders by tailorId
+        // Query orders by userEmail only (no composite index needed)
         const ordersQuery = query(
-          collection(db, "fashiontally_orders"),
-          where("tailorId", "==", effectiveEmail)
+          collection(db, "fashiontally_designs"),
+          where("userEmail", "==", effectiveEmail)
         );
 
         const snapshot = await getDocs(ordersQuery);
@@ -36,53 +36,44 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
         const allOrders = snapshot.docs.map((doc) => {
           const data = doc.data();
 
-          const parseDate = (val) => {
-            if (!val) return new Date();
-            if (val?.toDate) return val.toDate();
-            return new Date(val);
-          };
-
-          const mapStatus = (s) => {
-            switch (s?.toLowerCase()) {
-              case "active": case "in progress": return "In Progress";
-              case "archived": case "completed": return "Completed";
-              case "partial": case "pending payment": return "Pending Payment";
-              case "cancelled": return "Cancelled";
-              default: return "Pending";
-            }
+          const convertDate = (dateField) => {
+            if (!dateField) return new Date();
+            if (dateField.toDate && typeof dateField.toDate === "function") return dateField.toDate();
+            if (dateField instanceof Date) return dateField;
+            return new Date(dateField);
           };
 
           return {
             id: doc.id,
-            title: data.garmentDescription || data.name || "Untitled Order",
-            date: parseDate(data.createdAt).toLocaleDateString(),
+            title: data.name || "Untitled Order",
+            date: convertDate(data.createdAt).toLocaleDateString(),
             amount: `₦${(data.price || 0).toLocaleString()}`,
-            status: mapStatus(data.status),
+            status:
+              data.status === "Active" ? "In Progress" :
+              data.status === "Archived" ? "Completed" : "Pending",
             originalData: data,
-            createdAt: parseDate(data.createdAt),
-            dueDate: data.dueDate ? new Date(data.dueDate) : new Date(),
-            category: data.garmentType || data.category || "Others",
-            description: data.garmentDescription || data.description || "",
+            createdAt: convertDate(data.createdAt),
+            dueDate: convertDate(data.dueDate),
+            category: data.category || "Others",
+            description: data.description || "",
             measurements: data.measurements || {},
             images: data.images || [],
             clientId: data.clientId || "",
             clientName: data.clientName || "",
             clientEmail: data.clientEmail || "",
-            clientPhone: data.clientPhone || data.clientId || "",
+            clientPhone: data.clientPhone || "",
             price: data.price || 0,
-            basePrice: data.basePrice || data.price || 0,
-            deposit: data.deposit || data.depositPaid || 0,
-            balance: data.balance || data.balanceDue || 0,
+            basePrice: data.basePrice || 0,
+            additionalItems: data.additionalItems || [],
+            depositPaid: data.depositPaid || 0,
+            balanceDue: data.balanceDue || 0,
           };
         });
 
-        // Filter by client phone (legacy) or clientId
+        // Filter by client ID, include orders (type === "order") and legacy no-type records
         const ordersData = allOrders
-          .filter((order) =>
-            order.clientId === client.id ||
-            order.clientId === client.phone ||
-            order.clientPhone === client.phone
-          )
+          .filter((order) => order.clientId === client.id)
+          .filter((order) => !order.originalData?.type || order.originalData?.type === "order")
           .sort((a, b) => b.createdAt - a.createdAt);
 
         console.log(

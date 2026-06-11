@@ -72,9 +72,10 @@ const ClientOverview = ({ client }) => {
           };
         });
 
-        // Filter orders for this client
+        // Filter orders for this client — include type === "order" and legacy no-type records
         const clientOrders = allOrders.filter(
-          (order) => order.clientId === client.id
+          (order) => order.clientId === client.id &&
+          (!order.type || order.type === "order")
         );
         setTotalOrders(clientOrders.length);
 

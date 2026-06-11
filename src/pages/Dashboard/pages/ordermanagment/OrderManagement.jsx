@@ -5,7 +5,6 @@ import {
   onSnapshot,
   query,
   where,
-  orderBy,
 } from "firebase/firestore";
 import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
@@ -44,17 +43,17 @@ const OrderManagement = () => {
     // Get effective email (main admin's email for team members)
     const effectiveEmail = getEffectiveUserEmail(user);
 
-    // Set up the query — supports both tailorId (legacy) and userEmail fields
+    // Set up the query to filter by effective user's email
     const ordersQuery = query(
-      collection(db, "fashiontally_orders"),
-      where("tailorId", "==", effectiveEmail)
+      collection(db, "fashiontally_designs"),
+      where("userEmail", "==", effectiveEmail)
     );
 
     // Set up real-time listener
     const unsubscribe = onSnapshot(
       ordersQuery,
       (snapshot) => {
-        const ordersData = snapshot.docs.map((doc) => {
+        const allDocs = snapshot.docs.map((doc) => {
           const data = doc.data();
 
           const parseDate = (val) => {
@@ -65,11 +64,12 @@ const OrderManagement = () => {
 
           return {
             id: doc.id,
-            title: data.garmentDescription || data.name || "Untitled Order",
+            _type: data.type,
+            title: data.name || "Untitled Order",
             price: data.price || 0,
             date: parseDate(data.createdAt).toLocaleDateString(),
             status: mapStatusToUI(data.status),
-            icon: getCategoryIcon(data.garmentType || data.category),
+            icon: getCategoryIcon(data.category),
             client: {
               name: data.clientName || "No Client",
               phone: data.clientPhone || "",
@@ -78,8 +78,8 @@ const OrderManagement = () => {
             originalData: data,
             createdAt: parseDate(data.createdAt),
             dueDate: data.dueDate ? new Date(data.dueDate) : null,
-            category: data.garmentType || data.category || "Others",
-            description: data.garmentDescription || data.description || "",
+            category: data.category || "Others",
+            description: data.description || "",
             measurements: data.measurements || {},
             images: data.images || [],
             clientId: data.clientId || "",
@@ -92,8 +92,10 @@ const OrderManagement = () => {
           };
         });
 
-        // Sort newest first in JS since we removed orderBy
-        ordersData.sort((a, b) => b.createdAt - a.createdAt);
+        // Include orders (type === "order") and legacy records with no type
+        const ordersData = allDocs.filter((d) => !d._type || d._type === "order");
+
+        ordersData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         setOrders(ordersData);
         setLoading(false);
@@ -110,20 +112,11 @@ const OrderManagement = () => {
 
   // Map database status to UI status
   const mapStatusToUI = (dbStatus) => {
-    switch (dbStatus?.toLowerCase()) {
-      case "active":
-      case "in progress":
+    switch (dbStatus) {
+      case "Active":
         return "In Progress";
-      case "archived":
-      case "completed":
+      case "Archived":
         return "Completed";
-      case "pending":
-        return "Pending";
-      case "partial":
-      case "pending payment":
-        return "Pending Payment";
-      case "cancelled":
-        return "Cancelled";
       default:
         return "Pending";
     }
