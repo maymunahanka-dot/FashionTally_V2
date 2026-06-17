@@ -183,7 +183,7 @@ const ScheduleAppointmentPanel = ({
         return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
       };
 
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+      const googleCalendarUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(
         `${
           savedAppointmentData.appointmentTitle || savedAppointmentData.purpose
         } - ${savedAppointmentData.clientName}`
@@ -199,8 +199,8 @@ const ScheduleAppointmentPanel = ({
         }`
       )}&location=${encodeURIComponent(savedAppointmentData.location)}`;
 
-      // Open Google Calendar in new tab
-      window.open(googleCalendarUrl, "_blank");
+      // Use location.href to avoid popup blocking on mobile
+      window.location.href = googleCalendarUrl;
     }
 
     setShowCalendarDialog(false);

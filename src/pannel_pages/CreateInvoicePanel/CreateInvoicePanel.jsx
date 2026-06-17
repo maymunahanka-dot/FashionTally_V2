@@ -30,7 +30,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [status, setStatus] = useState("Unpaid");
   const [amountPaid, setAmountPaid] = useState(0);
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState("");
   const [taxRate, setTaxRate] = useState(7.5);
   const [items, setItems] = useState([
     {
@@ -38,8 +38,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
       itemType: "Service",
       category: "Labor",
       description: "",
-      quantity: 1,
-      price: 0,
+      quantity: "",
+      price: "",
       inventoryItemId: "",
       inventoryItemName: "",
     },
@@ -100,8 +100,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
             itemType: "Service",
             category: "Labor",
             description: "",
-            quantity: 1,
-            price: 0,
+            quantity: "",
+            price: "",
             inventoryItemId: "",
             inventoryItemName: "",
           },
@@ -274,10 +274,10 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
               inventoryItemId: inventoryItemId,
               inventoryItemName: selectedItem.name,
               description: selectedItem.name,
-              price: selectedItem.price || 0,
+              price: selectedItem.price || "",
               category: selectedItem.category,
               // Reset quantity to 1 when selecting new item
-              quantity: 1,
+              quantity: "",
             }
           : item
       );
@@ -297,8 +297,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
         itemType: "Service",
         category: "Labor",
         description: "",
-        quantity: 1,
-        price: 0,
+        quantity: "",
+        price: "",
         inventoryItemId: "",
         inventoryItemName: "",
       },
@@ -320,11 +320,11 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
   };
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    return items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
   };
 
   const calculateDiscountAmount = () => {
-    return (calculateSubtotal() * discount) / 100;
+    return (calculateSubtotal() * (Number(discount) || 0)) / 100;
   };
 
   const calculateTaxAmount = () => {
@@ -550,13 +550,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
           itemType: "Service",
           category: "Labor",
           description: "",
-          quantity: 1,
-          price: 0,
+          quantity: "",
+          price: "",
           inventoryItemId: "",
           inventoryItemName: "",
         },
       ]);
-      setDiscount(0);
+      setDiscount("");
       setTaxRate(7.5);
       setStatus("Unpaid");
       setPaymentMethod("Cash");
@@ -770,7 +770,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                             inventoryItemId: "",
                             inventoryItemName: "",
                             description: "",
-                            price: 0,
+                            price: "",
                           };
                         } else {
                           return {
@@ -780,8 +780,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                             inventoryItemId: "",
                             inventoryItemName: "",
                             description: "",
-                            price: 0,
-                            quantity: 1,
+                            price: "",
+                            quantity: "",
                           };
                         }
                       }
@@ -872,13 +872,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                   <Input
                     label="Quantity"
                     type="number"
-                    placeholder="1"
+                    placeholder="Quantity"
                     value={item.quantity}
                     onChange={(e) =>
                       updateItem(
                         index,
                         "quantity",
-                        parseInt(e.target.value) || 1
+                        e.target.value === "" ? "" : parseInt(e.target.value) || 1
                       )
                     }
                     variant="rounded"
@@ -900,13 +900,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                   <Input
                     label="Price"
                     type="number"
-                    placeholder="₦0"
+                    placeholder="Price"
                     value={item.price}
                     onChange={(e) =>
                       updateItem(
                         index,
                         "price",
-                        parseFloat(e.target.value) || 0
+                        e.target.value === "" ? "" : parseFloat(e.target.value) || 0
                       )
                     }
                     variant="rounded"
@@ -946,9 +946,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
             <Input
               label="Discount (%)"
               type="number"
-              placeholder="0"
+              placeholder="Discount (%)"
               value={discount}
-              onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+              onChange={(e) => setDiscount(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
               variant="rounded"
               min="0"
               max="100"
