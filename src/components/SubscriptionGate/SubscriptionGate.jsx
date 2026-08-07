@@ -173,36 +173,14 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
     if (requiredFeature) {
       const plan = subscriptionStatus.planType || "STARTER";
 
-      // Special case for Design Management - only allow for paid users, not trial
-      if (
-        requiredFeature === "Design Management" ||
-        requiredFeature === "Design Managements"
-      ) {
-        if (subscriptionStatus.subscriptionType === "trial") {
-          console.log(`🚫 Design feature blocked for trial user`);
-          // Continue to show subscription gate for Design feature during trial
-        } else {
-          // Paid user - check if plan has Design feature
-          const hasAccess = hasFeatureAccess(plan, requiredFeature);
-          if (hasAccess) {
-            console.log(
-              `🎉 Rendering Design content for paid user with plan: ${plan}`
-            );
-            return <>{children}</>;
-          }
-        }
+      const hasAccess = hasFeatureAccess(plan, requiredFeature);
+      if (hasAccess) {
+        console.log(`🎉 Rendering content for feature: ${requiredFeature}`);
+        return <>{children}</>;
       } else {
-        // For all other features, use normal logic
-        const hasAccess = hasFeatureAccess(plan, requiredFeature);
-        if (hasAccess) {
-          console.log(`🎉 Rendering content for feature: ${requiredFeature}`);
-          return <>{children}</>;
-        } else {
-          console.log(
-            `🚫 Plan ${plan} does not have access to feature: ${requiredFeature}`
-          );
-          // Continue to show subscription gate for this specific feature
-        }
+        console.log(
+          `🚫 Plan ${plan} does not have access to feature: ${requiredFeature}`
+        );
       }
     } else {
       console.log("🎉 Rendering content - user is subscribed");
