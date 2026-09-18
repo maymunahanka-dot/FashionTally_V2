@@ -120,6 +120,24 @@ export async function checkSubscriptionStatus(email, uuid) {
       };
     }
 
+    // createdAt fallback — grant 7-day trial based on account creation date
+    const createdAt = userData.createdAt;
+    if (createdAt) {
+      const createdDate = createdAt?.toDate ? createdAt.toDate() : new Date(createdAt);
+      const daysSinceCreation = getDaysSince(createdDate.toISOString());
+      if (daysSinceCreation < 7) {
+        const trialEndDate = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        console.log(`${logPrefix} 🆓 createdAt trial active — ${6 - daysSinceCreation} days remaining`);
+        return {
+          isSubscribed: true,
+          planType: "GROWTH",
+          subscriptionType: "trial",
+          isTrialActive: true,
+          subscriptionEndDate: trialEndDate,
+        };
+      }
+    }
+
     return { isSubscribed: false, planType: "Free", subscriptionType: "free" };
   } catch (error) {
     console.error(`${logPrefix} 💥 Unexpected error`, { email, error });

@@ -126,12 +126,33 @@ export function useSubscription() {
               data
             );
 
+            // If no subscription info, fall back to createdAt-based 7-day trial
+            let isSubscribed = data.isSubscribed || false;
+            let isTrialActive = data.isTrialActive || false;
+            let subscriptionEndDate = data.subscriptionEndDate;
+            let subscriptionType = data.subscriptionType;
+
+            if (!isSubscribed && !data.payment_amount && data.createdAt) {
+              const createdDate = data.createdAt?.toDate
+                ? data.createdAt.toDate()
+                : new Date(data.createdAt);
+              const trialEnd = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+              if (trialEnd > new Date()) {
+                isSubscribed = true;
+                isTrialActive = true;
+                subscriptionType = "trial";
+                subscriptionEndDate = trialEnd.toISOString();
+                plan = "GROWTH";
+                console.log("🆓 createdAt trial active for:", effectiveEmail);
+              }
+            }
+
             setSubscription({
               planType: plan,
-              isSubscribed: data.isSubscribed || false,
-              isTrialActive: data.isTrialActive || false,
-              subscriptionEndDate: data.subscriptionEndDate,
-              subscriptionType: data.subscriptionType,
+              isSubscribed,
+              isTrialActive,
+              subscriptionEndDate,
+              subscriptionType,
               loading: false,
             });
           } else {
@@ -139,6 +160,24 @@ export function useSubscription() {
               "❌❌❌❌❌❌❌❌❌❌ SUBSCRIPTION DATA - No user document found for email:",
               effectiveEmail
             );
+            // No Firestore doc — fall back to Firebase Auth createdAt from user context
+            const createdAt = currentUser?.createdAt;
+            if (createdAt) {
+              const createdDate = new Date(createdAt);
+              const trialEnd = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+              if (trialEnd > new Date()) {
+                console.log("🆓 No doc — createdAt trial active for:", effectiveEmail);
+                setSubscription({
+                  planType: "GROWTH",
+                  isSubscribed: true,
+                  isTrialActive: true,
+                  subscriptionType: "trial",
+                  subscriptionEndDate: trialEnd.toISOString(),
+                  loading: false,
+                });
+                return;
+              }
+            }
             setSubscription((prev) => ({ ...prev, loading: false }));
           }
         },
