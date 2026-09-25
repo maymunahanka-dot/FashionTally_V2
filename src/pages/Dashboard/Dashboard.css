@@ -10,7 +10,7 @@
 
 .dashboard-main {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 220px;
   padding: 2rem;
   overflow-y: auto;
   background-color: var(--bg-primary);
@@ -361,7 +361,7 @@
 
 /* Ensure trial banner appears above sidebar */
 .dashboard-container .trial-banner {
-  margin-left: 280px;
+  margin-left: 220px;
 }
 
 /* Mobile adjustments for trial banner */

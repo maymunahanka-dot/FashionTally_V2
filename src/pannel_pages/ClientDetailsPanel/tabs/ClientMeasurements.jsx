@@ -1,538 +1,216 @@
 import { useState, useEffect, useContext } from "react";
-import { Plus, Ruler, Info, Download } from "lucide-react";
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from "firebase/firestore";
-import { db } from "../../../backend/firebase.config";
+import { Plus, Ruler, Info, Download, Pencil, Trash2 } from "lucide-react";
 import NewAuthContext from "../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../utils/teamUtils";
 import AddMeasurementModal from "../components/AddMeasurementModal";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import "./ClientMeasurements.css";
 
+const API = import.meta.env.VITE_BACKEND_URL;
+
 const ClientMeasurements = ({ client }) => {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [measurements, setMeasurements] = useState(null);
+  const [editingMeasurement, setEditingMeasurement] = useState(null);
+  const [measurements, setMeasurements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
   const [brandData, setBrandData] = useState(null);
   const { user } = useContext(NewAuthContext);
 
-  useEffect(() => {
-    if (!client?.id || !db) {
+  const token = () => localStorage.getItem("authToken");
+
+  // Fetch measurements from backend
+  const fetchMeasurements = async (clientId) => {
+    if (!clientId) {
+      console.warn("⚠️ fetchMeasurements called with no clientId");
       setLoading(false);
       return;
     }
+    try {
+      const url = `${API}/api/measurement/list/${encodeURIComponent(clientId)}`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      const data = await res.json();
+      if (data.success) setMeasurements(data.data);
+      else console.error("❌ Fetch failed:", data.error);
+    } catch (err) {
+      console.error("❌ Error fetching measurements:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setLoading(true);
-
-    // Set up real-time listener for measurements
-    const measurementRef = doc(
-      db,
-      "fashiontally_clients",
-      client.id,
-      "measurements",
-      "latest"
-    );
-
-    const unsubscribe = onSnapshot(
-      measurementRef,
-      (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          console.log("📊 Measurements loaded from database:", data);
-          setMeasurements({
-            ...data,
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-          });
-        } else {
-          console.log("📊 No measurements found for this client");
-          setMeasurements(null);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching measurements:", error);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [client?.id]);
-
-  // Load brand data for PDF
   useEffect(() => {
-    const loadBrandData = async () => {
-      if (!user?.email) return;
+    setLoading(true);
+    setMeasurements([]);
+    fetchMeasurements(client?.email);
+  }, [client?.email]);
 
+  // Load brand data
+  useEffect(() => {
+    if (!user?.email) return;
+    const load = async () => {
       try {
-        const effectiveEmail = getEffectiveUserEmail(user);
-
-        // Load user data first
-        const userDoc = await getDoc(
-          doc(db, "fashiontally_users", effectiveEmail)
-        );
-        let userData = null;
-
-        if (userDoc.exists()) {
-          userData = userDoc.data();
-        }
-
-        // Load brand settings
-        const brandDoc = await getDoc(
-          doc(db, "fashiontally_brand_settings", effectiveEmail)
-        );
-
-        if (brandDoc.exists()) {
-          const brandData = brandDoc.data();
+        const res = await fetch(`${API}/api/brand-setting/get-by-email/${user.email}`);
+        const data = await res.json();
+        if (data.success) {
           setBrandData({
-            businessName:
-              brandData.businessName || userData?.businessName || null,
-            businessAddress:
-              brandData.businessAddress || userData?.businessAddress || null,
-            businessPhone:
-              brandData.businessPhone || userData?.phoneNumber || null,
-            businessEmail: brandData.businessEmail || userData?.email || null,
-            logoUrl:
-              brandData.logoUrl ||
-              userData?.logoUrl ||
-              userData?.profilePicture ||
-              null,
-            primaryColor: brandData.primaryColor || "#14b8a6",
-            secondaryColor: brandData.secondaryColor || "#0d9488",
-          });
-        } else if (userData) {
-          setBrandData({
-            businessName: userData.businessName || null,
-            businessAddress: userData.businessAddress || null,
-            businessPhone: userData.phoneNumber || null,
-            businessEmail: userData.email || null,
-            logoUrl: userData.logoUrl || userData.profilePicture || null,
-            primaryColor: "#14b8a6",
-            secondaryColor: "#0d9488",
+            businessName: data.data.businessName || "",
+            businessAddress: data.data.businessAddress || "",
+            businessPhone: data.data.businessPhone || "",
+            businessEmail: data.data.businessEmail || "",
+            logoUrl: data.data.logoUrl || null,
+            primaryColor: data.data.primaryColor || "#14b8a6",
           });
         }
-      } catch (error) {
-        console.error("Error loading brand data:", error);
+      } catch (err) {
+        console.error("Error loading brand data:", err);
       }
     };
-
-    loadBrandData();
+    load();
   }, [user?.email]);
 
-  const handleAddMeasurement = () => {
-    setShowAddModal(true);
+  // Create measurements (array)
+  const handleSaveMeasurements = async (items) => {
+    const res = await fetch(`${API}/api/measurement/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+      body: JSON.stringify({ clientId: client.email, measurements: items }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setMeasurements((prev) => [...prev, ...data.data]);
+      if (data.warning) console.warn("⚠️", data.warning);
+    } else {
+      throw new Error(data.error || "Failed to save");
+    }
   };
 
-  const handleSaveMeasurement = async (measurementData) => {
-    if (!user?.email || !client?.id) {
-      console.error("User not authenticated or client not found");
-      return;
-    }
-
-    try {
-      console.log("💾 Saving measurement:", measurementData);
-
-      // Measurements are stored as a subcollection of the client document
-      const measurementRef = doc(
-        db,
-        "fashiontally_clients",
-        client.id,
-        "measurements",
-        "latest"
+  // Edit a single measurement
+  const handleEditSave = async (item) => {
+    const res = await fetch(`${API}/api/measurement/edit/${editingMeasurement.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+      body: JSON.stringify({ name: item.name, value: item.value, unit: item.unit }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setMeasurements((prev) =>
+        prev.map((m) => (m.id === editingMeasurement.id ? data.data : m))
       );
-
-      // Prepare measurement data with normalized key
-      const measurementKey = measurementData.name
-        .toLowerCase()
-        .replace(/\s+/g, "");
-
-      const newMeasurementData = {
-        [measurementKey]: measurementData.value,
-        userEmail: user.email,
-        updatedAt: new Date(),
-      };
-
-      console.log("📝 Saving to Firestore:", newMeasurementData);
-
-      // Add or update measurements (merge to keep existing measurements)
-      await setDoc(measurementRef, newMeasurementData, { merge: true });
-
-      // Also update the client document to indicate they have measurements
-      const clientRef = doc(db, "fashiontally_clients", client.id);
-      await updateDoc(clientRef, {
-        hasMeasurements: true,
-        measurementsUpdatedAt: new Date(),
-      });
-
-      console.log("✅ Measurement saved successfully:", measurementKey);
-    } catch (error) {
-      console.error("❌ Error saving measurement:", error);
-      throw error;
+      setEditingMeasurement(null);
+    } else {
+      throw new Error(data.error || "Failed to update");
     }
   };
 
-  const handleCloseModal = () => {
-    setShowAddModal(false);
+  // Delete a measurement
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this measurement?")) return;
+    const res = await fetch(`${API}/api/measurement/delete/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token()}` },
+    });
+    const data = await res.json();
+    if (data.success) {
+      setMeasurements((prev) => prev.filter((m) => m.id !== id));
+    }
   };
 
-  const formatDate = (date) => {
-    if (!date) return "";
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      year: "numeric", month: "short", day: "numeric",
     });
   };
 
-  // PDF Component for rendering measurements
+  // PDF Component
   const MeasurementPDFComponent = ({ client, measurements, company }) => {
     const primaryColor = company.primaryColor || "#14b8a6";
-    const allMeasurements = Object.entries(measurements || {})
-      .filter(
-        ([key, value]) =>
-          !["userEmail", "updatedAt", "customMeasurements"].includes(key) &&
-          value &&
-          typeof value === "string" &&
-          value.trim() !== ""
-      )
-      .map(([key, value]) => ({
-        key,
-        label: formatMeasurementLabel(key),
-        value: value,
-      }));
-
     return (
-      <div
-        style={{
-          width: "1000px",
-          fontSize: "14px",
-          lineHeight: "1.6",
-          color: "#333",
-          backgroundColor: "white",
-          padding: "48px",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "48px",
-            borderBottom: `3px solid ${primaryColor}`,
-            paddingBottom: "24px",
-          }}
-        >
+      <div style={{ width: "1000px", fontSize: "14px", lineHeight: "1.6", color: "#333", backgroundColor: "white", padding: "48px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px", borderBottom: `3px solid ${primaryColor}`, paddingBottom: "24px" }}>
           <div style={{ flex: 1 }}>
             {company.logoUrl ? (
-              <img
-                src={company.logoUrl}
-                alt="Company Logo"
-                style={{ height: "80px", objectFit: "contain" }}
-                crossOrigin="anonymous"
-              />
+              <img src={company.logoUrl} alt="Logo" style={{ height: "80px", objectFit: "contain" }} crossOrigin="anonymous" />
             ) : (
-              <div
-                style={{
-                  height: "80px",
-                  width: "80px",
-                  backgroundColor: "#f3f4f6",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "32px",
-                  fontWeight: "bold",
-                  color: "#9ca3af",
-                  borderRadius: "8px",
-                }}
-              >
+              <div style={{ height: "80px", width: "80px", backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: "bold", color: "#9ca3af", borderRadius: "8px" }}>
                 {company.businessName?.charAt(0) || "FT"}
               </div>
             )}
           </div>
-
           <div style={{ textAlign: "right" }}>
-            <h1
-              style={{
-                fontSize: "48px",
-                fontWeight: "bold",
-                marginBottom: "8px",
-                margin: 0,
-                color: primaryColor,
-              }}
-            >
-              MEASUREMENTS
-            </h1>
-            <p style={{ fontSize: "16px", color: "#666", margin: 0 }}>
-              {formatDate(measurements.updatedAt)}
-            </p>
+            <h1 style={{ fontSize: "48px", fontWeight: "bold", margin: 0, color: primaryColor }}>MEASUREMENTS</h1>
+            <p style={{ fontSize: "16px", color: "#666", margin: 0 }}>{formatDate(new Date().toISOString())}</p>
           </div>
         </div>
-
-        {/* Company & Client Info */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "48px",
-          }}
-        >
-          {/* Company Info */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
           <div style={{ flex: 1 }}>
-            <h3
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#666",
-                marginBottom: "12px",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-              }}
-            >
-              From
-            </h3>
-            {company.businessName && (
-              <p
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  marginBottom: "8px",
-                  margin: "0 0 8px 0",
-                }}
-              >
-                {company.businessName}
-              </p>
-            )}
-            {company.businessAddress && (
-              <p style={{ color: "#666", margin: "4px 0" }}>
-                {company.businessAddress}
-              </p>
-            )}
-            {company.businessPhone && (
-              <p style={{ color: "#666", margin: "4px 0" }}>
-                {company.businessPhone}
-              </p>
-            )}
-            {company.businessEmail && (
-              <p style={{ color: "#666", margin: "4px 0" }}>
-                {company.businessEmail}
-              </p>
-            )}
+            <h3 style={{ fontSize: "12px", fontWeight: "600", color: "#666", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>From</h3>
+            {company.businessName && <p style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0" }}>{company.businessName}</p>}
+            {company.businessAddress && <p style={{ color: "#666", margin: "4px 0" }}>{company.businessAddress}</p>}
+            {company.businessPhone && <p style={{ color: "#666", margin: "4px 0" }}>{company.businessPhone}</p>}
+            {company.businessEmail && <p style={{ color: "#666", margin: "4px 0" }}>{company.businessEmail}</p>}
           </div>
-
-          {/* Client Info */}
           <div style={{ flex: 1, textAlign: "right" }}>
-            <h3
-              style={{
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#666",
-                marginBottom: "12px",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-              }}
-            >
-              Client Information
-            </h3>
-            {client.name && (
-              <p
-                style={{
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  marginBottom: "8px",
-                  margin: "0 0 8px 0",
-                }}
-              >
-                {client.name}
-              </p>
-            )}
-            {client.phone && (
-              <p style={{ color: "#666", margin: "4px 0" }}>{client.phone}</p>
-            )}
-            {client.email && (
-              <p style={{ color: "#666", margin: "4px 0" }}>{client.email}</p>
-            )}
-            {client.address && (
-              <p style={{ color: "#666", margin: "4px 0" }}>
-                {client.address}
-              </p>
-            )}
+            <h3 style={{ fontSize: "12px", fontWeight: "600", color: "#666", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>Client</h3>
+            {client.name && <p style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0" }}>{client.name}</p>}
+            {client.phone && <p style={{ color: "#666", margin: "4px 0" }}>{client.phone}</p>}
+            {client.email && <p style={{ color: "#666", margin: "4px 0" }}>{client.email}</p>}
           </div>
         </div>
-
-        {/* Measurements Table */}
-        <div style={{ marginBottom: "48px" }}>
-          <h3
-            style={{
-              fontSize: "18px",
-              fontWeight: "bold",
-              marginBottom: "24px",
-              color: primaryColor,
-            }}
-          >
-            Body Measurements
-          </h3>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <thead>
-              <tr style={{ backgroundColor: primaryColor }}>
-                <th
-                  style={{
-                    padding: "16px",
-                    textAlign: "left",
-                    color: "white",
-                    fontWeight: "600",
-                    fontSize: "14px",
-                    borderBottom: "2px solid #e5e7eb",
-                  }}
-                >
-                  Measurement
-                </th>
-                <th
-                  style={{
-                    padding: "16px",
-                    textAlign: "right",
-                    color: "white",
-                    fontWeight: "600",
-                    fontSize: "14px",
-                    borderBottom: "2px solid #e5e7eb",
-                  }}
-                >
-                  Value (inches)
-                </th>
+        <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e5e7eb" }}>
+          <thead>
+            <tr style={{ backgroundColor: primaryColor }}>
+              <th style={{ padding: "16px", textAlign: "left", color: "white", fontWeight: "600" }}>Measurement</th>
+              <th style={{ padding: "16px", textAlign: "right", color: "white", fontWeight: "600" }}>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {measurements.map((m, i) => (
+              <tr key={m.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f9fafb" }}>
+                <td style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb" }}>{m.name}</td>
+                <td style={{ padding: "14px 16px", textAlign: "right", borderBottom: "1px solid #e5e7eb", fontWeight: "600" }}>{m.value} {m.unit}</td>
               </tr>
-            </thead>
-            <tbody>
-              {allMeasurements.map((measurement, index) => (
-                <tr
-                  key={index}
-                  style={{
-                    backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
-                  }}
-                >
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      borderBottom: "1px solid #e5e7eb",
-                      color: "#1f2937",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {measurement.label}
-                  </td>
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      textAlign: "right",
-                      borderBottom: "1px solid #e5e7eb",
-                      color: "#1f2937",
-                      fontSize: "16px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {measurement.value}"
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer */}
-        <div
-          style={{
-            borderTop: "2px solid #e5e7eb",
-            paddingTop: "24px",
-            textAlign: "center",
-            color: "#666",
-            fontSize: "12px",
-          }}
-        >
-          <p style={{ margin: "0 0 8px 0" }}>
-            Generated on {new Date().toLocaleDateString()}
-            {company.businessName && ` by ${company.businessName}`}
-          </p>
-          <p style={{ margin: 0, color: "#999" }}>
-            This is a computer-generated document. No signature required.
-          </p>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ borderTop: "2px solid #e5e7eb", paddingTop: "24px", textAlign: "center", color: "#666", fontSize: "12px", marginTop: "48px" }}>
+          <p style={{ margin: 0 }}>Generated on {new Date().toLocaleDateString()}{company.businessName && ` by ${company.businessName}`}</p>
         </div>
       </div>
     );
   };
 
-  // Handle PDF Download
   const handleDownloadPDF = async () => {
-    if (!measurements || !client) return;
-
+    if (!measurements.length || !client) return;
     setDownloadingPDF(true);
     try {
-      const companyData = brandData || {
-        businessName: "Your Business",
-        businessAddress: "Business Address",
-        businessPhone: "Phone Number",
-        businessEmail: "email@business.com",
-        logoUrl: null,
-        primaryColor: "#14b8a6",
-        secondaryColor: "#0d9488",
-      };
-
-      // Create temporary container
+      const company = brandData || { businessName: "Your Business", primaryColor: "#14b8a6" };
       const tempContainer = document.createElement("div");
       tempContainer.style.position = "absolute";
       tempContainer.style.left = "-9999px";
-      tempContainer.style.top = "0";
       document.body.appendChild(tempContainer);
-
       try {
         const root = createRoot(tempContainer);
-
         await new Promise((resolve) => {
-          root.render(
-            <MeasurementPDFComponent
-              client={client}
-              measurements={measurements}
-              company={companyData}
-            />
-          );
+          root.render(<MeasurementPDFComponent client={client} measurements={measurements} company={company} />);
           setTimeout(resolve, 500);
         });
-
-        const measurementElement = tempContainer.firstChild;
-        const canvas = await html2canvas(measurementElement, {
-          scale: 2,
-          backgroundColor: "#ffffff",
-          useCORS: true,
-          logging: false,
-          allowTaint: true,
-        });
-
-        const dataCanvas = canvas.toDataURL("image/png");
-
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "px",
-          format: "a4",
-        });
-
-        const imgProperties = pdf.getImageProperties(dataCanvas);
+        const canvas = await html2canvas(tempContainer.firstChild, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false });
+        const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: "a4" });
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight =
-          (imgProperties.height * pdfWidth) / imgProperties.width;
-
-        pdf.addImage(dataCanvas, "PNG", 0, 0, pdfWidth, pdfHeight);
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pdfWidth, pdfHeight);
         pdf.save(`measurements-${client.name.replace(/\s+/g, "-")}.pdf`);
-
         root.unmount();
       } finally {
         document.body.removeChild(tempContainer);
       }
-    } catch (error) {
-      console.error("Error generating PDF:", error);
+    } catch (err) {
+      console.error("Error generating PDF:", err);
       alert("Failed to export PDF. Please try again.");
     } finally {
       setDownloadingPDF(false);
@@ -545,139 +223,76 @@ const ClientMeasurements = ({ client }) => {
         <div className="client_measurements_header">
           <div className="client_measurements_title_section">
             <h3 className="client_measurements_title">Body Measurements</h3>
-            <p className="client_measurements_subtitle">
-              Loading measurements...
-            </p>
+            <p className="client_measurements_subtitle">Loading measurements...</p>
           </div>
         </div>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-        </div>
+        <div className="loading-container"><div className="loading-spinner"></div></div>
       </div>
     );
-  }
-
-  if (!measurements) {
-    return (
-      <div className="client_details_measurements">
-        <div className="client_measurements_header">
-          <div className="client_measurements_title_section">
-            <h3 className="client_measurements_title">Body Measurements</h3>
-            <p className="client_measurements_subtitle">
-              No measurements recorded
-            </p>
-          </div>
-          <button
-            className="client_measurements_add_btn"
-            onClick={handleAddMeasurement}
-          >
-            <Plus size={20} />
-          </button>
-        </div>
-
-        <div className="no-measurements">
-          <p>No measurements recorded for this client</p>
-          <button
-            className="add-measurement-btn"
-            onClick={handleAddMeasurement}
-          >
-            Add First Measurement
-          </button>
-        </div>
-
-        <AddMeasurementModal
-          isOpen={showAddModal}
-          onClose={handleCloseModal}
-          onSave={handleSaveMeasurement}
-        />
-      </div>
-    );
-  }
-
-  // Get all measurements from the database (excluding system fields)
-  const systemFields = ["userEmail", "updatedAt", "customMeasurements"];
-
-  const allMeasurements = Object.entries(measurements || {})
-    .filter(
-      ([key, value]) =>
-        !systemFields.includes(key) &&
-        value &&
-        typeof value === "string" &&
-        value.trim() !== ""
-    )
-    .map(([key, value]) => ({
-      key,
-      label: formatMeasurementLabel(key),
-      value: value,
-      unit: '"',
-    }));
-
-  // Helper function to format measurement keys into readable labels
-  function formatMeasurementLabel(key) {
-    // Convert camelCase or lowercase to Title Case with spaces
-    return key
-      .replace(/([A-Z])/g, " $1") // Add space before capital letters
-      .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
-      .trim();
   }
 
   return (
     <div className="client_details_measurements">
-      {/* Measurements Header */}
+      {/* Header */}
       <div className="client_measurements_header">
         <div className="client_measurements_title_section">
           <h3 className="client_measurements_title">Body Measurements</h3>
           <p className="client_measurements_subtitle">
-            {measurements.updatedAt
-              ? `Last updated: ${formatDate(measurements.updatedAt)}`
-              : "Standard measurements in inches"}
+            {measurements.length > 0
+              ? `${measurements.length} measurement${measurements.length > 1 ? "s" : ""} recorded`
+              : "No measurements recorded"}
           </p>
         </div>
-        <button
-          className="client_measurements_add_btn"
-          onClick={handleAddMeasurement}
-        >
-          <Plus size={20} />
+        <button className="client_measurements_add_btn" onClick={() => setShowAddModal(true)}>
+          <Plus size={14} />
         </button>
       </div>
 
-      {/* All Measurements Grid */}
-      {allMeasurements.length > 0 ? (
-        <>
-          <div className="client_measurements_grid">
-            {allMeasurements.map((measurement, index) => (
-              <div key={index} className="client_measurement_item">
-                <div className="client_measurement_content">
-                  <div className="client_measurement_label">
-                    {measurement.label}
-                  </div>
-                  <div className="client_measurement_value">
-                    {measurement.value}
-                    <span className="client_measurement_unit">
-                      {measurement.unit}
-                    </span>
-                  </div>
+      {/* Measurements Grid */}
+      {measurements.length > 0 ? (
+        <div className="client_measurements_grid">
+          {measurements.map((m) => (
+            <div key={m.id} className="client_measurement_item">
+              <div className="client_measurement_content">
+                <div className="client_measurement_label">{m.name}</div>
+                <div className="client_measurement_value">
+                  {m.value}
+                  <span className="client_measurement_unit"> {m.unit}</span>
                 </div>
-                <button className="client_measurement_edit_btn">
-                  <Ruler size={16} className="client_measurement_ruler_icon" />
+              </div>
+              <div className="client_measurement_actions">
+                <button
+                  className="client_measurement_edit_btn"
+                  title="Edit"
+                  onClick={() => setEditingMeasurement(m)}
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  className="client_measurement_delete_btn"
+                  title="Delete"
+                  onClick={() => handleDelete(m.id)}
+                >
+                  <Trash2 size={14} />
                 </button>
               </div>
-            ))}
-          </div>
-        </>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="no-measurements">
-          <p>No measurements recorded yet</p>
+          <p>No measurements recorded for this client</p>
+          <button className="add-measurement-btn" onClick={() => setShowAddModal(true)}>
+            Add First Measurement
+          </button>
         </div>
       )}
 
       {/* Measurement Guide */}
       <div className="client_measurements_guide_section">
         <div className="client_measurements_guide_header">
-          <Info size={20} className="client_measurements_info_icon" />
-          <span className="client_measurements_guide_title">
-            Measurement Guide
-          </span>
+          <Info size={12} className="client_measurements_info_icon" />
+          <span className="client_measurements_guide_title">Measurement Guide</span>
         </div>
         <ul className="client_measurements_guide_list">
           <li>Always take measurements with the client standing straight.</li>
@@ -687,23 +302,30 @@ const ClientMeasurements = ({ client }) => {
       </div>
 
       {/* Export Button */}
-      {allMeasurements.length > 0 && (
-        <button
-          className="client_measurements_export_btn"
-          onClick={handleDownloadPDF}
-          disabled={downloadingPDF}
-        >
-          <Download size={20} />
+      {measurements.length > 0 && (
+        <button className="client_measurements_export_btn" onClick={handleDownloadPDF} disabled={downloadingPDF}>
+          <Download size={14} />
           {downloadingPDF ? "Generating PDF..." : "Download Measurements PDF"}
         </button>
       )}
 
-      {/* Add Measurement Modal */}
+      {/* Add Modal */}
       <AddMeasurementModal
         isOpen={showAddModal}
-        onClose={handleCloseModal}
-        onSave={handleSaveMeasurement}
+        onClose={() => setShowAddModal(false)}
+        onSave={handleSaveMeasurements}
       />
+
+      {/* Edit Modal */}
+      {editingMeasurement && (
+        <AddMeasurementModal
+          isOpen={true}
+          editMode={true}
+          initialData={editingMeasurement}
+          onClose={() => setEditingMeasurement(null)}
+          onSave={handleEditSave}
+        />
+      )}
     </div>
   );
 };

@@ -10,8 +10,6 @@ import {
   Building,
   MessageSquare,
 } from "lucide-react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import toast from "react-hot-toast";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input";
@@ -60,15 +58,17 @@ const ScheduleDemo = () => {
         return;
       }
 
-      // Save to Firebase
-      const demoRequestData = {
-        ...formData,
-        status: "pending",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await addDoc(collection(db, "demo_requests"), demoRequestData);
+      // Save to backend
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/demo-request/create`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to submit");
 
       toast.success(
         "Demo Scheduled Successfully! We'll contact you soon to confirm your demo appointment."
@@ -342,9 +342,6 @@ const ScheduleDemo = () => {
               Back to Home
             </button>
           </div>
-          <p className="schedule-demo-powered-by">
-            Product of <span style={{ color: "#c9a227", fontWeight: 600 }}>TALLY</span> AFRICA LTD
-          </p>
         </div>
       </div>
     </div>

@@ -591,3 +591,18 @@
     min-height: -webkit-fill-available;
   }
 }
+
+/* Google-only account error banner */
+.new-login-google-only-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff8f0;
+  border: 1.5px solid #e67e22;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  color: #7d4e0f;
+  font-size: 14px;
+  line-height: 1.5;
+}

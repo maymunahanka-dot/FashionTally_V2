@@ -7,18 +7,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import AddInventoryPanel from "../../../../pannel_pages/AddInventoryPanel";
 import ManageCategoriesPanel from "../../../../pannel_pages/ManageCategoriesPanel";
@@ -43,6 +32,42 @@ const Inventory = () => {
 
   const { user } = useContext(NewAuthContext);
 
+  const fetchInventory = async () => {
+    if (!user?.email) { setLoading(false); setInventory([]); return; }
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/inventory/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setInventory(data.data.map((item) => ({
+          ...item,
+          id: item.id || item._id,
+          createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+          updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          stockValue: (item.price || 0) * (item.quantity || 0),
+          code: item.sku,
+          pricePerUnit: item.price,
+          supplier: item.supplierName,
+          minStock: item.reorderPoint,
+          icon: getCategoryIcon(item.category),
+        })));
+      }
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch inventory from backend
+  useEffect(() => {
+    fetchInventory();
+  }, [user?.email]);
+
   const categories = [
     { name: "All", icon: "💰", color: "#16988d" },
     { name: "Fabric", icon: "🧵", color: "#3b82f6" },
@@ -53,80 +78,6 @@ const Inventory = () => {
     { name: "Patterns", icon: "📋", color: "#64748b" },
     { name: "Trim", icon: "🎀", color: "#f59e0b" },
   ];
-
-  // Fetch inventory from Firebase with real-time updates
-  useEffect(() => {
-    if (!db || !user?.email) {
-      setLoading(false);
-      setInventory([]);
-      return;
-    }
-
-    setLoading(true);
-
-    // Get effective email (main admin's email for team members)
-    const effectiveEmail = getEffectiveUserEmail(user);
-
-    // Set up the query to filter by effective user's email
-    const inventoryQuery = query(
-      collection(db, "fashiontally_inventory"),
-      where("userEmail", "==", effectiveEmail),
-      orderBy("createdAt", "desc")
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      inventoryQuery,
-      (snapshot) => {
-        const inventoryData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name,
-            sku: data.sku,
-            category: data.category,
-            subcategory: data.subcategory || "",
-            supplierName: data.supplierName,
-            quantity: data.quantity,
-            unit: data.unit,
-            price: data.price,
-            reorderPoint: data.reorderPoint,
-            status: data.status,
-            color: data.color || "",
-            description: data.description || "",
-            createdAt: data.createdAt?.toDate
-              ? data.createdAt.toDate()
-              : data.createdAt
-              ? new Date(data.createdAt)
-              : new Date(),
-            updatedAt: data.updatedAt?.toDate
-              ? data.updatedAt.toDate()
-              : data.updatedAt
-              ? new Date(data.updatedAt)
-              : new Date(),
-            // Calculate stock value
-            stockValue: data.price * data.quantity,
-            // Map to legacy fields for compatibility
-            code: data.sku,
-            pricePerUnit: data.price,
-            supplier: data.supplierName,
-            minStock: data.reorderPoint,
-            icon: getCategoryIcon(data.category),
-          };
-        });
-
-        setInventory(inventoryData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching inventory:", error);
-        setLoading(false);
-      }
-    );
-
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
-  }, [user?.email]);
 
   const getCategoryIcon = (category) => {
     const categoryMap = {
@@ -177,8 +128,7 @@ const Inventory = () => {
   });
 
   const formatCurrency = (amount) => {
-    const num = parseFloat(amount);
-    return `₦${isNaN(num) ? "0" : num.toLocaleString()}`;
+    return `₦${amount.toLocaleString()}`;
   };
 
   const handleAddInventoryClick = () => {
@@ -200,15 +150,20 @@ const Inventory = () => {
   };
 
   const handleDeleteItem = async (itemId) => {
-    if (!db || !user?.email) {
-      console.error("Database not available or user not authenticated");
-      return;
-    }
-
+    if (!user?.email) return;
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
-        await deleteDoc(doc(db, "fashiontally_inventory", itemId));
-        console.log("Item deleted successfully");
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/inventory/delete/${itemId}`,
+          { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          fetchInventory();
+        } else {
+          alert("Failed to delete item. Please try again.");
+        }
       } catch (error) {
         console.error("Error deleting item:", error);
         alert("Failed to delete item. Please try again.");
@@ -653,6 +608,7 @@ const Inventory = () => {
           onClose={handleCloseAddInventory}
           selectedItem={selectedItem}
           isEditMode={isEditMode}
+          onSuccess={fetchInventory}
         />
       </SlideInMenu>
 

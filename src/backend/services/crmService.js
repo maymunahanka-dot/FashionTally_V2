@@ -18,139 +18,112 @@ const designsCollection = collection(db, "fashiontally_designs");
 const appointmentsCollection = collection(db, "fashiontally_appointments");
 
 /**
- * Get all feedback for the current user
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of feedback objects
+ * Get all feedback for the current user — via backend
  */
 export const getFeedback = async (userEmail) => {
   try {
-    if (!userEmail) {
-      console.warn("No user email provided to getFeedback");
-      return [];
-    }
-
-    const q = query(feedbackCollection, where("tailorId", "==", userEmail));
-
-    const snapshot = await getDocs(q);
-    const feedbackData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    // Sort by createdAt in JavaScript instead of Firestore
-    feedbackData.sort((a, b) => {
-      const aTime = a.createdAt?.seconds || 0;
-      const bTime = b.createdAt?.seconds || 0;
-      return bTime - aTime; // Descending order (newest first)
-    });
-
-    return feedbackData;
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/feedback/list`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("Error fetching feedback:", error);
+    console.error('Error fetching feedback:', error);
     return [];
   }
 };
 
 /**
- * Add new feedback
- * @param {Object} feedbackData - Feedback data object
- * @param {string} userEmail - Current user's email
- * @returns {Promise<string>} Document ID of created feedback
+ * Add new feedback — via backend
  */
 export const addFeedback = async (feedbackData, userEmail) => {
   try {
-    if (!userEmail) {
-      throw new Error("User email is required");
-    }
-
-    const feedbackWithMetadata = {
-      ...feedbackData,
-      tailorId: userEmail,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-
-    const docRef = await addDoc(feedbackCollection, feedbackWithMetadata);
-    console.log("Feedback added with ID:", docRef.id);
-    return docRef.id;
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/feedback/create`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(feedbackData),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    return data.data.id;
   } catch (error) {
-    console.error("Error adding feedback:", error);
+    console.error('Error adding feedback:', error);
     throw error;
   }
 };
+
 /**
- * Reply to feedback
- * @param {string} feedbackId - ID of the feedback to reply to
- * @param {string} reply - Reply text
- * @returns {Promise<void>}
+ * Reply to feedback — via backend
  */
 export const replyToFeedback = async (feedbackId, reply) => {
   try {
-    const feedbackRef = doc(db, "feedback", feedbackId);
-    await updateDoc(feedbackRef, {
-      reply,
-      repliedAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-    console.log("Reply added to feedback:", feedbackId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/feedback/reply/${feedbackId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reply }),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("Error replying to feedback:", error);
+    console.error('Error replying to feedback:', error);
     throw error;
   }
 };
 
 /**
- * Update feedback reply
- * @param {string} feedbackId - ID of the feedback to update
- * @param {string} reply - Updated reply text
- * @returns {Promise<void>}
+ * Update feedback reply — via backend
  */
 export const updateFeedbackReply = async (feedbackId, reply) => {
-  try {
-    const feedbackRef = doc(db, "feedback", feedbackId);
-    await updateDoc(feedbackRef, {
-      reply,
-      updatedAt: Timestamp.now(),
-    });
-    console.log("Feedback reply updated:", feedbackId);
-  } catch (error) {
-    console.error("Error updating feedback reply:", error);
-    throw error;
-  }
+  return replyToFeedback(feedbackId, reply);
 };
 
 /**
- * Delete feedback
- * @param {string} feedbackId - ID of the feedback to delete
- * @returns {Promise<void>}
+ * Delete feedback — via backend
  */
 export const deleteFeedback = async (feedbackId) => {
   try {
-    const feedbackRef = doc(db, "feedback", feedbackId);
-    await deleteDoc(feedbackRef);
-    console.log("Feedback deleted:", feedbackId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/feedback/delete/${feedbackId}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("Error deleting feedback:", error);
+    console.error('Error deleting feedback:', error);
     throw error;
   }
 };
 
 /**
- * Update feedback
- * @param {string} feedbackId - ID of the feedback to update
- * @param {Object} updateData - Data to update
- * @returns {Promise<void>}
+ * Update feedback — via backend
  */
 export const updateFeedback = async (feedbackId, updateData) => {
   try {
-    const feedbackRef = doc(db, "feedback", feedbackId);
-    await updateDoc(feedbackRef, {
-      ...updateData,
-      updatedAt: Timestamp.now(),
-    });
-    console.log("Feedback updated:", feedbackId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/feedback/edit/${feedbackId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updateData),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("Error updating feedback:", error);
+    console.error('Error updating feedback:', error);
     throw error;
   }
 };
@@ -161,120 +134,49 @@ export const updateFeedback = async (feedbackId, updateData) => {
  * @returns {Promise<Array>} Array of client objects
  */
 export const getClients = async (userEmail) => {
-  console.log("👥 getClients called with userEmail:", userEmail);
-
   try {
-    if (!userEmail) {
-      console.warn("❌ No user email provided to getClients");
-      return [];
-    }
-
-    const q = query(
-      collection(db, "fashiontally_clients"),
-      where("userEmail", "==", userEmail)
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/client/list`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    console.log("👥 Executing clients query...");
-    const snapshot = await getDocs(q);
-    const clientsData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    console.log("✅ Clients fetched:", clientsData.length, clientsData);
-    return clientsData;
+    const data = await res.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("❌ Error fetching clients:", error);
+    console.error('❌ Error fetching clients:', error);
     return [];
   }
 };
 
-/**
- * Get orders for the current user
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of order objects
- */
 export const getOrders = async (userEmail) => {
-  console.log("📦 getOrders called with userEmail:", userEmail);
-
   try {
-    if (!userEmail) {
-      console.warn("❌ No user email provided to getOrders");
-      return [];
-    }
-
-    // Orders are stored in fashiontally_designs collection
-    const q = query(
-      collection(db, "fashiontally_designs"),
-      where("userEmail", "==", userEmail)
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/order/list`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    const snapshot = await getDocs(q);
-    const allDocs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-    // Include orders (type === "order") and legacy records with no type
-    const ordersData = allDocs.filter((d) => !d.type || d.type === "order");
-
-    console.log("✅ Orders fetched:", ordersData.length);
-    return ordersData;
+    const data = await res.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("❌ Error fetching orders:", error);
+    console.error('❌ Error fetching orders:', error);
     return [];
   }
 };
 
-/**
- * Get invoices for the current user
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of invoice objects
- */
 export const getInvoices = async (userEmail) => {
-  console.log("🧾 getInvoices called with userEmail:", userEmail);
-
   try {
-    if (!userEmail) {
-      console.warn("❌ No user email provided to getInvoices");
-      return [];
-    }
-
-    const q = query(
-      collection(db, "fashiontally_invoices"),
-      where("userEmail", "==", userEmail)
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/invoice/list`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    console.log("🧾 Executing invoices query...");
-    const snapshot = await getDocs(q);
-    const invoicesData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    console.log(
-      "invoiceeeeeeeeeeeeeeee 💰 Raw invoices fetched:",
-      invoicesData.length
-    );
-
-    // Log each invoice with detailed info
-    invoicesData.forEach((invoice, index) => {
-      console.log(`invoiceeeeeeeeeeeeeeee 💰 Invoice ${index + 1}:`, {
-        id: invoice.id,
-        totalAmount: invoice.totalAmount,
-        total: invoice.total,
-        amount: invoice.amount,
-        grandTotal: invoice.grandTotal,
-        finalAmount: invoice.finalAmount,
-        subtotal: invoice.subtotal,
-        createdAt: invoice.createdAt,
-        userEmail: invoice.userEmail,
-        allFields: Object.keys(invoice),
-        fullData: invoice,
-      });
-    });
-
-    console.log("✅ Invoices fetched:", invoicesData.length, invoicesData);
-    return invoicesData;
+    const data = await res.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("❌ Error fetching invoices:", error);
+    console.error('❌ Error fetching invoices:', error);
     return [];
   }
 };
@@ -322,98 +224,83 @@ export const calculateFeedbackStats = (feedbackArray) => {
 // ============ LOYALTY MEMBERS FUNCTIONS ============
 
 /**
- * Get all loyalty members for the current user
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of loyalty member objects
+ * Get all loyalty members for the current user — via backend
  */
 export const getLoyaltyMembers = async (userEmail) => {
   try {
-    if (!userEmail) {
-      console.warn("No user email provided to getLoyaltyMembers");
-      return [];
-    }
-
-    const q = query(
-      loyaltyMembersCollection,
-      where("tailorId", "==", userEmail)
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/loyalty-member/list`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    const snapshot = await getDocs(q);
-    const membersData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    // Sort by points in JavaScript (descending order)
-    membersData.sort((a, b) => (b.points || 0) - (a.points || 0));
-
-    return membersData;
+    const data = await res.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("Error fetching loyalty members:", error);
+    console.error('Error fetching loyalty members:', error);
     return [];
   }
 };
 
 /**
- * Add new loyalty member
- * @param {Object} memberData - Member data object
- * @param {string} userEmail - Current user's email
- * @returns {Promise<string>} Document ID of created member
+ * Add new loyalty member — via backend
  */
 export const addLoyaltyMember = async (memberData, userEmail) => {
   try {
-    if (!userEmail) {
-      throw new Error("User email is required");
-    }
-
-    const memberWithMetadata = {
-      ...memberData,
-      tailorId: userEmail,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-
-    const docRef = await addDoc(loyaltyMembersCollection, memberWithMetadata);
-    console.log("Loyalty member added with ID:", docRef.id);
-    return docRef.id;
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/loyalty-member/create`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(memberData),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    return data.data.id;
   } catch (error) {
-    console.error("Error adding loyalty member:", error);
+    console.error('Error adding loyalty member:', error);
     throw error;
   }
 };
 
 /**
- * Update loyalty member
- * @param {string} memberId - ID of the member to update
- * @param {Object} updateData - Data to update
- * @returns {Promise<void>}
+ * Update loyalty member — via backend
  */
 export const updateLoyaltyMember = async (memberId, updateData) => {
   try {
-    const memberRef = doc(db, "loyaltyMembers", memberId);
-    await updateDoc(memberRef, {
-      ...updateData,
-      updatedAt: Timestamp.now(),
-    });
-    console.log("Loyalty member updated:", memberId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/loyalty-member/edit/${memberId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updateData),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("Error updating loyalty member:", error);
+    console.error('Error updating loyalty member:', error);
     throw error;
   }
 };
 
 /**
- * Delete loyalty member
- * @param {string} memberId - ID of the member to delete
- * @returns {Promise<void>}
+ * Delete loyalty member — via backend
  */
 export const deleteLoyaltyMember = async (memberId) => {
   try {
-    const memberRef = doc(db, "loyaltyMembers", memberId);
-    await deleteDoc(memberRef);
-    console.log("Loyalty member deleted:", memberId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/loyalty-member/delete/${memberId}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("Error deleting loyalty member:", error);
+    console.error('Error deleting loyalty member:', error);
     throw error;
   }
 };
@@ -479,185 +366,97 @@ export const calculateLoyaltyStats = (membersArray) => {
 // ============ DESIGNS FUNCTIONS ============
 
 /**
- * Get all designs for the current user
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of design objects
+ * Get all designs for the current user — via backend
  */
 export const getDesigns = async (userEmail) => {
   try {
-    if (!userEmail) {
-      console.warn("No user email provided to getDesigns");
-      return [];
-    }
-
-    console.log("🎨 Fetching designs for user:", userEmail);
-
-    const q = query(designsCollection, where("userEmail", "==", userEmail));
-
-    const snapshot = await getDocs(q);
-    const allDocs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-    // Include designs (type === "design") and legacy records with no type
-    const designsData = allDocs.filter((d) => !d.type || d.type === "design");
-
-    // Sort by createdAt in JavaScript (descending order)
-    designsData.sort((a, b) => {
-      const aTime = a.createdAt?.seconds || 0;
-      const bTime = b.createdAt?.seconds || 0;
-      return bTime - aTime; // Newest first
-    });
-
-    console.log(`✅ Fetched ${designsData.length} designs`);
-    console.log(`✅ Fetchedddd `, designsData);
-
-    // Log each design with client information
-    designsData.forEach((design, index) => {
-      console.log(`\n📋 Design ${index + 1}:`, {
-        id: design.id,
-        name: design.name,
-        category: design.category,
-        price: design.price,
-        clientId: design.clientId || "No client linked",
-        clientName: design.clientName || "No client name",
-        hasImage:
-          !!design.imageUrl || (design.images && design.images.length > 0),
-        createdAt: design.createdAt?.toDate?.() || "N/A",
-      });
-    });
-
-    return designsData;
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/design/list?type=design`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    return data.success ? data.data : [];
   } catch (error) {
-    console.error("❌ Error fetching designs:", error);
+    console.error('❌ Error fetching designs:', error);
     return [];
   }
 };
 
 /**
- * Add new design
- * @param {Object} designData - Design data object
- * @param {string} userEmail - Current user's email
- * @returns {Promise<string>} Document ID of created design
+ * Add new design — via backend
  */
 export const addDesign = async (designData, userEmail) => {
   try {
-    if (!userEmail) {
-      throw new Error("User email is required");
-    }
-
-    const designWithMetadata = {
-      ...designData,
-      type: "design",
-      userEmail: userEmail,
-      tailorId: userEmail,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-
-    console.log("➕ Adding new design:", {
-      name: designWithMetadata.name,
-      category: designWithMetadata.category,
-      price: designWithMetadata.price,
-      clientId: designWithMetadata.clientId || "No client",
-      clientName: designWithMetadata.clientName || "No client name",
-      userEmail: designWithMetadata.userEmail,
-    });
-
-    const docRef = await addDoc(designsCollection, designWithMetadata);
-    console.log("✅ Design added successfully with ID:", docRef.id);
-
-    return docRef.id;
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/design/create`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(designData),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    return data.data.id;
   } catch (error) {
-    console.error("❌ Error adding design:", error);
+    console.error('❌ Error adding design:', error);
     throw error;
   }
 };
 
 /**
- * Update design
- * @param {string} designId - ID of the design to update
- * @param {Object} updateData - Data to update
- * @returns {Promise<void>}
+ * Update design — via backend
  */
 export const updateDesign = async (designId, updateData) => {
   try {
-    console.log("✏️ Updating design:", designId, {
-      name: updateData.name,
-      category: updateData.category,
-      price: updateData.price,
-      clientId: updateData.clientId || "No client",
-      clientName: updateData.clientName || "No client name",
-    });
-
-    const designRef = doc(db, "fashiontally_designs", designId);
-    await updateDoc(designRef, {
-      ...updateData,
-      updatedAt: Timestamp.now(),
-    });
-
-    console.log("✅ Design updated successfully:", designId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/design/edit/${designId}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updateData),
+      }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("❌ Error updating design:", error);
+    console.error('❌ Error updating design:', error);
     throw error;
   }
 };
 
 /**
- * Delete design
- * @param {string} designId - ID of the design to delete
- * @returns {Promise<void>}
+ * Delete design — via backend
  */
 export const deleteDesign = async (designId) => {
   try {
-    const designRef = doc(db, "fashiontally_designs", designId);
-    await deleteDoc(designRef);
-    console.log("Design deleted:", designId);
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/design/delete/${designId}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
   } catch (error) {
-    console.error("Error deleting design:", error);
+    console.error('❌ Error deleting design:', error);
     throw error;
   }
 };
 
 /**
- * Get designs for a specific client
- * @param {string} clientId - Client ID to filter designs
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of design objects for the client
+ * Get designs for a specific client — via backend
  */
 export const getDesignsByClientId = async (clientId, userEmail) => {
   try {
-    if (!clientId || !userEmail) {
-      console.warn("Client ID and user email are required");
-      return [];
-    }
-
-    console.log("🎨 Fetching designs for client:", clientId);
-
-    const q = query(
-      designsCollection,
-      where("userEmail", "==", userEmail),
-      where("clientId", "==", clientId)
-    );
-
-    const snapshot = await getDocs(q);
-    const designsData = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    // Sort by createdAt (newest first)
-    designsData.sort((a, b) => {
-      const aTime = a.createdAt?.seconds || 0;
-      const bTime = b.createdAt?.seconds || 0;
-      return bTime - aTime;
-    });
-
-    console.log(
-      `✅ Found ${designsData.length} designs for client ${clientId}`
-    );
-
-    return designsData;
+    if (!clientId) return [];
+    const all = await getDesigns(userEmail);
+    return all.filter(d => d.clientId === clientId);
   } catch (error) {
-    console.error("❌ Error fetching designs by client:", error);
+    console.error('❌ Error fetching designs by client:', error);
     return [];
   }
 };
@@ -665,54 +464,20 @@ export const getDesignsByClientId = async (clientId, userEmail) => {
 // ============ APPOINTMENTS FUNCTIONS ============
 
 /**
- * Get today's appointments for the current user
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of today's appointment objects
+ * Get today's appointments for the current user — via backend
  */
 export const getTodaysAppointments = async (userEmail) => {
   try {
-    if (!userEmail) {
-      console.warn("No user email provided to getTodaysAppointments");
-      return [];
-    }
-
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date();
-    const todayString = today.toISOString().split("T")[0];
-
-    const q = query(
-      appointmentsCollection,
-      where("userEmail", "==", userEmail),
-      where("date", "==", todayString)
+    if (!userEmail) return [];
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/dashboard/stats`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    const snapshot = await getDocs(q);
-    const appointmentsData = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: data.purpose || data.appointmentType || "Appointment",
-        clientName: data.clientName || "Unknown Client",
-        date: data.date || "",
-        time: data.time || "",
-        location: data.location || "Shop",
-        status: data.status || "Scheduled",
-        duration: data.duration || "1hr",
-        notes: data.notes || "",
-        ...data,
-      };
-    });
-
-    // Sort by time
-    appointmentsData.sort((a, b) => {
-      const timeA = convertTimeToMinutes(a.time);
-      const timeB = convertTimeToMinutes(b.time);
-      return timeA - timeB;
-    });
-
-    return appointmentsData;
+    const data = await res.json();
+    return data?.data?.todaysAppointments || [];
   } catch (error) {
-    console.error("Error fetching today's appointments:", error);
+    console.error('Error fetching today\'s appointments:', error);
     return [];
   }
 };
@@ -741,52 +506,21 @@ const convertTimeToMinutes = (timeString) => {
 // ============ DASHBOARD STATS FUNCTIONS ============
 
 /**
- * Get comprehensive dashboard statistics
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Object>} Dashboard statistics object
+ * Get comprehensive dashboard statistics — via backend
  */
 export const getDashboardStats = async (userEmail) => {
-  console.log("🔍 getDashboardStats called with userEmail:", userEmail);
-
   try {
-    if (!userEmail) {
-      console.warn("❌ No user email provided to getDashboardStats");
-      return getDefaultStats();
-    }
-
-    console.log("📊 Fetching dashboard data in parallel...");
-
-    // Get all data in parallel
-    const [clients, orders, invoices, inventory, appointments] =
-      await Promise.all([
-        getClients(userEmail),
-        getOrders(userEmail),
-        getInvoices(userEmail),
-        getInventory(userEmail),
-        getAppointments(userEmail),
-      ]);
-
-    console.log("📈 Raw data fetched:");
-    console.log("  - Clients:", clients.length, clients);
-    console.log("  - Orders:", orders.length, orders);
-    console.log("  - Invoices:", invoices.length, invoices);
-    console.log("  - Inventory:", inventory.length, inventory);
-    console.log("  - Appointments:", appointments.length, appointments);
-
-    // Calculate stats
-    const stats = await calculateDashboardMetrics(
-      clients,
-      orders,
-      invoices,
-      inventory,
-      appointments,
-      userEmail
+    if (!userEmail) return getDefaultStats();
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/dashboard/stats`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-
-    console.log("✅ Calculated dashboard stats:", stats);
-    return stats;
+    const data = await res.json();
+    if (!data.success) return getDefaultStats();
+    return data.data;
   } catch (error) {
-    console.error("❌ Error fetching dashboard stats:", error);
+    console.error('Error fetching dashboard stats:', error);
     return getDefaultStats();
   }
 };
@@ -1286,108 +1020,35 @@ const getDefaultStats = () => ({
 });
 
 /**
- * Get sales chart data for the current and previous year
- * @param {string} userEmail - Current user's email
- * @returns {Promise<Array>} Array of monthly sales data
+ * Get sales chart data — via backend
  */
 export const getSalesChartData = async (userEmail) => {
-  console.log("📊 getSalesChartData called with userEmail:", userEmail);
-
   try {
-    if (!userEmail) {
-      console.warn("❌ No user email provided to getSalesChartData");
-      return getDefaultChartData();
-    }
-
-    const invoices = await getInvoices(userEmail);
-    console.log(
-      "invoiceeeeeeeeeeeeeeee 💰 Chart data - invoices fetched:",
-      invoices.length
+    if (!userEmail) return getDefaultChartData();
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/dashboard/stats`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
+    const data = await res.json();
+    if (!data.success) return getDefaultChartData();
 
-    invoices.forEach((invoice, index) => {
-      const amount =
-        parseFloat(invoice.totalAmount) ||
-        parseFloat(invoice.total) ||
-        parseFloat(invoice.amount) ||
-        parseFloat(invoice.grandTotal) ||
-        parseFloat(invoice.finalAmount) ||
-        parseFloat(invoice.subtotal) ||
-        0;
-
-      console.log(`invoiceeeeeeeeeeeeeeee 💰 Chart Invoice ${index + 1}:`, {
-        id: invoice.id,
-        totalAmount: invoice.totalAmount,
-        total: invoice.total,
-        amount: invoice.amount,
-        grandTotal: invoice.grandTotal,
-        finalAmount: invoice.finalAmount,
-        subtotal: invoice.subtotal,
-        parsedAmount: amount,
-      });
-    });
-
+    // Backend returns last 12 months; map to { name, current, last } for SalesChart
     const currentYear = new Date().getFullYear();
-    const lastYear = currentYear - 1;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const chartMap = {};
+    months.forEach(m => { chartMap[m] = { name: m, current: 0, last: 0 }; });
 
-    console.log("📅 Chart years:", { currentYear, lastYear });
-
-    // Initialize monthly data
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const chartData = months.map((month) => ({
-      name: month,
-      current: 0,
-      last: 0,
-    }));
-
-    // Process invoices
-    invoices.forEach((invoice) => {
-      const invoiceDate = invoice.createdAt?.toDate
-        ? invoice.createdAt.toDate()
-        : new Date(invoice.createdAt);
-      const year = invoiceDate.getFullYear();
-      const month = invoiceDate.getMonth();
-
-      // Try different possible field names for the amount
-      const amount =
-        parseFloat(invoice.totalAmount) ||
-        parseFloat(invoice.total) ||
-        parseFloat(invoice.amount) ||
-        parseFloat(invoice.grandTotal) ||
-        parseFloat(invoice.finalAmount) ||
-        parseFloat(invoice.subtotal) ||
-        0;
-
-      console.log(
-        `📊 Processing invoice: ${invoice.id}, date: ${invoiceDate}, year: ${year}, month: ${month}, amount: ₦${amount}`
-      );
-
-      if (year === currentYear) {
-        chartData[month].current += amount;
-        console.log(`  ➡️ Added ₦${amount} to ${months[month]} ${currentYear}`);
-      } else if (year === lastYear) {
-        chartData[month].last += amount;
-        console.log(`  ➡️ Added ₦${amount} to ${months[month]} ${lastYear}`);
+    (data.data.salesChart || []).forEach(({ month, year, revenue }) => {
+      if (chartMap[month]) {
+        if (year === currentYear) chartMap[month].current = revenue;
+        else chartMap[month].last = revenue;
       }
     });
 
-    console.log("✅ Final chart data:", chartData);
-    return chartData;
+    return months.map(m => chartMap[m]);
   } catch (error) {
-    console.error("❌ Error fetching sales chart data:", error);
+    console.error('Error fetching sales chart data:', error);
     return getDefaultChartData();
   }
 };

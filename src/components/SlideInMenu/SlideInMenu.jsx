@@ -41,7 +41,7 @@ const SlideInMenu = ({
       <div className="slide-in-menu-overlay" onClick={onClose} />
 
       {/* Menu */}
-      <div className={`slide-in-menu-content ${position}`} style={{ width }}>
+      <div className={`slide-in-menu-content ${position}`} style={{ width: 500 }}>
         {/* Close button */}
 
         {/* Children content */}

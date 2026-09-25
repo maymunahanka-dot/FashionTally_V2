@@ -1,22 +1,11 @@
 import { useState, useEffect, useContext } from "react";
 import { X } from "lucide-react";
-import {
-  addDoc,
-  collection,
-  doc,
-  updateDoc,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Input from "../../components/Input/Input";
 import Button from "../../components/button/Button";
 import "./AddInventoryPanel.css";
 
-const AddInventoryPanel = ({ onClose, selectedItem, isEditMode }) => {
+const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => {
   // Individual useState for each input field
   const [itemName, setItemName] = useState("");
   const [sku, setSku] = useState("");
@@ -149,123 +138,60 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
-
-    if (!user?.email) {
-      setErrors({ submit: "You must be logged in to manage inventory" });
-      return;
-    }
+    if (!user?.email) { setErrors({ submit: "You must be logged in to manage inventory" }); return; }
 
     setIsSubmitting(true);
     setErrors({});
 
     try {
-      const quantityNum = parseFloat(quantity) || 0;
-      const priceNum = parseFloat(pricePerUnit) || 0;
-      const reorderPointNum = parseFloat(minStockAlert) || 0;
-
-      const inventoryData = {
+      const token = localStorage.getItem("authToken");
+      const payload = {
         name: itemName.trim(),
         sku: sku.trim(),
-        category: category,
+        category,
         subcategory: subcategory.trim() || "",
         supplierName: supplier.trim(),
-        quantity: quantityNum,
-        unit: unit,
-        price: priceNum,
-        reorderPoint: reorderPointNum,
+        quantity: parseFloat(quantity) || 0,
+        unit,
+        price: parseFloat(pricePerUnit) || 0,
+        reorderPoint: parseFloat(minStockAlert) || 0,
         status: calculateStatus(quantity, minStockAlert),
         color: color.trim() || "",
         description: description.trim() || "",
-        userEmail: getEffectiveUserEmail(user),
-        tailorId: "", // Keep for backward compatibility
-        updatedAt: new Date(),
       };
 
+      let res;
       if (isEditMode && selectedItem?.id) {
-        // Update existing item
-        await updateDoc(
-          doc(db, "fashiontally_inventory", selectedItem.id),
-          inventoryData
-        );
-        console.log("Inventory item updated successfully");
-
-        // Update the related finance transaction if it exists and user wants to update
-        if (updateFinanceTransaction) {
-          try {
-            const transactionQuery = query(
-              collection(db, "fashiontally_transactions"),
-              where("userEmail", "==", getEffectiveUserEmail(user)),
-              where("reference", "==", `INV-${selectedItem.sku || selectedItem.code}`),
-              where("type", "==", "Expense")
-            );
-            const transactionSnapshot = await getDocs(transactionQuery);
-
-            if (!transactionSnapshot.empty) {
-              // Update the first matching transaction
-              const transactionDoc = transactionSnapshot.docs[0];
-              const totalCost = quantityNum * priceNum;
-              
-              await updateDoc(doc(db, "fashiontally_transactions", transactionDoc.id), {
-                description: `Inventory purchase: ${itemName.trim()}`,
-                amount: totalCost,
-                notes: `Auto-generated from inventory: ${itemName.trim()} (${quantityNum} ${unit} @ ₦${priceNum.toLocaleString()} each)`,
-                reference: `INV-${sku.trim()}`, // Update reference if SKU changed
-                updatedAt: new Date(),
-              });
-              console.log("Related finance transaction updated successfully");
-            }
-          } catch (error) {
-            console.error("Error updating related transaction:", error);
-            // Don't fail the whole operation if transaction update fails
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/inventory/edit/${selectedItem.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
           }
-        }
+        );
       } else {
-        // Add new item
-        inventoryData.createdAt = new Date();
-        await addDoc(collection(db, "fashiontally_inventory"), inventoryData);
-        console.log("Inventory item added successfully");
-
-        // Create finance transaction if recordAsExpense is true
-        if (recordAsExpense) {
-          const totalCost = quantityNum * priceNum;
-          const transactionData = {
-            description: `Inventory purchase: ${itemName.trim()}`,
-            amount: totalCost,
-            type: "Expense",
-            category: "Materials",
-            date: new Date(),
-            paymentMethod: "Cash",
-            reference: `INV-${sku.trim()}`,
-            notes: `Auto-generated from inventory: ${itemName.trim()} (${quantityNum} ${unit} @ ₦${priceNum.toLocaleString()} each)`,
-            userEmail: getEffectiveUserEmail(user),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-
-          await addDoc(
-            collection(db, "fashiontally_transactions"),
-            transactionData
-          );
-          console.log("Finance transaction created successfully");
-        }
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/inventory/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          }
+        );
       }
 
-      // Reset form and close
-      setItemName("");
-      setSku("");
-      setCategory("");
-      setSubcategory("");
-      setSupplier("");
-      setQuantity("");
-      setUnit("");
-      setPricePerUnit("");
-      setMinStockAlert("");
-      setColor("");
-      setDescription("");
-      setRecordAsExpense(false); // Default to false (commented out feature)
+      const data = await res.json();
+      if (!data.success) {
+        setErrors({ submit: data.error || "Failed to save inventory item" });
+        return;
+      }
 
+      setItemName(""); setSku(""); setCategory(""); setSubcategory("");
+      setSupplier(""); setQuantity(""); setUnit(""); setPricePerUnit("");
+      setMinStockAlert(""); setColor(""); setDescription("");
+      onSuccess && onSuccess();
       onClose();
     } catch (error) {
       console.error("Error saving inventory item:", error);

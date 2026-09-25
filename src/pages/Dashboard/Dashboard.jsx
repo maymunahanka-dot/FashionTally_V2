@@ -14,11 +14,16 @@ import Appointments from "./pages/apointments/Appointments";
 import Finances from "./pages/finance/Finances";
 import CRM from "./pages/crm/CRM";
 import Settings from "./pages/settings/Settings";
+import TicketingWidget from "../../components/TicketingWidget/TicketingWidget";
+import { useNotificationSetup } from "../../hooks/useNotificationSetup";
 import "./Dashboard.css";
 
 export const Dashboard = () => {
   const { user } = useNewAuth();
   const { isDark, actualTheme } = useTheme();
+
+  // Listen for foreground FCM messages and show native notifications
+  useNotificationSetup();
 
   // Use the new auth system
   const currentUser = user;
@@ -129,6 +134,7 @@ export const Dashboard = () => {
           />
         </Routes>
       </main>
+      <TicketingWidget />
     </div>
   );
 };

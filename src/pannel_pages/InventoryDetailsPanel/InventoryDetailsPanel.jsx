@@ -75,8 +75,7 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
   };
 
   const formatCurrency = (amount) => {
-    const num = parseFloat(amount);
-    return `₦${isNaN(num) ? "0" : num.toLocaleString()}`;
+    return `₦${amount.toLocaleString()}`;
   };
 
   const totalValue = selectedItem.price * selectedItem.quantity;

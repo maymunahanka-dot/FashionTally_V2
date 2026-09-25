@@ -1,103 +1,75 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, User, Users, Search } from "lucide-react";
+import { X, Upload, User, Users, Search, Phone, Mail } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
-import {
-  addDesign,
-  updateDesign,
-  getClients,
-} from "../../backend/services/crmService";
-import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 import { useTheme } from "../../contexts/ThemeContext";
 import Input from "../../components/Input/Input";
 import Button from "../../components/button/Button";
 import "./AddDesignPanel.css";
 
-const AddDesignPanel = ({
-  onClose,
-  onSubmit,
-  editMode = false,
-  initialData = null,
-}) => {
+const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = null }) => {
   const { user } = useNewAuth();
   const { isDark } = useTheme();
   const fileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
-    name: "",
-    category: "Uniforms",
-    customCategory: "",
-    description: "",
-    price: "",
-    imageUrl: "",
-    images: [],
-    clientId: "",
-    clientName: "",
+    name: "", category: "Uniforms", customCategory: "",
+    description: "", price: "", imageUrl: "", images: [],
+    clientId: "", clientName: "", clientPhone: "",
   });
 
   const [errors, setErrors] = useState({});
   const [dragOver, setDragOver] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [fillMode, setFillMode] = useState("manual"); // "manual" or "client"
+  const [fillMode, setFillMode] = useState("manual");
 
-  const categories = [
-    "Uniforms",
-    "Shirts",
-    "Children's Wear",
-    "Dresses",
-    "Tops",
-    "Bottoms",
-    "Others",
-  ];
+  const categories = ["Uniforms","Shirts","Children's Wear","Dresses","Tops","Bottoms","Others"];
 
-  // Load clients when component mounts
-  useEffect(() => {
-    if (user?.email) {
-      loadClients();
-    }
-  }, [user?.email]);
+  useEffect(() => { if (user?.email) loadClients(); }, [user?.email]);
 
   const loadClients = async () => {
     try {
       setClientsLoading(true);
-      const effectiveEmail = getEffectiveUserEmail(user);
-      const clientsData = await getClients(effectiveEmail);
-      setClients(clientsData);
-    } catch (error) {
-      console.error("Error loading clients:", error);
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/client/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setClients(data.success ? data.data : []);
+    } catch (e) {
+      console.error("Error loading clients:", e);
     } finally {
       setClientsLoading(false);
     }
   };
 
-  // Handle client selection
   const handleClientSelect = (client) => {
     setFormData((prev) => ({
       ...prev,
       clientId: client.id,
       clientName: client.name || "",
+      clientPhone: client.phone || "",
     }));
     setFillMode("client");
     setShowClientSelector(false);
     setClientSearchTerm("");
   };
 
-  // Filter clients based on search
-  const filteredClients = clients.filter((client) => {
-    const searchLower = clientSearchTerm.toLowerCase();
-    return (
-      client.name?.toLowerCase().includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower) ||
-      client.phone?.toLowerCase().includes(searchLower)
-    );
+  const handleManualEntry = () => {
+    setFillMode("manual");
+    setFormData((prev) => ({ ...prev, clientId: "", clientName: "", clientPhone: "" }));
+  };
+
+  const filteredClients = clients.filter((c) => {
+    const s = clientSearchTerm.toLowerCase();
+    return c.name?.toLowerCase().includes(s) || c.email?.toLowerCase().includes(s) || c.phone?.toLowerCase().includes(s);
   });
 
-  // Initialize form data when in edit mode
   useEffect(() => {
     if (editMode && initialData) {
       setFormData({
@@ -110,244 +82,97 @@ const AddDesignPanel = ({
         images: initialData.images || [],
         clientId: initialData.clientId || "",
         clientName: initialData.clientName || "",
+        clientPhone: initialData.clientPhone || "",
       });
-
-      if (
-        initialData.imageUrl ||
-        (initialData.images && initialData.images.length > 0)
-      ) {
+      if (initialData.imageUrl || initialData.images?.[0]) {
         setImagePreview(initialData.imageUrl || initialData.images[0]);
       }
-    } else if (
-      initialData &&
-      (initialData.clientId || initialData.clientName)
-    ) {
-      // Pre-fill client information when creating new design from client details
-      setFormData({
-        name: "",
-        category: "Uniforms",
-        customCategory: "",
-        description: "",
-        price: "",
-        imageUrl: "",
-        images: [],
+      if (initialData.clientId) setFillMode("client");
+    } else if (initialData?.clientId || initialData?.clientName) {
+      setFormData((prev) => ({
+        ...prev,
         clientId: initialData.clientId || "",
         clientName: initialData.clientName || "",
-      });
+        clientPhone: initialData.clientPhone || "",
+      }));
       setFillMode("client");
     } else {
-      // Reset form for new design
-      setFormData({
-        name: "",
-        category: "Uniforms",
-        customCategory: "",
-        description: "",
-        price: "",
-        imageUrl: "",
-        images: [],
-        clientId: "",
-        clientName: "",
-      });
+      setFormData({ name: "", category: "Uniforms", customCategory: "", description: "", price: "", imageUrl: "", images: [], clientId: "", clientName: "", clientPhone: "" });
     }
     setErrors({});
   }, [editMode, initialData]);
 
-  // Cleanup image preview URL on unmount
   useEffect(() => {
-    return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
+    return () => { if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview); };
   }, [imagePreview]);
 
   const handleInputChange = (field) => (e) => {
-    const value = e.target.type === "file" ? e.target.files[0] : e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
+  const handleImageUpload = (file) => {
+    if (file?.type.startsWith("image/")) {
+      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      setImagePreview(URL.createObjectURL(file));
+      setImageFile(file);
     }
-  };
-
-  const handleImageUpload = async (file) => {
-    if (file && file.type.startsWith("image/")) {
-      try {
-        setIsUploading(true);
-
-        // Clean up previous preview URL if it exists
-        if (imagePreview && imagePreview.startsWith("blob:")) {
-          URL.revokeObjectURL(imagePreview);
-        }
-
-        // Create temporary preview
-        const previewUrl = URL.createObjectURL(file);
-        setImagePreview(previewUrl);
-
-        // Upload to Cloudinary
-        const cloudinaryUrl = await uploadToCloudinary(file);
-
-        // Update form data with Cloudinary URL
-        setFormData((prev) => ({
-          ...prev,
-          images: [cloudinaryUrl],
-          imageUrl: cloudinaryUrl,
-        }));
-
-        // Update preview to Cloudinary URL
-        setImagePreview(cloudinaryUrl);
-
-        // Clean up blob URL
-        URL.revokeObjectURL(previewUrl);
-
-        // Clear any existing error
-        if (errors.images) {
-          setErrors((prev) => ({
-            ...prev,
-            images: "",
-          }));
-        }
-
-        console.log("Design image uploaded successfully:", cloudinaryUrl);
-      } catch (error) {
-        console.error("Error uploading image:", error);
-        alert(error.message || "Failed to upload image. Please try again.");
-
-        // Clean up on error
-        if (imagePreview && imagePreview.startsWith("blob:")) {
-          URL.revokeObjectURL(imagePreview);
-        }
-        setImagePreview(null);
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  };
-
-  const handleFileInputChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      handleImageUpload(file);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleImageUpload(file);
-    }
-  };
-
-  const handleImageAreaClick = () => {
-    fileInputRef.current?.click();
   };
 
   const removeImage = () => {
-    // Clean up the previous URL if it's a blob URL
-    if (imagePreview && imagePreview.startsWith("blob:")) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      images: [],
-      imageUrl: "",
-    }));
+    if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setFormData((prev) => ({ ...prev, images: [], imageUrl: "" }));
     setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    setImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Design name is required";
-    }
-
-    if (!formData.category) {
-      newErrors.category = "Category is required";
-    }
-
-    if (formData.category === "Others" && !formData.customCategory.trim()) {
-      newErrors.customCategory =
-        "Custom category is required when 'Others' is selected";
-    }
-
-    if (
-      formData.price &&
-      (isNaN(formData.price) || parseFloat(formData.price) < 0)
-    ) {
+    if (!formData.name.trim()) newErrors.name = "Design name is required";
+    if (!formData.category) newErrors.category = "Category is required";
+    if (formData.category === "Others" && !formData.customCategory.trim())
+      newErrors.customCategory = "Custom category is required";
+    if (formData.price && (isNaN(formData.price) || parseFloat(formData.price) < 0))
       newErrors.price = "Please enter a valid price";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    if (!user?.email) {
-      alert("User not authenticated");
-      return;
-    }
-
+    if (!validateForm() || !user?.email) return;
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-
-      // Prepare data for submission
-      const submitData = {
+      const token = localStorage.getItem("authToken");
+      const payload = {
         name: formData.name.trim(),
         category: formData.category,
-        customCategory:
-          formData.category === "Others" ? formData.customCategory.trim() : "",
+        customCategory: formData.category === "Others" ? formData.customCategory.trim() : "",
         description: formData.description.trim(),
         price: formData.price ? parseFloat(formData.price) : 0,
-        imageUrl: formData.imageUrl,
-        images: formData.images,
+        imageUrl: formData.imageUrl || "",
         clientId: formData.clientId || "",
         clientName: formData.clientName || "",
-        status: "Active", // Default status
+        clientPhone: formData.clientPhone || "",
+        status: "Active",
       };
+      const body = new FormData();
+      body.append("data", JSON.stringify(payload));
+      if (imageFile) body.append("image", imageFile);
 
-      const effectiveEmail = getEffectiveUserEmail(user);
+      const url = editMode && initialData?.id
+        ? `${import.meta.env.VITE_BACKEND_URL}/api/design/edit/${initialData.id}`
+        : `${import.meta.env.VITE_BACKEND_URL}/api/design/create`;
 
-      if (editMode && initialData?.id) {
-        await updateDesign(initialData.id, submitData);
-      } else {
-        await addDesign(submitData, effectiveEmail);
-      }
-
-      // Call onSubmit callback to refresh the designs list
-      if (onSubmit) {
-        await onSubmit();
-      }
-
+      const res = await fetch(url, {
+        method: editMode && initialData?.id ? "PUT" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      if (onSubmit) await onSubmit();
       handleClose();
     } catch (error) {
       console.error("Error saving design:", error);
@@ -358,24 +183,11 @@ const AddDesignPanel = ({
   };
 
   const handleClose = () => {
-    // Clean up blob URLs
-    if (imagePreview && imagePreview.startsWith("blob:")) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
-    setFormData({
-      name: "",
-      category: "Uniforms",
-      customCategory: "",
-      description: "",
-      price: "",
-      imageUrl: "",
-      images: [],
-      clientId: "",
-      clientName: "",
-    });
+    if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setFormData({ name: "", category: "Uniforms", customCategory: "", description: "", price: "", imageUrl: "", images: [], clientId: "", clientName: "", clientPhone: "" });
     setErrors({});
     setImagePreview(null);
+    setImageFile(null);
     setShowClientSelector(false);
     setClientSearchTerm("");
     setFillMode("manual");
@@ -383,70 +195,74 @@ const AddDesignPanel = ({
   };
 
   return (
-    <div
-      className={`adp_add-design-panell ${
-        isDark ? "dark-theme" : "light-theme"
-      }`}
-    >
+    <div className={`adp_panel ${isDark ? "dark-theme" : "light-theme"}`}>
       {/* Header */}
-      <div className="adp_add-design-header">
-        <button className="adp_close-btn" onClick={handleClose}>
+      <div className="adp_header">
+        <button className="adp_close_btn" onClick={handleClose} type="button">
           <X size={20} />
         </button>
-        <h2 className="adp_panel-title">
-          {editMode ? "Edit Design" : "Add New Design"}
-        </h2>
+        <h2 className="adp_title">{editMode ? "Edit Design" : "Add New Design"}</h2>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="adp_add-design-form">
-        {/* Client Information Section */}
-        <div className="adp_form-section">
-          <label className="adp_section-label">
-            Client Information (Optional)
-          </label>
+      <form onSubmit={handleSubmit} className="adp_form">
 
-          {/* Fill Mode Selection */}
-          <div className="adp_form-field">
-            <div className="fill_mode_options">
-              <button
-                type="button"
-                className={`fill_mode_btn ${
-                  fillMode === "manual" ? "active" : ""
-                }`}
-                onClick={() => setFillMode("manual")}
-              >
-                <User size={16} />
-                Manual Entry
-              </button>
-              <button
-                type="button"
-                className={`fill_mode_btn ${
-                  fillMode === "client" ? "active" : ""
-                }`}
-                onClick={() => setShowClientSelector(true)}
-              >
-                <Users size={16} />
-                Select from Clients
-              </button>
-            </div>
+        {/* Client Section */}
+        <div className="adp_section">
+          <p className="adp_section_label">Client (Optional)</p>
+          <div className="adp_mode_btns">
+            <button
+              type="button"
+              className={`adp_mode_btn ${fillMode === "manual" ? "active" : ""}`}
+              onClick={handleManualEntry}
+            >
+              <User size={15} /> Manual Entry
+            </button>
+            <button
+              type="button"
+              className={`adp_mode_btn ${fillMode === "client" ? "active" : ""}`}
+              onClick={() => setShowClientSelector(true)}
+            >
+              <Users size={15} /> Select Client
+            </button>
           </div>
 
-          {formData.clientName && (
-            <div className="adp_form-field">
+          {fillMode === "client" && formData.clientName ? (
+            <div className="adp_selected_client">
+              <div className="adp_selected_client_info">
+                <div className="adp_client_avatar">{formData.clientName.charAt(0).toUpperCase()}</div>
+                <div>
+                  <p className="adp_client_name">{formData.clientName}</p>
+                  {formData.clientPhone && <p className="adp_client_phone"><Phone size={12} /> {formData.clientPhone}</p>}
+                </div>
+              </div>
+              <button type="button" className="adp_clear_client" onClick={handleManualEntry}>
+                <X size={14} />
+              </button>
+            </div>
+          ) : fillMode === "manual" ? (
+            <div className="adp_row">
               <Input
                 type="text"
-                label="Selected Client"
+                label="Client Name"
+                placeholder="Enter client name"
                 value={formData.clientName}
-                disabled
+                onChange={handleInputChange("clientName")}
+                variant="rounded"
+              />
+              <Input
+                type="tel"
+                label="Client Phone"
+                placeholder="e.g., 08034567890"
+                value={formData.clientPhone}
+                onChange={handleInputChange("clientPhone")}
                 variant="rounded"
               />
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Design Name */}
-        <div className="adp_form-section">
+        <div className="adp_section">
           <Input
             type="text"
             label="Design Name *"
@@ -454,33 +270,25 @@ const AddDesignPanel = ({
             value={formData.name}
             onChange={handleInputChange("name")}
             error={errors.name}
-            required
             variant="rounded"
           />
         </div>
 
         {/* Category */}
-        <div className="adp_form-section">
-          <label className="adp_section-label">Category *</label>
-          <select
+        <div className="adp_section">
+          <Input
+            type="select"
+            label="Category *"
             value={formData.category}
             onChange={handleInputChange("category")}
-            className={`adp_select ${errors.category ? "error" : ""}`}
-          >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-          {errors.category && (
-            <span className="error_message">{errors.category}</span>
-          )}
+            error={errors.category}
+            variant="rounded"
+            options={categories.map((c) => ({ value: c, label: c }))}
+          />
         </div>
 
-        {/* Custom Category */}
         {formData.category === "Others" && (
-          <div className="adp_form-section">
+          <div className="adp_section">
             <Input
               type="text"
               label="Custom Category *"
@@ -488,14 +296,13 @@ const AddDesignPanel = ({
               value={formData.customCategory}
               onChange={handleInputChange("customCategory")}
               error={errors.customCategory}
-              required
               variant="rounded"
             />
           </div>
         )}
 
         {/* Price */}
-        <div className="adp_form-section">
+        <div className="adp_section">
           <Input
             type="number"
             label="Price (₦)"
@@ -505,12 +312,11 @@ const AddDesignPanel = ({
             error={errors.price}
             variant="rounded"
             min="0"
-            step="0.01"
           />
         </div>
 
         {/* Description */}
-        <div className="adp_form-section">
+        <div className="adp_section">
           <Input
             type="textarea"
             label="Description"
@@ -518,158 +324,90 @@ const AddDesignPanel = ({
             value={formData.description}
             onChange={handleInputChange("description")}
             variant="rounded"
-            rows={4}
+            rows={3}
           />
         </div>
 
-        {/* Style Images Section */}
-        <div className="adp_form-section">
-          <label className="adp_section-label">Style Images (Optional)</label>
+        {/* Image Upload */}
+        <div className="adp_section">
+          <p className="adp_section_label">Design Image (Optional)</p>
           <div
-            className={`adp_image-upload-area ${
-              dragOver ? "adp_drag-over" : ""
-            } ${imagePreview ? "adp_has-image" : ""} ${
-              isUploading ? "adp_uploading" : ""
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={handleImageAreaClick}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleImageAreaClick();
-              }
-            }}
+            className={`adp_upload_area ${dragOver ? "drag_over" : ""} ${imagePreview ? "has_image" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); handleImageUpload(e.dataTransfer.files[0]); }}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
             tabIndex={0}
             role="button"
             aria-label="Upload design image"
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileInputChange}
-              className="adp_hidden-file-input"
-            />
-
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} className="adp_file_input" />
             {imagePreview ? (
-              <div className="adp_image-preview-container">
-                <img
-                  src={imagePreview}
-                  alt="Design preview"
-                  className="adp_image-preview"
-                />
-                {isUploading ? (
-                  <div className="adp_upload-overlay">
-                    <div className="adp_upload-spinner"></div>
-                    <p>Uploading...</p>
-                  </div>
-                ) : (
-                  <div className="adp_image-overlay">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage();
-                      }}
-                      className="adp_remove-image-btn"
-                    >
-                      <X size={16} />
-                    </button>
-                    <p>Click to change image</p>
-                  </div>
-                )}
+              <div className="adp_preview_wrap">
+                <img src={imagePreview} alt="Preview" className="adp_preview_img" />
+                <div className="adp_preview_overlay">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="adp_remove_img_btn">
+                    <X size={16} />
+                  </button>
+                  <span>Click to change</span>
+                </div>
               </div>
             ) : (
-              <div className="adp_upload-placeholder">
-                <div className="adp_upload-icon-container">
-                  <Upload size={32} className="adp_upload-icon" />
-                </div>
-                <p className="adp_upload-text">Click to upload design images</p>
-                <p className="adp_upload-hint">PNG, JPG up to 10MB</p>
+              <div className="adp_upload_placeholder">
+                <div className="adp_upload_icon_wrap"><Upload size={28} /></div>
+                <p>Click or drag to upload</p>
+                <span>PNG, JPG up to 10MB</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="adp_form-actions">
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            fullWidth
-            className="adp_create-design-btn"
-            disabled={isSubmitting || isUploading}
-          >
-            {isUploading
-              ? "Uploading image..."
-              : isSubmitting
-              ? "Saving..."
-              : editMode
-              ? "Update Design"
-              : "Create Design"}
-          </Button>
-        </div>
+        <Button type="submit" variant="primary"  fullWidth disabled={isSubmitting} className="adp_submit_btn">
+          {isSubmitting ? "Saving..." : editMode ? "Update Design" : "Create Design"}
+        </Button>
       </form>
 
-      {/* Client Selector Slide-in Menu */}
+      {/* Client Selector Modal */}
       {showClientSelector && (
-        <div className="client_selector_overlay">
-          <div className="client_selector_panel">
-            <div className="client_selector_header">
+        <div className="adp_client_modal_overlay" onClick={() => setShowClientSelector(false)}>
+          <div className="adp_client_modal" onClick={(e) => e.stopPropagation()}>
+            <div className="adp_client_modal_header">
               <h3>Select Client</h3>
-              <button
-                className="client_selector_close"
-                onClick={() => {
-                  setShowClientSelector(false);
-                  setClientSearchTerm("");
-                }}
-              >
+              <button type="button" onClick={() => { setShowClientSelector(false); setClientSearchTerm(""); }}>
                 <X size={20} />
               </button>
             </div>
-
-            <div className="client_selector_search">
+            <div className="adp_client_modal_search">
               <Search size={16} />
               <input
                 type="text"
-                placeholder="Search clients by name, email, or phone"
+                placeholder="Search by name, email or phone"
                 value={clientSearchTerm}
                 onChange={(e) => setClientSearchTerm(e.target.value)}
+                autoFocus
               />
             </div>
-
-            <div className="client_selector_list">
+            <div className="adp_client_modal_list">
               {clientsLoading ? (
-                <div className="client_selector_loading">
-                  <p>Loading clients...</p>
-                </div>
+                <p className="adp_client_modal_empty">Loading clients...</p>
               ) : filteredClients.length > 0 ? (
                 filteredClients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="client_selector_item"
-                    onClick={() => handleClientSelect(client)}
-                  >
-                    <div className="client_info">
-                      <h4>{client.name}</h4>
-                      <p>{client.email}</p>
-                      {client.phone && (
-                        <span className="client_phone">{client.phone}</span>
-                      )}
+                  <div key={client.id} className="adp_client_modal_item" onClick={() => handleClientSelect(client)}>
+                    <div className="adp_client_modal_avatar">{client.name?.charAt(0).toUpperCase()}</div>
+                    <div className="adp_client_modal_info">
+                      <p className="adp_client_modal_name">{client.name}</p>
+                      <div className="adp_client_modal_meta">
+                        {client.email && <span><Mail size={11} /> {client.email}</span>}
+                        {client.phone && <span><Phone size={11} /> {client.phone}</span>}
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="client_selector_empty">
-                  <p>
-                    {clientSearchTerm
-                      ? "No clients found matching your search"
-                      : "No clients available"}
-                  </p>
-                </div>
+                <p className="adp_client_modal_empty">
+                  {clientSearchTerm ? "No clients found" : "No clients available"}
+                </p>
               )}
             </div>
           </div>

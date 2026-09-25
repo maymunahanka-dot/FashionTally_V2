@@ -1,16 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { auth, db, provider } from "../backend/firebase.config";
-import { sendWhatsAppTemplate } from "../backend/services/whatsapp.service";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  sendPasswordResetEmail,
-  updateProfile,
-} from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useGoogleLogin } from "@react-oauth/google";
 import toast, { Toaster } from "react-hot-toast";
+import { requestAndRegisterToken, removeDeviceToken } from "../backend/services/notification.service";
 
 const NewAuthContext = createContext();
 
@@ -23,680 +14,284 @@ export const useNewAuth = () => {
 };
 
 export const NewAuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(false); // Flag to prevent race condition
 
+  // ── Restore session from localStorage on mount ──────────────
   useEffect(() => {
-    // Check localStorage first for faster initial load
-    const storedUser = localStorage.getItem("newAuthUser");
-    if (storedUser) {
+    const storedUser  = localStorage.getItem("newAuthUser");
+    const storedToken = localStorage.getItem("authToken");
+
+    if (storedUser && storedToken) {
       try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
+        setUser(JSON.parse(storedUser));
         setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Error parsing stored user data:", error);
+      } catch {
         localStorage.removeItem("newAuthUser");
+        localStorage.removeItem("authToken");
       }
     }
+    setLoading(false);
+  }, []);
 
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      // Skip if signup is in progress to prevent race condition
-      if (isSigningUp) {
-        console.log("⏸️ Signup in progress, skipping auth state change");
-        return;
-      }
+  // ── Shared helper: persist session ──────────────────────────
+  const persistSession = (token, userData) => {
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("newAuthUser", JSON.stringify(userData));
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
 
-      if (firebaseUser) {
-        // Normalize email to lowercase
-        const normalizedEmail = firebaseUser.email?.toLowerCase();
-
-        // First, check if this is an admin user
-        console.log(
-          "🔍 Auth state changed - checking for admin data for:",
-          normalizedEmail
-        );
-        const adminRef = doc(db, "fashiontally_admins", normalizedEmail);
-        const adminDoc = await getDoc(adminRef);
-
-        let userData = null;
-        let isAdmin = false;
-
-        if (adminDoc.exists()) {
-          // This is an admin user
-          console.log(
-            "✅ Admin user found in auth state change:",
-            adminDoc.data()
-          );
-          userData = adminDoc.data();
-          isAdmin = true;
-        } else {
-          // Check regular users collection
-          console.log(
-            "🔍 Checking regular user data in auth state change for:",
-            normalizedEmail
-          );
-          const userRef = doc(db, "fashiontally_users", normalizedEmail);
-          const userDoc = await getDoc(userRef);
-
-          if (userDoc.exists()) {
-            userData = userDoc.data();
-            console.log("✅ User data found in Firestore:", userData);
-          } else {
-            console.log(
-              "⚠️ No Firestore data found, using Firebase Auth data only"
-            );
-          }
-        }
-
-        // Always set user if Firebase Auth user exists, even without Firestore data
-        // This matches tally-main's behavior
-        const completeUserData = {
-          uid: firebaseUser.uid,
-          id: firebaseUser.uid,
-          email: userData?.email || normalizedEmail || "",
-          originalEmail:
-            userData?.originalEmail || userData?.email || normalizedEmail || "",
-          phone:
-            userData?.phone ||
-            userData?.phoneNumber ||
-            firebaseUser.phoneNumber ||
-            "",
-          originalPhone: userData?.originalPhone || userData?.phone || "",
-          name: userData?.name || firebaseUser.displayName || "",
-          role: userData?.role || "Designer",
-          country: userData?.country || "",
-          state: userData?.state || "",
-          lga: userData?.lga || "",
-          address: userData?.address || "",
-          businessName: userData?.businessName || "",
-          businessAddress: userData?.businessAddress || "",
-          isPhoneBasedAccount: userData?.isPhoneBasedAccount || false,
-          displayName: firebaseUser.displayName || userData?.name || "",
-          photoURL: firebaseUser.photoURL || userData?.photoURL || "",
-          provider: userData?.provider || "email",
-          createdAt: userData?.createdAt || new Date().toISOString(),
-          // Admin-specific fields
-          isAdmin: isAdmin,
-          permissions: userData?.permissions || null,
-          invitedBy: userData?.invitedBy || null,
-          status: userData?.status || "active",
-          // Subscription/trial fields
-          subscriptionType: userData?.subscriptionType || null,
-          isTrialActive: userData?.isTrialActive || false,
-          planType: userData?.planType || null,
-          subscriptionEndDate: userData?.subscriptionEndDate || null,
-          isSubscribed: userData?.isSubscribed || false,
-          trialStartDate: userData?.trialStartDate || null,
-        };
-
-        setUser(completeUserData);
-        setIsAuthenticated(true);
-        localStorage.setItem("newAuthUser", JSON.stringify(completeUserData));
-        console.log("✅ User state set successfully");
-
-        // Auto-redirect to dashboard from auth pages (only if not signing up)
-        if (!isSigningUp) {
-          const currentPath = window.location.pathname;
-          if (currentPath === "/login" || currentPath === "/signup") {
-            window.location.href = "/dashboard";
-          }
-        }
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
-        localStorage.removeItem("newAuthUser");
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, [isSigningUp]); // Add isSigningUp to dependencies
-
-  // Sign up with email and password - matching tally-main_v2 structure
+  // ── Sign up with email/password ──────────────────────────────
   const signUpWithEmail = async (formData) => {
     try {
-      // Set signup flag to prevent race condition
-      setIsSigningUp(true);
-      console.log("🚀 Starting signup process with flag set...");
+      const { name, email, phone, password, businessName, category, country, logoFile } = formData;
 
-      const {
-        name,
-        email,
-        phone,
-        password,
-        businessName,
-        category,
-        country,
-        logo,
-        role = "Designer", // Default role
-        state = "",
-        lga = "",
-        address = "",
-        businessAddress = "",
-      } = formData;
-
-      // Validation - both email AND phone are required
       if (!name || !email?.trim() || !phone?.trim() || !country || !password) {
-        throw new Error(
-          "Please fill in all required fields including email and phone number"
-        );
+        throw new Error("Please fill in all required fields");
       }
 
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        throw new Error("Please enter a valid email address");
-      }
-
-      // Password validation
-      if (password.length < 6) {
-        throw new Error("Password must be at least 6 characters long");
-      }
-
-      // State and LGA are optional for all countries
-
-      // Business role validation
-      if (role === "Business" && (!businessName || !businessAddress)) {
-        throw new Error(
-          "Business users must provide Business Name and Address"
-        );
-      }
-
-      // Normalize email to lowercase to match Firebase Auth behavior
       const normalizedEmail = email.trim().toLowerCase();
 
-      // Create user with email and password
-      console.log("🚀 Creating Firebase Auth user for:", normalizedEmail);
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        normalizedEmail,
-        password
-      );
-      const firebaseUser = userCredential.user;
-      console.log(
-        "✅ Firebase Auth user created successfully:",
-        firebaseUser.uid
-      );
+      // Step 1: signup
+      const body = new FormData();
+      body.append("name", name.trim());
+      body.append("email", normalizedEmail);
+      body.append("phone", phone.trim());
+      body.append("password", password);
+      body.append("country", country.trim());
+      body.append("businessName", (businessName || "").trim());
+      body.append("category", (category || "").trim());
+      if (logoFile) body.append("logo", logoFile);
 
-      // Store user data in Firestore FIRST (before updateProfile to prevent race condition)
-      console.log("🔄 Preparing to create Firestore document...");
+      const signupRes  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, { method: "POST", body });
+      const signupData = await signupRes.json();
+      if (!signupData.success) throw new Error(signupData.error || "Signup failed");
 
-      // Test Firestore connectivity
-      try {
-        console.log("🧪 Testing Firestore connectivity...");
-        const testRef = doc(db, "test", "connectivity");
-        await setDoc(testRef, {
-          test: true,
-          timestamp: new Date().toISOString(),
-        });
-        console.log("✅ Firestore connectivity test passed");
-      } catch (connectivityError) {
-        console.error(
-          "❌ Firestore connectivity test failed:",
-          connectivityError
-        );
-        throw new Error(
-          "Database connection failed. Please check your internet connection and try again."
-        );
-      }
-
-      const userRef = doc(db, "fashiontally_users", normalizedEmail);
-      const userData = {
-        role: role,
-        name: name,
-        phone: phone,
-        originalPhone: phone,
-        country: country,
-        state: country === "Nigeria" ? state : "",
-        lga: country === "Nigeria" ? lga : "",
-        address: address || "",
-        email: normalizedEmail,
-        originalEmail: normalizedEmail,
-        isPhoneBasedAccount: false, // We now require both email and phone
-        createdAt: serverTimestamp(),
-        // Store business information from signup
-        businessName: businessName || "",
-        businessCategory: category || "",
-        // Store business logo URL from Cloudinary upload
-        logoUrl: formData.logoUrl || formData.logo || "",
-        // Add 7-day free trial automatically - matching tally-main
-        subscriptionType: "trial",
-        isTrialActive: true,
-        planType: "Growth", // Give trial users the Growth plan features
-        subscriptionEndDate: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(), // 7 days from now
-        isSubscribed: true,
-        trialStartDate: new Date().toISOString(),
-      };
-
-      // Add business address if role is Business (though this is rarely provided during signup)
-      if (role === "Business" && businessAddress) {
-        userData.businessAddress = businessAddress;
-      }
-
-      console.log("🔥 Creating user document with email as ID:", email);
-      console.log("🔥 User data to be saved:", userData);
-
-      try {
-        await setDoc(userRef, userData);
-        console.log("✅ User document created successfully in Firestore");
-
-        // Verify the document was created
-        const verifyDoc = await getDoc(userRef);
-        if (verifyDoc.exists()) {
-          console.log("✅ Document verification successful:", verifyDoc.data());
-        } else {
-          console.error("❌ Document verification failed - document not found");
-        }
-      } catch (firestoreError) {
-        console.error(
-          "❌ Firestore error during document creation:",
-          firestoreError
-        );
-        console.error("❌ Error code:", firestoreError.code);
-        console.error("❌ Error message:", firestoreError.message);
-        throw firestoreError;
-      }
-
-      // Update the user's display name AFTER Firestore write
-      console.log("🔄 Updating user display name to:", name);
-      await updateProfile(firebaseUser, {
-        displayName: name,
+      // Step 2: auto-login to get JWT
+      const loginRes  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
-      console.log("✅ User display name updated successfully");
+      const loginData = await loginRes.json();
+      if (!loginData.success) throw new Error(loginData.error || "Auto-login failed");
 
-      const completeUserData = {
-        uid: firebaseUser.uid,
-        id: firebaseUser.uid, // Keep for backward compatibility
-        name: name,
-        email: normalizedEmail,
-        originalEmail: normalizedEmail,
-        phone: phone,
-        originalPhone: phone,
-        role: role,
-        country: country,
-        state: country === "Nigeria" ? state : "",
-        lga: country === "Nigeria" ? lga : "",
-        address: address || "",
-        businessName: businessName || "",
-        businessCategory: category || "",
-        businessAddress: businessAddress || "",
-        // Include logo URL in user context
-        logoUrl: formData.logoUrl || formData.logo || "",
-        isPhoneBasedAccount: false,
-        displayName: name,
-        provider: "email",
-        createdAt: new Date().toISOString(),
-        // Include subscription/trial data
-        subscriptionType: "trial",
-        isTrialActive: true,
-        planType: "Growth",
-        subscriptionEndDate: new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        isSubscribed: true,
-        trialStartDate: new Date().toISOString(),
-      };
+      persistSession(loginData.token, loginData.user);
+      toast.success(`Welcome ${name}! Account created. You have a 7-day free trial.`);
 
-      setUser(completeUserData);
-      setIsAuthenticated(true);
-      localStorage.setItem("newAuthUser", JSON.stringify(completeUserData));
+      const plan = new URLSearchParams(window.location.search).get("plan");
+      setTimeout(() => { window.location.href = plan ? `/subscription?plan=${plan}` : "/dashboard"; }, 1000);
 
-      // Clear signup flag
-      setIsSigningUp(false);
-      console.log("✅ Signup flag cleared");
-
-      toast.success(
-        `Welcome ${name}! Account created successfully. You have a 7-day free trial to explore all features.`
-      );
-
-      // Send WhatsApp welcome message to the user's phone number
-      if (phone) {
-        const waResult = await sendWhatsAppTemplate(phone, { 1: name });
-        if (waResult && !waResult.success) {
-          toast.error(`WhatsApp welcome message could not be sent: ${waResult.error}`);
-        }
-      }
-
-      // Check if there's a selected plan in URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      const selectedPlan = urlParams.get("plan");
-
-      // Navigate to subscription page with selected plan or dashboard
-      setTimeout(() => {
-        if (selectedPlan) {
-          window.location.href = `/subscription?plan=${selectedPlan}`;
-        } else {
-          window.location.href = "/dashboard";
-        }
-      }, 1000);
       return { success: true };
     } catch (error) {
-      // Clear signup flag on error
-      setIsSigningUp(false);
-      console.log("✅ Signup flag cleared due to error");
-
-      console.error("Email signup error:", error);
-      let errorMessage = "Failed to create account";
-
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "An account with this email already exists";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "Password should be at least 6 characters";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      toast.error(error.message || "Failed to create account");
+      return { success: false, error: error.message };
     }
   };
 
-  // Sign in with email and password
-  const signInWithEmail = async (email, password, rememberMe = false) => {
+  // ── Sign in with email/password ──────────────────────────────
+  const signInWithEmail = async (email, password) => {
     try {
-      // Normalize email to lowercase to match Firebase Auth behavior
       const normalizedEmail = email.trim().toLowerCase();
 
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        normalizedEmail,
-        password
-      );
-      const firebaseUser = userCredential.user;
+      const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Invalid email or password");
 
-      // Don't throw error if Firestore data not found - Firebase Auth succeeded
-      // The onAuthStateChanged will handle loading user data
-      toast.success(`Welcome back!`);
+      persistSession(data.token, data.user);
+      toast.success("Welcome back!");
+      setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
 
-      // Navigate to dashboard after successful login
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 1000);
       return { success: true };
     } catch (error) {
-      console.error("Email signin error:", error);
-      let errorMessage = "Failed to sign in";
-
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "No account found with this email";
-      } else if (error.code === "auth/wrong-password") {
-        errorMessage = "Incorrect password";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address";
-      } else if (error.code === "auth/user-disabled") {
-        errorMessage = "This account has been disabled";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      toast.error(error.message || "Failed to sign in");
+      return { success: false, error: error.message };
     }
   };
 
-  // Sign in with Google
-  const signInWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const firebaseUser = result.user;
+  // ── Google sign-in (internal) — called by useGoogleLogin callback ──
+  const _handleGoogleCredential = async (credential) => {
+    console.log("[googleAuth] Sending credential to backend");
 
-      // Split displayName into name
-      const name = firebaseUser.displayName || "";
+    const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ credential }),
+    });
+    const data = await res.json();
 
-      // Normalize email to lowercase
-      const normalizedEmail = firebaseUser.email?.toLowerCase();
+    if (!data.success) throw new Error(data.error || "Google sign-in failed");
 
-      // Check if user exists in Firestore using fashiontally_users collection
-      // Use normalized email as document ID to match tally-main approach
-      const userRef = doc(db, "fashiontally_users", normalizedEmail);
-      const userDoc = await getDoc(userRef);
+    persistSession(data.token, data.user);
 
-      if (!userDoc.exists()) {
-        // Create new user in Firestore with tally-main_v2 structure + 3-day trial
-        await setDoc(userRef, {
-          role: "Designer", // Default role
-          name: name,
-          phone: firebaseUser.phoneNumber || "",
-          originalPhone: firebaseUser.phoneNumber || "",
-          country: "",
-          state: "",
-          lga: "",
-          address: "",
-          email: normalizedEmail,
-          originalEmail: normalizedEmail,
-          isPhoneBasedAccount: false,
-          displayName: firebaseUser.displayName || "",
-          photoURL: firebaseUser.photoURL || "",
-          provider: "google",
-          createdAt: serverTimestamp(),
-          // Add 7-day free trial automatically for Google sign-ups
-          subscriptionType: "trial",
-          isTrialActive: true,
-          planType: "Growth", // Give trial users the Growth plan features
-          subscriptionEndDate: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-          ).toISOString(), // 7 days from now
-          isSubscribed: true,
-          trialStartDate: new Date().toISOString(),
+    const name = data.user?.name || "";
+    toast.success(`Welcome ${name}!${data.isNewUser ? " You have a 7-day free trial." : ""}`);
+
+    const plan = new URLSearchParams(window.location.search).get("plan");
+    setTimeout(() => {
+      window.location.href = (plan && data.isNewUser) ? `/subscription?plan=${plan}` : "/dashboard";
+    }, 1000);
+
+    return { success: true };
+  };
+
+  // ── Sign in with Google — hook must be called at component level ─
+  // This is a factory: components call useGoogleSignIn() to get the trigger fn
+  // We expose signInWithGoogle as a stable function that components call directly
+  const [_googleResolve, _setGoogleResolve] = useState(null);
+  const [_googleReject,  _setGoogleReject]  = useState(null);
+
+  // signInWithGoogle returns a promise; the useGoogleLogin hook below resolves it
+  const signInWithGoogle = () => {
+    return new Promise((resolve, reject) => {
+      _setGoogleResolve(() => resolve);
+      _setGoogleReject(()  => reject);
+    });
+  };
+
+  // The actual Google OAuth trigger — must be defined at top level (hook rules)
+  const _googleLoginTrigger = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      console.log("[googleAuth] Google OAuth success, fetching user info");
+      try {
+        // tokenResponse.access_token → fetch user info from Google
+        const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
-      } else {
-        // Update existing user with Google data if missing
-        await setDoc(
-          userRef,
-          {
-            displayName: firebaseUser.displayName || userDoc.data().displayName,
-            photoURL: firebaseUser.photoURL || userDoc.data().photoURL,
-            provider: "google",
-            lastLogin: serverTimestamp(),
-          },
-          { merge: true }
-        );
+        const userInfo = await userInfoRes.json();
+        console.log("[googleAuth] userInfo received:", userInfo.email);
+
+        // Build a credential-like object — send access_token to backend
+        // Backend will use google-auth-library to get user info server-side
+        const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({
+            accessToken: tokenResponse.access_token,
+            email:       userInfo.email,
+            name:        userInfo.name,
+            picture:     userInfo.picture,
+            sub:         userInfo.sub,
+          }),
+        });
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error || "Google sign-in failed");
+
+        persistSession(data.token, data.user);
+
+        const name = data.user?.name || "";
+        toast.success(`Welcome ${name}!${data.isNewUser ? " You have a 7-day free trial." : ""}`);
+
+        const plan = new URLSearchParams(window.location.search).get("plan");
+        setTimeout(() => {
+          window.location.href = (plan && data.isNewUser) ? `/subscription?plan=${plan}` : "/dashboard";
+        }, 1000);
+
+        // Register this browser for push notifications (fire-and-forget)
+        requestAndRegisterToken().catch(() => {});
+
+        // Register this browser for push notifications (fire-and-forget)
+        requestAndRegisterToken().catch(() => {});
+
+        if (_googleResolve) _googleResolve({ success: true });
+      } catch (err) {
+        toast.error(err.message || "Google sign-in failed");
+        if (_googleReject) _googleReject(err);
       }
+    },
+    onError: (err) => {
+      console.error("[googleAuth] OAuth error:", err);
+      toast.error("Google sign-in failed");
+      if (_googleReject) _googleReject(new Error("Google OAuth failed"));
+    },
+    flow: "implicit",
+  });
 
-      // Get the complete user data
-      const updatedDoc = await getDoc(userRef);
-      const userData = updatedDoc.data();
-      const completeUserData = {
-        uid: firebaseUser.uid,
-        id: firebaseUser.uid, // Keep for backward compatibility
-        name: userData.name || name,
-        email: normalizedEmail,
-        originalEmail: userData.originalEmail || normalizedEmail,
-        phone: userData.phone || firebaseUser.phoneNumber || "",
-        originalPhone: userData.originalPhone || userData.phone || "",
-        role: userData.role || "Designer",
-        country: userData.country || "",
-        state: userData.state || "",
-        lga: userData.lga || "",
-        address: userData.address || "",
-        businessName: userData.businessName || "",
-        businessAddress: userData.businessAddress || "",
-        isPhoneBasedAccount: userData.isPhoneBasedAccount || false,
-        displayName: firebaseUser.displayName || "",
-        photoURL: firebaseUser.photoURL || "",
-        provider: "google",
-        createdAt: userData.createdAt || new Date().toISOString(),
-        // Include subscription/trial data
-        subscriptionType: userData.subscriptionType || null,
-        isTrialActive: userData.isTrialActive || false,
-        planType: userData.planType || null,
-        subscriptionEndDate: userData.subscriptionEndDate || null,
-        isSubscribed: userData.isSubscribed || false,
-        trialStartDate: userData.trialStartDate || null,
-      };
-
-      setUser(completeUserData);
-      setIsAuthenticated(true);
-      localStorage.setItem("newAuthUser", JSON.stringify(completeUserData));
-
-      toast.success(
-        `Welcome ${name}! ${
-          !userDoc.exists()
-            ? "You have a 7-day free trial to explore all features."
-            : ""
-        }`
-      );
-
-      // Send WhatsApp welcome message only for new Google sign-ups that have a phone number
-      if (!userDoc.exists() && firebaseUser.phoneNumber) {
-        const waResult = await sendWhatsAppTemplate(firebaseUser.phoneNumber, { 1: name });
-        if (waResult && !waResult.success) {
-          toast.error(`WhatsApp welcome message could not be sent: ${waResult.error}`);
-        }
-      }
-
-      // Check if there's a selected plan in URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      const selectedPlan = urlParams.get("plan");
-
-      // Navigate to subscription page with selected plan or dashboard
-      setTimeout(() => {
-        if (selectedPlan && !userDoc.exists()) {
-          // Only redirect to subscription for new users with selected plan
-          window.location.href = `/subscription?plan=${selectedPlan}`;
-        } else {
-          window.location.href = "/dashboard";
-        }
-      }, 1000);
-      return { success: true };
-    } catch (error) {
-      console.error("Google signin error:", error);
-      toast.error(error.message || "Google sign-in failed");
-      return { success: false, error: error.message };
-    }
+  // Wrap so components just call signInWithGoogle() and it triggers the popup
+  const triggerGoogleSignIn = () => {
+    _googleLoginTrigger();
+    return signInWithGoogle();
   };
 
-  // Sign out
+  // ── Sign out ─────────────────────────────────────────────────
   const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      setIsAuthenticated(false);
-      localStorage.removeItem("newAuthUser");
-
-      toast.success("Signed out successfully");
-      return { success: true };
-    } catch (error) {
-      console.error("Sign out error:", error);
-      return { success: false, error: error.message };
-    }
+    // Remove this browser's FCM token before clearing session
+    await removeDeviceToken().catch(() => {});
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem("newAuthUser");
+    localStorage.removeItem("authToken");
+    toast.success("Signed out successfully");
+    return { success: true };
   };
 
-  // Reset password - enhanced with better error handling
+  // ── Forgot password ──────────────────────────────────────────
   const resetPassword = async (email) => {
     try {
-      // Normalize email to lowercase
-      const normalizedEmail = email.trim().toLowerCase();
-      await sendPasswordResetEmail(auth, normalizedEmail);
+      const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/forgot-password`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to send reset email");
+
       toast.success("Password reset email sent!");
       return { success: true };
     } catch (error) {
-      console.error("Password reset error:", error);
-      let errorMessage = "Failed to send password reset email";
-
-      // Enhanced error handling matching tally-main_v2
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "No account found with this email address";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Please enter a valid email address";
-      } else if (error.code === "auth/too-many-requests") {
-        errorMessage = "Too many requests. Please try again later";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      toast.error(errorMessage);
-      return { success: false, error: errorMessage };
+      toast.error(error.message || "Failed to send reset email");
+      return { success: false, error: error.message };
     }
   };
 
-  // Update user profile - for updating user data across the app
+  // ── Update user profile locally ──────────────────────────────
   const updateUserProfile = (updatedUserData) => {
-    const newUserData = {
-      ...user,
-      ...updatedUserData,
-    };
-
+    const newUserData = { ...user, ...updatedUserData };
     setUser(newUserData);
     localStorage.setItem("newAuthUser", JSON.stringify(newUserData));
-
-    console.log("User profile updated in context:", newUserData);
   };
 
-  // Refresh user data from Firestore - useful after profile updates
+  // ── Refresh user from backend ────────────────────────────────
   const refreshUserData = async () => {
-    if (!user?.email) return;
+    const token = localStorage.getItem("authToken");
+    if (!token || !user?.email) return null;
 
     try {
-      console.log("🔄 Refreshing user data from Firestore...");
+      const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/get`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
 
-      // Normalize email to lowercase
-      const normalizedEmail = user.email.toLowerCase();
-
-      // Check if this is an admin user first
-      const adminRef = doc(db, "fashiontally_admins", normalizedEmail);
-      const adminDoc = await getDoc(adminRef);
-
-      let userData = null;
-      let isAdmin = false;
-
-      if (adminDoc.exists()) {
-        userData = adminDoc.data();
-        isAdmin = true;
-        console.log("✅ Refreshed admin user data:", userData);
-      } else {
-        // Check regular users collection
-        const userRef = doc(db, "fashiontally_users", normalizedEmail);
-        const userDoc = await getDoc(userRef);
-
-        if (userDoc.exists()) {
-          userData = userDoc.data();
-          console.log("✅ Refreshed regular user data:", userData);
-        }
+      const data = await res.json();
+      if (data.success && data.data) {
+        const refreshed = { ...user, ...data.data };
+        setUser(refreshed);
+        localStorage.setItem("newAuthUser", JSON.stringify(refreshed));
+        return refreshed;
       }
-
-      if (userData) {
-        const refreshedUserData = {
-          ...user, // Keep existing data
-          ...userData, // Override with fresh Firestore data
-          // Ensure critical fields are preserved
-          uid: user.uid,
-          id: user.uid,
-          isAdmin: isAdmin,
-          isAuthenticated: true,
-        };
-
-        setUser(refreshedUserData);
-        localStorage.setItem("newAuthUser", JSON.stringify(refreshedUserData));
-        console.log("✅ User data refreshed successfully");
-        return refreshedUserData;
-      }
-    } catch (error) {
-      console.error("Error refreshing user data:", error);
-      return null;
+    } catch (err) {
+      console.error("refreshUserData error:", err.message);
     }
+    return null;
   };
 
   const value = {
-    // State
     user,
     setUser,
     loading,
     isAuthenticated,
-    // Auth functions
     signUpWithEmail,
     signInWithEmail,
-    signInWithGoogle,
+    signInWithGoogle:  triggerGoogleSignIn,
     signOut,
     resetPassword,
-    // Profile update functions
     updateUserProfile,
     refreshUserData,
   };

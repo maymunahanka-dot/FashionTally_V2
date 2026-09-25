@@ -2,14 +2,10 @@ import { db } from "../backend/firebase.config.js";
 import {
   doc,
   getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
   updateDoc,
 } from "firebase/firestore";
 
-export async function checkSubscriptionStatus(email, uuid) {
+export async function checkSubscriptionStatus(email, uuid, token) {
   const logPrefix = "[SUB_CHECK]";
   console.log(`${logPrefix} ▶️ Starting check`, { email, uuid });
 
@@ -26,43 +22,27 @@ export async function checkSubscriptionStatus(email, uuid) {
     }
 
     // 2. Global Kill-Switch Check
-    const settingsDoc = await getDoc(
-      doc(db, "system_settings", "subscription")
-    );
-    if (
-      settingsDoc.exists() &&
-      settingsDoc.data()?.subscriptionsEnabled === false
-    ) {
-      console.warn(
-        `${logPrefix} 🚨 Subscriptions globally disabled — granting access`
+    try {
+      const settingsRes = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/system-setting/subscription`
       );
-      return getFallbackAccess();
-    }
-
-    // 3. Admin / Delegation Logic
-    let effectiveEmail = email;
-    const adminSnapshot = await getDocs(
-      query(collection(db, "fashiontally_admins"), where("email", "==", email))
-    );
-
-    if (!adminSnapshot.empty) {
-      const adminData = adminSnapshot.docs[0].data();
-      if (adminData.invitedBy) {
-        console.log(
-          `${logPrefix} 🔁 Invited admin: delegation to ${adminData.invitedBy}`
-        );
-        effectiveEmail = adminData.invitedBy;
+      const settingsData = await settingsRes.json();
+      if (settingsData.success && settingsData.data?.subscriptionsEnabled === false) {
+        console.warn(`${logPrefix} 🚨 Subscriptions globally disabled — granting access`);
+        return getFallbackAccess();
       }
+    } catch (err) {
+      console.warn(`${logPrefix} ⚠️ Could not fetch subscription setting, continuing`);
     }
 
-    // 4. Resolve User Document
-    const userDoc = await findUserDoc(effectiveEmail, uuid);
+    // 3. Fetch user from MongoDB via backend using token
+    const userDoc = await findUserDoc(token);
     if (!userDoc) {
       console.error(`${logPrefix} ❌ User not found`);
       return { isSubscribed: false };
     }
 
-    const userData = userDoc.data();
+    const userData = userDoc;
     const {
       subscriptionType,
       planType,
@@ -74,7 +54,7 @@ export async function checkSubscriptionStatus(email, uuid) {
     } = userData;
     console.log(userData, "userdata");
 
-    // 5. Evaluation Logic (Priority: Trial -> Paid Legacy -> New Fields)
+    // 4. Evaluation Logic (Priority: Trial -> New Fields -> Legacy Paid)
 
     // Trial Check
     if (subscriptionType === "trial" && isTrialActive && subscriptionEndDate) {
@@ -93,20 +73,8 @@ export async function checkSubscriptionStatus(email, uuid) {
       };
     }
 
-    // Legacy Paid Check (30-day window)
-    if (payment_amount > 0 && payment_date) {
-      const daysSince = getDaysSince(payment_date);
-      const isActive = daysSince <= 30;
-      return {
-        isSubscribed: isActive,
-        paymentAmount: payment_amount,
-        paymentDate: payment_date,
-        planType: determinePlanType(payment_amount),
-        subscriptionType: "paid",
-      };
-    }
-
-    // New Fields Check
+    // New Fields Check — runs FIRST before legacy payment date window
+    // isSubscribed + subscriptionEndDate is the authoritative source of truth
     if (
       isSubscribed &&
       subscriptionEndDate &&
@@ -120,22 +88,17 @@ export async function checkSubscriptionStatus(email, uuid) {
       };
     }
 
-    // createdAt fallback — grant 7-day trial based on account creation date
-    const createdAt = userData.createdAt;
-    if (createdAt) {
-      const createdDate = createdAt?.toDate ? createdAt.toDate() : new Date(createdAt);
-      const daysSinceCreation = getDaysSince(createdDate.toISOString());
-      if (daysSinceCreation < 7) {
-        const trialEndDate = new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        console.log(`${logPrefix} 🆓 createdAt trial active — ${6 - daysSinceCreation} days remaining`);
-        return {
-          isSubscribed: true,
-          planType: "GROWTH",
-          subscriptionType: "trial",
-          isTrialActive: true,
-          subscriptionEndDate: trialEndDate,
-        };
-      }
+    // Legacy Paid Check (30-day window) — fallback for old records without subscriptionEndDate
+    if (payment_amount > 0 && payment_date && !subscriptionEndDate) {
+      const daysSince = getDaysSince(payment_date);
+      const isActive = daysSince <= 30;
+      return {
+        isSubscribed: isActive,
+        paymentAmount: payment_amount,
+        paymentDate: payment_date,
+        planType: determinePlanType(payment_amount),
+        subscriptionType: "paid",
+      };
     }
 
     return { isSubscribed: false, planType: "Free", subscriptionType: "free" };
@@ -145,21 +108,23 @@ export async function checkSubscriptionStatus(email, uuid) {
   }
 }
 
-export async function findUserDoc(email, uuid) {
-  if (!db) return null;
+export async function findUserDoc(token) {
+  if (!token) return null;
 
-  // Try Email
-  const emailRef = doc(db, "fashiontally_users", email);
-  const emailSnap = await getDoc(emailRef);
-  if (emailSnap.exists()) return emailSnap;
-
-  // Try UUID Fallback
-  if (uuid) {
-    const uuidRef = doc(db, "fashiontally_users", uuid);
-    const uuidSnap = await getDoc(uuidRef);
-    if (uuidSnap.exists()) return uuidSnap;
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_BACKEND_URL}/api/user/get`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    const data = await res.json();
+    if (data.success) return data.data;
+    return null;
+  } catch (error) {
+    console.error("[SUB_CHECK] Error fetching user from backend:", error);
+    return null;
   }
-  return null;
 }
 
 const isFutureDate = (dateStr) => new Date(dateStr) > new Date();

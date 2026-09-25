@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Upload, Link, Loader2 } from "lucide-react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Input from "../../components/Input";
 import "./BrandPanel.css";
 
+const API = import.meta.env.VITE_BACKEND_URL;
+
 const BrandPanel = ({ onClose }) => {
   const { user } = useNewAuth();
+
+  const token = () => localStorage.getItem("authToken");
 
   // Form state
   const [brandName, setBrandName] = useState("");
@@ -35,73 +37,33 @@ const BrandPanel = ({ onClose }) => {
 
   const [errors, setErrors] = useState({});
 
-  // Load existing brand data on component mount
   useEffect(() => {
-    if (user?.email) {
-      loadBrandData();
-    }
+    if (user?.email) loadBrandData();
   }, [user]);
 
   const loadBrandData = async () => {
     try {
       setLoading(true);
-      // Get effective email (main admin's email for team members)
       const effectiveEmail = getEffectiveUserEmail(user);
-      console.log("📧 BrandPanel: Using effective email:", effectiveEmail);
+      const res = await fetch(`${API}/api/brand-setting/get-by-email/${effectiveEmail}`);
+      const data = await res.json();
 
-      // Load user data first to get backup logo
-      const userDocRef = doc(db, "fashiontally_users", effectiveEmail);
-      const userDoc = await getDoc(userDocRef);
-      let userLogoUrl = "";
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        userLogoUrl = userData.logoUrl || userData.profilePicture || "";
-      }
-
-      const docRef = doc(db, "fashiontally_brand_settings", effectiveEmail);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        // Load existing brand settings
-        const data = docSnap.data();
-        setBrandName(data.businessName || "");
-        setBusinessAddress(data.businessAddress || "");
-        setPhoneNumber(data.businessPhone || "");
-        setEmail(data.businessEmail || "");
-        setWebsite(data.businessWebsite || "");
-        setInstagramHandle(data.instagramHandle || "");
-        setBankName(data.bankName || "");
-        setAccountNumber(data.accountNumber || "");
-        setAccountName(data.accountName || "");
-        // Use brand logo, fallback to user logo
-        setLogoUrl(data.logoUrl || userLogoUrl);
-        setPrimaryColor(data.primaryColor || "#000000");
-        setSecondaryColor(data.secondaryColor || "#666666");
-        setFooterText(data.footerText || "");
-        setTermsAndConditions(data.termsAndConditions || "");
-      } else {
-        // No brand settings exist - only pre-fill basic info from signup
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          // Only pre-fill the business name from signup, leave other fields empty for user to fill
-          setBrandName(userData.businessName || "");
-          setEmail(userData.email || "");
-          // Use user logo as fallback
-          setLogoUrl(userLogoUrl);
-          // Leave other fields empty - don't pre-fill with profile data
-          setBusinessAddress("");
-          setPhoneNumber("");
-          setWebsite("");
-          setInstagramHandle("");
-          setBankName("");
-          setAccountNumber("");
-          setAccountName("");
-          setPrimaryColor("#000000");
-          setSecondaryColor("#666666");
-          setFooterText("");
-          setTermsAndConditions("");
-        }
+      if (data.success && data.data) {
+        const d = data.data;
+        setBrandName(d.businessName || "");
+        setBusinessAddress(d.businessAddress || "");
+        setPhoneNumber(d.businessPhone || "");
+        setEmail(d.businessEmail || "");
+        setWebsite(d.businessWebsite || "");
+        setInstagramHandle(d.instagramHandle || "");
+        setBankName(d.bankName || "");
+        setAccountNumber(d.accountNumber || "");
+        setAccountName(d.accountName || "");
+        setLogoUrl(d.logoUrl || "");
+        setPrimaryColor(d.primaryColor || "#000000");
+        setSecondaryColor(d.secondaryColor || "#666666");
+        setFooterText(d.footerText || "");
+        setTermsAndConditions(d.termsAndConditions || "");
       }
     } catch (error) {
       console.error("Error loading brand data:", error);
@@ -167,49 +129,54 @@ const BrandPanel = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     try {
       setSaving(true);
 
       let finalLogoUrl = logoUrl;
+      if (brandLogo) finalLogoUrl = await uploadLogoToStorage(brandLogo);
 
-      // Upload logo if a new file was selected
-      if (brandLogo) {
-        finalLogoUrl = await uploadLogoToStorage(brandLogo);
-      }
-
-      // Prepare brand data
+      const effectiveEmail = getEffectiveUserEmail(user);
       const brandData = {
-        businessName: brandName,
-        businessAddress: businessAddress,
-        businessPhone: phoneNumber,
-        businessEmail: email,
-        businessWebsite: website,
-        instagramHandle: instagramHandle,
-        bankName: bankName,
-        accountNumber: accountNumber,
-        accountName: accountName,
-        logoUrl: finalLogoUrl,
-        primaryColor: primaryColor,
-        secondaryColor: secondaryColor,
-        footerText: footerText,
+        id:                effectiveEmail,
+        userEmail:         effectiveEmail,
+        businessName:      brandName,
+        businessAddress:   businessAddress,
+        businessPhone:     phoneNumber,
+        businessEmail:     email,
+        businessWebsite:   website,
+        instagramHandle:   instagramHandle,
+        bankName:          bankName,
+        accountNumber:     accountNumber,
+        accountName:       accountName,
+        logoUrl:           finalLogoUrl,
+        primaryColor:      primaryColor,
+        secondaryColor:    secondaryColor,
+        footerText:        footerText,
         termsAndConditions: termsAndConditions,
-        userEmail: getEffectiveUserEmail(user),
-        updatedAt: new Date(),
       };
 
-      // Save to Firebase
-      const effectiveEmail = getEffectiveUserEmail(user);
-      const docRef = doc(db, "fashiontally_brand_settings", effectiveEmail);
-      await setDoc(docRef, brandData, { merge: true });
+      // Try edit first, fall back to create if not found
+      const editRes = await fetch(`${API}/api/brand-setting/edit/${effectiveEmail}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        body: JSON.stringify(brandData),
+      });
+      const editData = await editRes.json();
 
-      console.log("Brand settings saved successfully:", brandData);
+      if (!editData.success) {
+        // Brand doesn't exist yet — create it
+        const createRes = await fetch(`${API}/api/brand-setting/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+          body: JSON.stringify(brandData),
+        });
+        const createData = await createRes.json();
+        if (!createData.success) throw new Error(createData.error || "Failed to save brand settings");
+      }
 
-      // Show success message (you can replace with your preferred notification method)
       alert("Brand settings saved successfully!");
-
       onClose();
     } catch (error) {
       console.error("Error saving brand settings:", error);

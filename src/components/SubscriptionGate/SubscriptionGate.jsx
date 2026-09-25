@@ -16,8 +16,6 @@ import { checkSubscriptionStatus } from "../../lib/subscription-check";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { hasFeatureAccess } from "../../lib/subscription-utils";
-import { auth } from "../../backend/firebase.config";
-import { signOut } from "firebase/auth";
 import "./SubscriptionGate.css";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
 
@@ -108,7 +106,7 @@ const pricingPlans = [
 ];
 
 export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
-  const { user } = useNewAuth();
+  const { user, signOut } = useNewAuth();
   const { actualTheme } = useTheme();
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,7 +115,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await signOut();
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -135,7 +133,8 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
 
       try {
         console.log("🔐 Checking subscription status for:", user.email);
-        const status = await checkSubscriptionStatus(user.email, user.uid);
+        const token = localStorage.getItem("authToken");
+        const status = await checkSubscriptionStatus(user.email, user.uid, token);
         console.log("📊 Subscription status result:", status);
         setSubscriptionStatus(status);
 
@@ -173,6 +172,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
     if (requiredFeature) {
       const plan = subscriptionStatus.planType || "STARTER";
 
+      // For all features, use normal logic
       const hasAccess = hasFeatureAccess(plan, requiredFeature);
       if (hasAccess) {
         console.log(`🎉 Rendering content for feature: ${requiredFeature}`);
@@ -181,6 +181,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
         console.log(
           `🚫 Plan ${plan} does not have access to feature: ${requiredFeature}`
         );
+        // Continue to show subscription gate for this specific feature
       }
     } else {
       console.log("🎉 Rendering content - user is subscribed");

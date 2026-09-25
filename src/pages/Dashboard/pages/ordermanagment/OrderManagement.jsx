@@ -1,14 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { Search, Filter, Plus, Package } from "lucide-react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
-import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import Button from "../../../../components/button/Button";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
@@ -30,86 +22,59 @@ const OrderManagement = () => {
 
   const { user } = useContext(NewAuthContext);
 
-  // Fetch orders from Firebase with real-time updates
-  useEffect(() => {
-    if (!db || !user?.email) {
+  const fetchOrders = async () => {
+    if (!user?.email) {
+      console.log("[OrderManagement] No user email — skipping fetch");
       setLoading(false);
       setOrders([]);
       return;
     }
-
     setLoading(true);
-
-    // Get effective email (main admin's email for team members)
-    const effectiveEmail = getEffectiveUserEmail(user);
-
-    // Set up the query to filter by effective user's email
-    const ordersQuery = query(
-      collection(db, "fashiontally_designs"),
-      where("userEmail", "==", effectiveEmail)
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      ordersQuery,
-      (snapshot) => {
-        const allDocs = snapshot.docs.map((doc) => {
-          const data = doc.data();
-
-          const parseDate = (val) => {
-            if (!val) return new Date();
-            if (val?.toDate) return val.toDate();
-            return new Date(val);
-          };
-
-          return {
-            id: doc.id,
-            _type: data.type,
-            title: data.name || "Untitled Order",
-            price: data.price || 0,
-            date: parseDate(data.createdAt).toLocaleDateString(),
-            status: mapStatusToUI(data.status),
-            icon: getCategoryIcon(data.category),
-            client: {
-              name: data.clientName || "No Client",
-              phone: data.clientPhone || "",
-              email: data.clientEmail || "",
-            },
-            originalData: data,
-            createdAt: parseDate(data.createdAt),
-            dueDate: data.dueDate ? new Date(data.dueDate) : null,
-            category: data.category || "Others",
-            description: data.description || "",
-            measurements: data.measurements || {},
-            images: data.images || [],
-            clientId: data.clientId || "",
-            basePrice: data.price || 0,
-            deposit: data.deposit || data.depositPaid || 0,
-            balance: data.balance || data.balanceDue || 0,
-            quantity: data.quantity || 1,
-            paymentStatus: data.paymentStatus || "",
-            specialInstructions: data.specialInstructions || data.notes || "",
-          };
-        });
-
-        // Include orders (type === "order") and legacy records with no type
-        const ordersData = allDocs.filter((d) => !d._type || d._type === "order");
-
-        ordersData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        setOrders(ordersData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching orders:", error);
-        setLoading(false);
+    try {
+      const token = localStorage.getItem("authToken");
+      console.log("[OrderManagement] Fetching orders for:", user.email);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/order/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("[OrderManagement] Response status:", res.status);
+      const data = await res.json();
+      console.log("[OrderManagement] Raw response:", data);
+      if (data.success) {
+        console.log("[OrderManagement] Orders fetched ✅ count:", data.data?.length, data.data);
+        setOrders(data.data.map((o) => ({
+          ...o,
+          id: o.id || o._id,
+          title: o.name || o.garmentDescription || o.garmentType || "Untitled Order",
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "",
+          status: mapStatusToUI(o.status),
+          icon: getCategoryIcon(o.garmentType),
+          client: { name: o.clientName || "No Client", phone: o.clientPhone || "", email: o.clientEmail || "" },
+          createdAt: o.createdAt ? new Date(o.createdAt) : new Date(),
+          dueDate: o.dueDate ? new Date(o.dueDate) : null,
+          // Pricing fields
+          basePrice: o.basePrice || 0,
+          additionalItems: Array.isArray(o.additionalItems) ? o.additionalItems : [],
+          depositPaid: o.depositPaid || o.deposit || 0,
+          balanceDue: o.balanceDue || o.balance || 0,
+          // Measurements & details
+          measurements: o.measurements || {},
+          fabric: o.fabric || (Array.isArray(o.materials) ? o.materials[0] : "") || "",
+          specialInstructions: o.specialInstructions || o.description || "",
+        })));
+      } else {
+        console.warn("[OrderManagement] success=false:", data);
       }
-    );
+    } catch (error) {
+      console.error("[OrderManagement] Fetch error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
-  }, [user?.email]);
+  useEffect(() => { fetchOrders(); }, [user?.email]);
 
+  
   // Map database status to UI status
   const mapStatusToUI = (dbStatus) => {
     switch (dbStatus) {
@@ -219,8 +184,7 @@ const OrderManagement = () => {
             className="o_m_ipolsbbb"
           />
         </div>
-        {/* <h2 className="o_m_stats_period">December 2025</h2> */}
-        <div className="o_m_order_stats">
+         <div className="o_m_order_stats">
           <div className="o_m_stat_card">
             <div className="o_m_stat_content">
               <h3 className="o_m_stat_title">Total Orders</h3>
@@ -404,6 +368,7 @@ const OrderManagement = () => {
           onClose={handleCloseNewOrderPanel}
           editMode={editMode}
           initialData={editingOrder}
+          onSuccess={fetchOrders}
         />
       </SlideInMenu>
 

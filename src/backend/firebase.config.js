@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // Your web app's Firebase configuration using environment variables
 const firebaseConfig = {
@@ -30,3 +31,14 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Messaging — only available in browsers that support service workers
+let messaging = null;
+try {
+  messaging = getMessaging(app);
+  console.log("[FCM] Messaging initialized ✅");
+} catch (err) {
+  console.warn("[FCM] Messaging not supported in this environment:", err.message);
+}
+
+export { messaging, getToken, onMessage };

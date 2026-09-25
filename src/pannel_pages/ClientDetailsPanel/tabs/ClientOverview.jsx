@@ -1,16 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { FileText, Package, Edit3 } from "lucide-react";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { db } from "../../../backend/firebase.config";
 import NewAuthContext from "../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../utils/teamUtils";
 import EditNotesModal from "../components/EditNotesModal";
 import "./ClientOverview.css";
 
@@ -24,141 +14,68 @@ const ClientOverview = ({ client }) => {
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch client data
   useEffect(() => {
     const fetchClientData = async () => {
-      if (!client?.id || !user?.email) {
-        setLoading(false);
-        return;
-      }
-
+      if (!client?.id || !user?.email) { setLoading(false); return; }
       setLoading(true);
-
       try {
-        // Get effective email (main admin's email for team members)
-        const effectiveEmail = getEffectiveUserEmail(user);
+        const token = localStorage.getItem("authToken");
+        const [ordersRes, invoicesRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/order/list`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${import.meta.env.VITE_BACKEND_URL}/api/invoice/list`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        const [ordersData, invoicesData] = await Promise.all([ordersRes.json(), invoicesRes.json()]);
 
-        // Fetch orders
-        const ordersQuery = query(
-          collection(db, "fashiontally_designs"),
-          where("userEmail", "==", effectiveEmail)
-        );
-        const ordersSnapshot = await getDocs(ordersQuery);
-        const allOrders = ordersSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          const convertDate = (dateField) => {
-            if (!dateField) return new Date();
-            if (dateField.toDate && typeof dateField.toDate === "function") {
-              return dateField.toDate();
-            }
-            if (dateField instanceof Date) {
-              return dateField;
-            }
-            return new Date(dateField);
-          };
+        if (ordersData.success) {
+          const clientOrders = ordersData.data
+            .filter((o) => o.clientId === client.id)
+            .map((o) => ({ ...o, createdAt: o.createdAt ? new Date(o.createdAt) : new Date() }))
+            .sort((a, b) => b.createdAt - a.createdAt);
+          setTotalOrders(clientOrders.length);
+          setRecentActivity(clientOrders.slice(0, 3).map((o) => ({
+            id: o.id,
+            title: o.garmentDescription || o.garmentType || "Order",
+            date: o.createdAt.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            amount: `₦${(o.price || 0).toLocaleString()}`,
+            status: o.status === "in-progress" ? "In Progress" : o.status || "Pending",
+          })));
+        }
 
-          return {
-            id: doc.id,
-            name: data.name || "Untitled Order",
-            price: data.price || 0,
-            status:
-              data.status === "Active"
-                ? "In Progress"
-                : data.status === "Archived"
-                ? "Completed"
-                : "Pending",
-            createdAt: convertDate(data.createdAt),
-            clientId: data.clientId,
-          };
-        });
-
-        // Filter orders for this client — include type === "order" and legacy no-type records
-        const clientOrders = allOrders.filter(
-          (order) => order.clientId === client.id &&
-          (!order.type || order.type === "order")
-        );
-        setTotalOrders(clientOrders.length);
-
-        // Get recent 3 orders sorted by date
-        const recentOrders = clientOrders
-          .sort((a, b) => b.createdAt - a.createdAt)
-          .slice(0, 3)
-          .map((order) => ({
-            id: order.id,
-            title: order.name,
-            date: order.createdAt.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }),
-            amount: `₦${order.price.toLocaleString()}`,
-            status: order.status,
-          }));
-        setRecentActivity(recentOrders);
-
-        // Fetch invoices
-        const invoicesQuery = query(
-          collection(db, "fashiontally_invoices"),
-          where("userEmail", "==", effectiveEmail)
-        );
-        const invoicesSnapshot = await getDocs(invoicesQuery);
-        const allInvoices = invoicesSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            clientEmail: data.clientEmail,
-            amount: data.amount || 0,
-          };
-        });
-
-        // Filter invoices for this client and calculate total
-        const clientInvoices = allInvoices.filter(
-          (invoice) => invoice.clientEmail === client.email
-        );
-        setInvoiceCount(clientInvoices.length);
-
-        const total = clientInvoices.reduce(
-          (sum, invoice) => sum + invoice.amount,
-          0
-        );
-        setTotalSpent(total);
+        if (invoicesData.success) {
+          const clientInvoices = invoicesData.data.filter((inv) => inv.clientEmail === client.email);
+          setInvoiceCount(clientInvoices.length);
+          setTotalSpent(clientInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0));
+        }
       } catch (error) {
         console.error("Error fetching client overview data:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchClientData();
   }, [client?.id, client?.email, user?.email]);
 
-  // Update notes from client prop
-  useEffect(() => {
-    setClientNotes(client?.notes || "");
-  }, [client?.notes]);
-
-  const handleEditNotes = () => {
-    setShowEditNotesModal(true);
-  };
+  useEffect(() => { setClientNotes(client?.notes || ""); }, [client?.notes]);
 
   const handleSaveNotes = async (newNote) => {
     try {
-      // Update notes in Firebase
-      const clientRef = doc(db, "fashiontally_clients", client.id);
-      await updateDoc(clientRef, {
-        notes: newNote,
-        updatedAt: new Date(),
-      });
-
+      const token = localStorage.getItem("authToken");
+      await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/client/edit/${client.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ notes: newNote }),
+        }
+      );
       setClientNotes(newNote);
-      console.log("Notes updated successfully");
     } catch (error) {
       console.error("Error updating notes:", error);
     }
   };
 
-  const handleCloseNotesModal = () => {
-    setShowEditNotesModal(false);
-  };
+  const handleEditNotes = () => { setShowEditNotesModal(true); };
+  const handleCloseNotesModal = () => { setShowEditNotesModal(false); };
 
   const formatCurrency = (amount) => {
     if (amount >= 1000000) {

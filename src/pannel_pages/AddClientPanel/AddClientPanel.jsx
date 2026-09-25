@@ -1,22 +1,11 @@
 import { useState, useContext } from "react";
 import { ArrowLeft, User, Mail, Phone, FileText, Info } from "lucide-react";
-import {
-  doc,
-  setDoc,
-  updateDoc,
-  query,
-  collection,
-  where,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Input from "../../components/Input/Input";
 import "./AddClientPanel.css";
 import { X } from "lucide-react";
 
-const AddClientPanel = ({ onClose, editMode = false, clientData = null }) => {
+const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSuccess }) => {
   const [formData, setFormData] = useState({
     fullName: editMode && clientData ? clientData.name || "" : "",
     email: editMode && clientData ? clientData.email || "" : "",
@@ -85,73 +74,53 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null }) => {
     setErrors({});
 
     try {
-      const effectiveEmail = getEffectiveUserEmail(user);
-      const cleanedPhone = formData.phone
-        .replace(/\s+/g, "")
-        .replace(/[-()+]/g, "");
+      const token = localStorage.getItem("authToken");
+      const cleanedPhone = formData.phone.replace(/\s+/g, "").replace(/[-()+]/g, "");
+      const payload = {
+        name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: cleanedPhone,
+        address: formData.address.trim() || "",
+        status: formData.status,
+        notes: formData.notes.trim() || "",
+      };
+
+      let res, data;
 
       if (editMode && clientData) {
-        // --- EDIT MODE: update existing client document ---
-        const clientRef = doc(db, "fashiontally_clients", clientData.id);
-        await updateDoc(clientRef, {
-          name: formData.fullName.trim(),
-          email: formData.email.trim(),
-          phone: cleanedPhone,
-          address: formData.address.trim() || "",
-          status: formData.status,
-          notes: formData.notes.trim() || "",
-          updatedAt: new Date(),
-        });
-      } else {
-        // --- CREATE MODE: check duplicate then create ---
-        const makeClientId = (email, phone) =>
-          `${encodeURIComponent(email)}__${phone}`;
-        const tenantDocId = makeClientId(effectiveEmail, cleanedPhone);
-
-        const dupQuery = query(
-          collection(db, "fashiontally_clients"),
-          where("userEmail", "==", effectiveEmail),
-          where("phone", "==", cleanedPhone)
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/client/edit/${clientData.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          }
         );
-        const dupSnap = await getDocs(dupQuery);
-
-        if (!dupSnap.empty) {
-          setErrors({
-            phone: "You already have a client with this phone number",
-          });
-          setIsSubmitting(false);
-          return;
-        }
-
-        const clientData = {
-          name: formData.fullName.trim(),
-          email: formData.email.trim(),
-          phone: cleanedPhone,
-          address: formData.address.trim() || "",
-          status: formData.status,
-          notes: formData.notes.trim() || "",
-          userEmail: effectiveEmail,
-          tailorId: "",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          totalSpent: 0,
-          lastOrder: null,
-          hasMeasurements: false,
-          measurementsUpdatedAt: null,
-        };
-
-        await setDoc(doc(db, "fashiontally_clients", tenantDocId), clientData);
+      } else {
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/client/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          }
+        );
       }
 
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        address: "",
-        status: "Active",
-        notes: "",
-      });
+      data = await res.json();
 
+      if (!data.success) {
+        const msg = data.error || "Failed to save client";
+        if (msg.toLowerCase().includes("phone")) {
+          setErrors({ phone: msg });
+        } else {
+          setErrors({ submit: msg });
+        }
+        return;
+      }
+
+      setFormData({ fullName: "", email: "", phone: "", address: "", status: "Active", notes: "" });
+      onSuccess && onSuccess();
       onClose();
     } catch (error) {
       console.error("Error saving client:", error);

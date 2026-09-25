@@ -11,12 +11,6 @@ import {
   FileText,
 } from "lucide-react";
 import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  deleteDoc,
   doc,
   getDoc,
 } from "firebase/firestore";
@@ -54,69 +48,34 @@ const Invoice = () => {
 
   const { user } = useContext(NewAuthContext);
 
-  // Fetch invoices from Firebase with real-time updates
-  useEffect(() => {
-    if (!db || !user?.email) {
-      setLoading(false);
-      setInvoices([]);
-      return;
-    }
-
+  const fetchInvoices = async () => {
+    if (!user?.email) { setLoading(false); setInvoices([]); return; }
     setLoading(true);
-
-    // Get effective email (main admin's email for team members)
-    const effectiveEmail = getEffectiveUserEmail(user);
-
-    // Set up the query to filter by effective user's email
-    const invoicesQuery = query(
-      collection(db, "fashiontally_invoices"),
-      where("userEmail", "==", effectiveEmail),
-      orderBy("createdAt", "desc")
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      invoicesQuery,
-      (snapshot) => {
-        const invoicesData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            invoiceNumber: data.invoiceNumber,
-            clientName: data.clientName,
-            clientEmail: data.clientEmail,
-            clientPhone: data.clientPhone,
-            amount: data.amount,
-            subtotal: data.subtotal,
-            discountAmount: data.discountAmount || 0,
-            taxAmount: data.taxAmount || 0,
-            amountPaid: data.amountPaid || 0,
-            balanceDue: data.balanceDue ?? data.amount ?? 0,
-            status: data.status,
-            paymentMethod: data.paymentMethod,
-            createdDate: toDate(data.createdDate),
-            dueDate: toDate(data.dueDate),
-            items: data.items || [],
-            notes: data.notes || "",
-            discount: data.discount || 0,
-            taxRate: data.taxRate || 7.5,
-            createdAt: toDate(data.createdAt),
-            updatedAt: toDate(data.updatedAt),
-          };
-        });
-
-        setInvoices(invoicesData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching invoices:", error);
-        setLoading(false);
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/invoice/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setInvoices(data.data.map((inv) => ({
+          ...inv,
+          id: inv.id || inv._id,
+          createdDate: toDate(inv.createdDate || inv.createdAt),
+          dueDate: toDate(inv.dueDate),
+          createdAt: toDate(inv.createdAt),
+          updatedAt: toDate(inv.updatedAt),
+        })));
       }
-    );
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
-  }, [user?.email]);
+  useEffect(() => { fetchInvoices(); }, [user?.email]);
 
   // Calculate stats from real data
   const stats = {
@@ -156,15 +115,20 @@ const Invoice = () => {
   };
 
   const handleDeleteInvoice = async (invoiceId) => {
-    if (!db || !user?.email) {
-      console.error("Database not available or user not authenticated");
-      return;
-    }
-
+    if (!user?.email) return;
     if (window.confirm("Are you sure you want to delete this invoice?")) {
       try {
-        await deleteDoc(doc(db, "fashiontally_invoices", invoiceId));
-        console.log("Invoice deleted successfully");
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/invoice/delete/${invoiceId}`,
+          { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          fetchInvoices();
+        } else {
+          alert("Failed to delete invoice. Please try again.");
+        }
       } catch (error) {
         console.error("Error deleting invoice:", error);
         alert("Failed to delete invoice. Please try again.");
@@ -248,25 +212,23 @@ const Invoice = () => {
   };
 
   // Filter invoices based on search and status
-  const filteredInvoices = invoices
-    .filter((invoice) => {
-      const matchesSearch =
-        invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredInvoices = invoices.filter((invoice) => {
+    const matchesSearch =
+      invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus =
-        filterStatus === "all" ||
-        (filterStatus === "paid" && invoice.status === "Paid") ||
-        (filterStatus === "pending" && invoice.status === "Unpaid") ||
-        (filterStatus === "overdue" &&
-          invoice.status === "Unpaid" &&
-          invoice.dueDate &&
-          invoice.dueDate < new Date());
+    const matchesStatus =
+      filterStatus === "all" ||
+      (filterStatus === "paid" && invoice.status === "Paid") ||
+      (filterStatus === "pending" && invoice.status === "Unpaid") ||
+      (filterStatus === "overdue" &&
+        invoice.status === "Unpaid" &&
+        invoice.dueDate &&
+        invoice.dueDate < new Date());
 
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return matchesSearch && matchesStatus;
+  });
 
   const handleFilterSelect = (status) => {
     setFilterStatus(status);
@@ -613,25 +575,20 @@ const Invoice = () => {
               borderBottom: "2px solid #d1d5db",
               padding: "12px 16px",
               display: "flex",
-              flexDirection: "column",
-              gap: "8px",
+              gap: "64px",
               backgroundColor: "#f9fafb",
             }}
           >
-            {data.status === "Partially Paid" && (
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                <span style={{ fontWeight: "bold", color: "#16a34a" }}>Amount Paid</span>
-                <span style={{ fontWeight: "bold", color: "#16a34a" }}>
-                  ₦{(data.amountPaid || 0).toLocaleString()}
-                </span>
-              </div>
-            )}
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontWeight: "bold", fontSize: "16px" }}>Balance Due</span>
-              <span style={{ fontWeight: "bold", fontSize: "16px", color: data.status === "Partially Paid" ? "#dc2626" : "#1f2937" }}>
-                ₦{(data.balanceDue ?? data.amount)?.toLocaleString()}
-              </span>
-            </div>
+            <span style={{ fontWeight: "bold" }}>Balance Due</span>
+            <span
+              style={{
+                width: "160px",
+                textAlign: "right",
+                fontWeight: "bold",
+              }}
+            >
+              ₦{data.amount?.toLocaleString()}
+            </span>
           </div>
         </div>
 
@@ -1007,6 +964,7 @@ const Invoice = () => {
           onClose={handleCloseCreateInvoice}
           selectedInvoice={selectedInvoice}
           isEditMode={isEditMode}
+          onSuccess={fetchInvoices}
         />
       </SlideInMenu>
 
@@ -1171,11 +1129,6 @@ const Invoice = () => {
                   <div className="inv_invoice_amount">
                     {formatCurrency(invoice.amount)}
                   </div>
-                  {invoice.status === "Partially Paid" && (
-                    <div className="inv_invoice_balance">
-                      Balance: {formatCurrency(invoice.balanceDue)}
-                    </div>
-                  )}
                   <div
                     className={`inv_status_badge ${(invoice.status ?? "")
                       .toLowerCase()

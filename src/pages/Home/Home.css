@@ -1559,6 +1559,13 @@
 }
 
 /* Play Store Download Button */
+.hero-store-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .hero-download {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
@@ -1663,23 +1670,6 @@
 
 .playstore-button:hover .playstore-icon {
   transform: rotate(360deg) scale(1.1);
-}
-
-.appstore-button {
-  background: #000000;
-  border-color: #444;
-}
-
-.appstore-button:hover {
-  background: #1a1a1a;
-}
-
-.store-buttons-row {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
 }
 
 .playstore-text {

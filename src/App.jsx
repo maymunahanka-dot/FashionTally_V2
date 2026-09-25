@@ -18,7 +18,6 @@ import { SubscriptionDemo } from "./components/SubscriptionDemo";
 import SubscriptionCallback from "./pages/SubscriptionCallback/SubscriptionCallback";
 import ScheduleDemo from "./pages/ScheduleDemo/ScheduleDemo";
 import Loading from "./components/Loading/Loading";
-import WhatsAppTest from "./components/WhatsAppTest";
 
 function App() {
   const { user, loading } = useNewAuth();
@@ -47,9 +46,7 @@ function App() {
   }
 
   return (
-    <>
-      {/* <WhatsAppTest/> */}
-      <Routes>
+    <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
@@ -80,7 +77,6 @@ function App() {
         element={currentUser ? <SubscriptionDemo /> : <Navigate to="/login" />}
       />
     </Routes>
-    </>
   );
 }
 

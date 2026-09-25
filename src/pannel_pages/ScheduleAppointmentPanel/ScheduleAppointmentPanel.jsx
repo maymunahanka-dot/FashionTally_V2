@@ -1,20 +1,12 @@
 import { useState, useContext } from "react";
 import { X, Calendar, ExternalLink } from "lucide-react";
-import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import { useTheme } from "../../contexts/ThemeContext";
 import "./ScheduleAppointmentPanel.css";
 
-const ScheduleAppointmentPanel = ({
-  onClose,
-  onSubmit,
-  editingAppointment,
-  editMode,
-}) => {
+const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editMode, onSuccess }) => {
   const { isDark } = useTheme();
   const { user } = useContext(NewAuthContext);
   const [loading, setLoading] = useState(false);
@@ -92,41 +84,50 @@ const ScheduleAppointmentPanel = ({
     setLoading(true);
 
     try {
-      const appointmentData = {
+      const token = localStorage.getItem("authToken");
+      const appointmentPayload = {
         clientName: formData.clientName || "Unknown Client",
         date: formData.date,
         time: formData.time,
         purpose: formData.appointmentType,
+        appointmentType: formData.appointmentType,
         duration: formData.duration,
         status: "Scheduled",
         notes: formData.notes,
         location: formData.location,
         phone: formData.phone,
         email: formData.email,
-        userEmail: getEffectiveUserEmail(user),
-        updatedAt: new Date(),
       };
 
+      let res;
       if (editMode && editingAppointment?.id) {
-        // Update existing appointment
-        await updateDoc(
-          doc(db, "fashiontally_appointments", editingAppointment.id),
-          appointmentData
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/appointment/edit/${editingAppointment.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(appointmentPayload),
+          }
         );
-        console.log("Appointment updated successfully");
       } else {
-        // Create new appointment
-        appointmentData.createdAt = new Date();
-        await addDoc(
-          collection(db, "fashiontally_appointments"),
-          appointmentData
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/appointment/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(appointmentPayload),
+          }
         );
-        console.log("Appointment created successfully");
       }
+
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || "Failed to save appointment");
+
+      onSuccess && onSuccess();
 
       // Store appointment data for Google Calendar
       setSavedAppointmentData({
-        ...appointmentData,
+        ...appointmentPayload,
         appointmentTitle: formData.appointmentTitle,
       });
 
@@ -134,7 +135,7 @@ const ScheduleAppointmentPanel = ({
       setShowCalendarDialog(true);
 
       if (onSubmit) {
-        onSubmit(appointmentData);
+        onSubmit(appointmentPayload);
       }
     } catch (error) {
       console.error("Error saving appointment:", error);
@@ -183,7 +184,7 @@ const ScheduleAppointmentPanel = ({
         return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
       };
 
-      const googleCalendarUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(
+      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
         `${
           savedAppointmentData.appointmentTitle || savedAppointmentData.purpose
         } - ${savedAppointmentData.clientName}`
@@ -199,8 +200,8 @@ const ScheduleAppointmentPanel = ({
         }`
       )}&location=${encodeURIComponent(savedAppointmentData.location)}`;
 
-      // Use location.href to avoid popup blocking on mobile
-      window.location.href = googleCalendarUrl;
+      // Open Google Calendar in new tab
+      window.open(googleCalendarUrl, "_blank");
     }
 
     setShowCalendarDialog(false);

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Input from "../../../components/Input";
 import Button from "../../../components/button/Button";
 import SearchableSelect from "../../../components/SearchableSelect";
-import { uploadToCloudinary } from "../../../utils/cloudinaryUpload";
 
 // Business categories
 const businessCategories = [
@@ -87,7 +86,7 @@ const Step3BusinessInfo = ({
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [customCategory, setCustomCategory] = useState("");
   const [showCustomCategory, setShowCustomCategory] = useState(false);
   const fileInputRef = useRef(null);
@@ -139,47 +138,27 @@ const Step3BusinessInfo = ({
 
   const handleSubmit = async () => {
     if (validateStep3()) {
-      // Logo is already uploaded to Cloudinary in handleLogoChange
-      // Just proceed with signup
-      onSubmit();
+      setIsSubmitting(true);
+      try {
+        await onSubmit();
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleLogoChange = async (file) => {
     if (file && file.type.startsWith("image/")) {
-      // Check file size (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         alert("File size must be less than 10MB");
         return;
       }
 
-      // Create preview URL immediately
+      // Preview locally — backend will upload to Cloudinary
       const previewUrl = URL.createObjectURL(file);
       setLogoPreview(previewUrl);
-
-      // Store file info
-      onInputChange("logo", file.name);
       onInputChange("logoFile", file);
-
-      // Upload to Cloudinary immediately
-      setIsUploading(true);
-      try {
-        const cloudinaryUrl = await uploadToCloudinary(file);
-
-        // Update formData with Cloudinary URL
-        onInputChange("logoUrl", cloudinaryUrl);
-        onInputChange("logo", cloudinaryUrl);
-
-        console.log("Logo uploaded successfully:", cloudinaryUrl);
-      } catch (error) {
-        console.error("Error uploading logo:", error);
-        setErrors({ logo: "Failed to upload logo. Please try again." });
-        // Remove preview on error
-        removeLogo();
-      } finally {
-        setIsUploading(false);
-      }
     } else if (file) {
       alert("Please select a valid image file (PNG, JPG, GIF)");
     }
@@ -212,12 +191,10 @@ const Step3BusinessInfo = ({
   };
 
   const removeLogo = () => {
-    // Clean up the preview URL to prevent memory leaks
     if (logoPreview) {
       URL.revokeObjectURL(logoPreview);
     }
     setLogoPreview(null);
-    onInputChange("logo", "");
     onInputChange("logoFile", null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -237,9 +214,7 @@ const Step3BusinessInfo = ({
     formData.businessName &&
     formData.category &&
     formData.country
-  );
-
-  return (
+  );  return (
     <>
       <div className="n_s_u_s-s-header">
         <div className="n_s_u_s-s-header-l-s">
@@ -387,14 +362,7 @@ const Step3BusinessInfo = ({
                   alt="Logo preview"
                   className="n_s_u_logo-preview"
                 />
-                {isUploading && (
-                  <div className="n_s_u_logo-upload-overlay">
-                    <div className="n_s_u_logo-upload-spinner"></div>
-                    <p className="n_s_u_logo-upload-text">Uploading...</p>
-                  </div>
-                )}
-                {!isUploading && (
-                  <div className="n_s_u_logo-preview-overlay">
+                <div className="n_s_u_logo-preview-overlay">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -420,7 +388,6 @@ const Step3BusinessInfo = ({
                     </button>
                     <p className="n_s_u_logo-change-text">Click to change</p>
                   </div>
-                )}
               </div>
             ) : (
               <div className="n_s_u_logo-upload-content">
@@ -454,12 +421,10 @@ const Step3BusinessInfo = ({
             type="submit"
             variant="primary"
             fullWidth
-            disabled={!isFormValid || isUploading}
-            className={
-              isFormValid && !isUploading ? "" : "n_s_u_s-s-btn-inactive"
-            }
+            disabled={!isFormValid || isSubmitting}
+            className={isFormValid && !isSubmitting ? "" : "n_s_u_s-s-btn-inactive"}
           >
-            {isUploading ? "Uploading..." : "Complete Signup"}
+            {isSubmitting ? "Creating Account..." : "Complete Signup"}
           </Button>
         </div>
 

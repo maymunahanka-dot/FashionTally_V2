@@ -7,7 +7,6 @@ import Input from "../../../components/Input";
 import Button from "../../../components/button/Button";
 import OTPVerificationModal from "../../../components/OTPVerificationModal/OTPVerificationModal";
 import toast from "react-hot-toast";
-import { sendOTP, generateOTP } from "../../../utils/emailService";
 
 const Step1PersonalInfo = ({
   formData,
@@ -65,28 +64,32 @@ const Step1PersonalInfo = ({
 
   const handleNext = async () => {
     if (validateStep1()) {
-      const otp = generateOTP();
-      setGeneratedOTP(otp);
+      // Show OTP modal immediately
       setShowOTPModal(true);
       setIsSendingOTP(true);
 
       try {
-        const result = await sendOTP({
-          mail: formData.email,
-          name: formData.name,
-          otp,
-        });
+        // Send OTP via backend — backend generates OTP and sends via email
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/auth/send-email-otp`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: formData.email }),
+          }
+        );
+        const data = await res.json();
 
-        if (result.success) {
+        if (data.success) {
+          setGeneratedOTP(data.otp); // store OTP returned from backend
           toast.success("OTP sent to your email!");
-          console.log("✅ OTP sent successfully");
         } else {
-          throw new Error(result.error || "Failed to send OTP");
+          throw new Error(data.message || "Failed to send OTP");
         }
       } catch (error) {
         console.error("❌ Error sending OTP:", error);
         toast.error("Failed to send OTP. Please try again.");
-        console.log("🔐 Generated OTP (fallback):", otp);
+        setShowOTPModal(false);
       } finally {
         setIsSendingOTP(false);
       }
@@ -282,7 +285,7 @@ const Step1PersonalInfo = ({
         message={
           isSendingOTP
             ? "Sending verification code..."
-            : `We've sent a verification code to ${formData.email}. Please enter it below.`
+            : `We've sent a verification code to your email (${formData.email}). Please enter it below.`
         }
         otpLength={6}
       />

@@ -18,6 +18,7 @@ const NewLogin = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [googleOnlyError, setGoogleOnlyError] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -25,12 +26,13 @@ const NewLogin = () => {
       [field]: value,
     }));
 
-    // Clear error when user starts typing
+    // Clear errors when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+    // Dismiss Google-only banner when user edits email or password
+    if (field === "email" || field === "password") {
+      setGoogleOnlyError(false);
     }
   };
 
@@ -73,6 +75,7 @@ const NewLogin = () => {
 
     setLoading(true);
     setErrors({});
+    setGoogleOnlyError(false);
 
     try {
       const result = await signInWithEmail(
@@ -80,9 +83,11 @@ const NewLogin = () => {
         formData.password,
         formData.rememberMe
       );
-      if (result.success) {
-        // Navigation is handled in the context
-        console.log("Email sign-in successful");
+      if (!result.success) {
+        // Detect Google-only account error — show inline hint instead of just toast
+        if (result.error && result.error.includes('Google Sign-In')) {
+          setGoogleOnlyError(true);
+        }
       }
     } catch (error) {
       console.error("Email sign-in error:", error);
@@ -124,6 +129,21 @@ const NewLogin = () => {
           <form onSubmit={handleSubmit}>
             {errors.general && (
               <div className="new-login-error-message">{errors.general}</div>
+            )}
+
+            {googleOnlyError && (
+              <div className="new-login-google-only-error">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" stroke="#e67e22" strokeWidth="2"/>
+                  <path d="M12 8v4M12 16h.01" stroke="#e67e22" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600 }}>This account uses Google Sign-In</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '13px' }}>
+                    Please use the <strong>Continue with Google</strong> button below.
+                  </p>
+                </div>
+              </div>
             )}
 
             <Input

@@ -1040,3 +1040,95 @@
 .progress_fill[style*="width: 100%"] {
   background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
 }
+
+/* Tabs */
+.sub_tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 24px 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.sub_tab_btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+.sub_tab_btn:hover { color: var(--text-primary); }
+.sub_tab_btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* Payments Tab */
+.sub_payments_tab { display: flex; flex-direction: column; gap: 12px; }
+
+.sub_payments_loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.sub_no_payments {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  text-align: center;
+}
+.sub_no_payments_icon { color: var(--text-tertiary); }
+.sub_no_payments h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.sub_no_payments p { margin: 0; font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+.sub_payments_list { display: flex; flex-direction: column; gap: 10px; }
+
+.sub_payment_card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  transition: box-shadow 0.2s;
+}
+.sub_payment_card:hover { box-shadow: var(--shadow-sm); }
+
+.sub_payment_icon_wrap { flex-shrink: 0; }
+.sub_payment_icon.success { color: #10b981; }
+.sub_payment_icon.failed { color: #ef4444; }
+
+.sub_payment_info { flex: 1; min-width: 0; }
+.sub_payment_plan { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.sub_payment_date { margin: 0 0 2px; font-size: 12px; color: var(--text-secondary); }
+.sub_payment_ref { margin: 0; font-size: 11px; color: var(--text-tertiary); font-family: monospace; }
+
+.sub_payment_right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.sub_payment_amount { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.sub_payment_status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+.sub_payment_status.success { background: #dcfce7; color: #16a34a; }
+.sub_payment_status.failed { background: #fee2e2; color: #dc2626; }
+
+[data-theme="dark"] .sub_payment_status.success { background: rgba(16,185,129,0.15); color: #34d399; }
+[data-theme="dark"] .sub_payment_status.failed { background: rgba(239,68,68,0.15); color: #f87171; }

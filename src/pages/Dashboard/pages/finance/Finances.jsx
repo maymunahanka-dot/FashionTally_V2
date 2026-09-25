@@ -1,26 +1,9 @@
 import { useState, useEffect, useContext } from "react";
 import {
-  Search,
-  Filter,
-  Plus,
-  Download,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  Wallet,
+  Search, Filter, Plus, Download,
+  ArrowUpRight, ArrowDownRight, TrendingUp, Wallet,
 } from "lucide-react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import Button from "../../../../components/button/Button";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import AddTransactionPanel from "../../../../pannel_pages/AddTransactionPanel";
@@ -43,104 +26,39 @@ const Finances = () => {
 
   const { user } = useContext(NewAuthContext);
 
-  // Fetch transactions from Firebase with real-time updates
-  useEffect(() => {
-    if (!db || !user?.email) {
-      setLoading(false);
-      setTransactions([]);
-      return;
-    }
-
+  const fetchTransactions = async () => {
+    if (!user?.email) { setLoading(false); setTransactions([]); return; }
     setLoading(true);
-
-    // Get effective email (main admin's email for team members)
-    const effectiveEmail = getEffectiveUserEmail(user);
-
-    // Set up the query to filter by effective user's email
-    const transactionsQuery = query(
-      collection(db, "fashiontally_transactions"),
-      where("userEmail", "==", effectiveEmail),
-      orderBy("createdAt", "desc")
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      transactionsQuery,
-      (snapshot) => {
-        console.log(
-          "Firebase snapshot received:",
-          snapshot.docs.length,
-          "documents"
-        );
-
-        const transactionsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          console.log("Processing transaction:", doc.id, data);
-          console.log("Transaction type check:", {
-            originalType: data.type,
-            isIncomeCheck: data.type === "Income",
-            isExpenseCheck: data.type === "Expense",
-          });
-
-          return {
-            id: doc.id,
-            title: data.description || "Transaction",
-            type: data.type === "Income" ? "Sales" : "Purchase",
-            date: (() => {
-              let d = data.date;
-              if (!d) return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
-              if (typeof d.toDate === "function") d = d.toDate();
-              else if (d._seconds !== undefined) d = new Date(d._seconds * 1000);
-              else d = new Date(d);
-              return isNaN(d) ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-            })(),
-            category: data.category || "Other",
-            amount: data.amount || 0,
-            isIncome: data.type === "Income",
-            description: data.description || "",
-            vendor: data.type === "Income" ? "Customer Payment" : "Vendor",
-            paymentMethod: data.paymentMethod || "Cash",
-            referenceNumber:
-              data.reference || `TXN-${doc.id.slice(-6).toUpperCase()}`,
-            status: "completed",
-            notes: data.notes || "",
-            createdAt: data.createdAt?.toDate?.() ?? (data.createdAt?._seconds ? new Date(data.createdAt._seconds * 1000) : new Date(data.createdAt || Date.now())),
-            updatedAt: data.updatedAt?.toDate?.() ?? (data.updatedAt?._seconds ? new Date(data.updatedAt._seconds * 1000) : new Date(data.updatedAt || Date.now())),
-            // Store original data for editing
-            originalData: data,
-          };
-        });
-
-        console.log("Processed transactions:", transactionsData);
-
-        // Debug: Log transaction type distribution
-        const incomeTransactions = transactionsData.filter(
-          (t) => t.isIncome === true
-        );
-        const expenseTransactions = transactionsData.filter(
-          (t) => t.isIncome === false
-        );
-        console.log("Transaction distribution:", {
-          total: transactionsData.length,
-          income: incomeTransactions.length,
-          expenses: expenseTransactions.length,
-          incomeTypes: incomeTransactions.map((t) => t.originalData?.type),
-          expenseTypes: expenseTransactions.map((t) => t.originalData?.type),
-        });
-
-        setTransactions(transactionsData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching transactions:", error);
-        setLoading(false);
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/transaction/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setTransactions(data.data.map((t) => ({
+          ...t,
+          id: t.id || t._id,
+          title: t.description || "Transaction",
+          type: t.type === "Income" ? "Sales" : "Purchase",
+          isIncome: t.type === "Income",
+          vendor: t.type === "Income" ? "Customer Payment" : "Vendor",
+          referenceNumber: t.reference || `TXN-${(t.id || "").slice(-6).toUpperCase()}`,
+          status: "completed",
+          createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+          updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
+          date: t.date ? new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        })));
       }
-    );
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
-  }, [user?.email]);
+  useEffect(() => { fetchTransactions(); }, [user?.email]);
 
   // Calculate stats from real data
   const calculateStats = () => {
@@ -236,16 +154,16 @@ const Finances = () => {
 
   const handleDeleteTransaction = async (transactionId, transactionTitle) => {
     if (!user?.email) return;
-
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete the transaction "${transactionTitle}"? This action cannot be undone.`
-    );
-
-    if (!confirmDelete) return;
-
+    if (!window.confirm(`Are you sure you want to delete "${transactionTitle}"?`)) return;
     try {
-      await deleteDoc(doc(db, "fashiontally_transactions", transactionId));
-      console.log("Transaction deleted successfully");
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/transaction/delete/${transactionId}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) fetchTransactions();
+      else alert("Failed to delete transaction. Please try again.");
     } catch (error) {
       console.error("Error deleting transaction:", error);
       alert("Failed to delete transaction. Please try again.");
@@ -632,6 +550,7 @@ const Finances = () => {
             onSubmit={handleTransactionSaved}
             editingTransaction={editingTransaction}
             editMode={editMode}
+            onSuccess={fetchTransactions}
           />
         </SlideInMenu>
 

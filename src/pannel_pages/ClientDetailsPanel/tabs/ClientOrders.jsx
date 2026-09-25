@@ -1,9 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { Plus, Package } from "lucide-react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../../backend/firebase.config";
 import NewAuthContext from "../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../utils/teamUtils";
 import "./ClientOrders.css";
 
 const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
@@ -11,83 +8,37 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
   const [loading, setLoading] = useState(true);
   const { user } = useContext(NewAuthContext);
 
-  // Load orders for this client
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!client?.id || !user?.email) {
-        setLoading(false);
-        return;
-      }
-
+      if (!client?.id || !user?.email) { setLoading(false); return; }
       setLoading(true);
-
       try {
-        // Get effective email (main admin's email for team members)
-        const effectiveEmail = getEffectiveUserEmail(user);
-
-        // Query orders by userEmail only (no composite index needed)
-        const ordersQuery = query(
-          collection(db, "fashiontally_designs"),
-          where("userEmail", "==", effectiveEmail)
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/order/list`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        const snapshot = await getDocs(ordersQuery);
-
-        const allOrders = snapshot.docs.map((doc) => {
-          const data = doc.data();
-
-          const convertDate = (dateField) => {
-            if (!dateField) return new Date();
-            if (dateField.toDate && typeof dateField.toDate === "function") return dateField.toDate();
-            if (dateField instanceof Date) return dateField;
-            return new Date(dateField);
-          };
-
-          return {
-            id: doc.id,
-            title: data.name || "Untitled Order",
-            date: convertDate(data.createdAt).toLocaleDateString(),
-            amount: `₦${(data.price || 0).toLocaleString()}`,
-            status:
-              data.status === "Active" ? "In Progress" :
-              data.status === "Archived" ? "Completed" : "Pending",
-            originalData: data,
-            createdAt: convertDate(data.createdAt),
-            dueDate: convertDate(data.dueDate),
-            category: data.category || "Others",
-            description: data.description || "",
-            measurements: data.measurements || {},
-            images: data.images || [],
-            clientId: data.clientId || "",
-            clientName: data.clientName || "",
-            clientEmail: data.clientEmail || "",
-            clientPhone: data.clientPhone || "",
-            price: data.price || 0,
-            basePrice: data.basePrice || 0,
-            additionalItems: data.additionalItems || [],
-            depositPaid: data.depositPaid || 0,
-            balanceDue: data.balanceDue || 0,
-          };
-        });
-
-        // Filter by client ID, include orders (type === "order") and legacy no-type records
-        const ordersData = allOrders
-          .filter((order) => order.clientId === client.id)
-          .filter((order) => !order.originalData?.type || order.originalData?.type === "order")
-          .sort((a, b) => b.createdAt - a.createdAt);
-
-        console.log(
-          `📦 Loaded ${ordersData.length} orders for client:`,
-          client.name
-        );
-        setOrders(ordersData);
+        const data = await res.json();
+        if (data.success) {
+          const clientOrders = data.data
+            .filter((o) => o.clientId === client.id)
+            .map((o) => ({
+              ...o,
+              title: o.garmentDescription || o.garmentType || "Untitled Order",
+              date: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "",
+              amount: `₦${(o.price || 0).toLocaleString()}`,
+              status: o.status === "in-progress" ? "In Progress" : o.status === "Completed" ? "Completed" : "Pending",
+              createdAt: o.createdAt ? new Date(o.createdAt) : new Date(),
+            }))
+            .sort((a, b) => b.createdAt - a.createdAt);
+          setOrders(clientOrders);
+        }
       } catch (error) {
         console.error("Error fetching client orders:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchOrders();
   }, [client?.id, user?.email]);
 

@@ -55,7 +55,7 @@ const contactMethods = [
   {
     title: "Email Us",
     description: "Reach out for support, sales, or general inquiries",
-    contact: "fashiontallyy@gmail.com",
+    contact: "support@fashiontally.com",
     availability: "24/7",
     responseTime: "Within 24hrs",
     action: "Send Email",
@@ -99,7 +99,7 @@ const contactMethods = [
   {
     title: "LinkedIn",
     description: "Professional network and business updates",
-    contact: "fashiontally",
+    contact: "@fashiontally",
     availability: "Daily posts",
     responseTime: "DMs open",
     action: "Visit LinkedIn",
@@ -190,22 +190,35 @@ const Contact = () => {
     priority: "medium",
   });
 
+  const [submitting, setSubmitting] = useState(false);
+
   useScrollAnimation();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      company: "",
-      phone: "",
-      subject: "",
-      message: "",
-      priority: "medium",
-    });
-    alert("Message sent successfully! We'll get back to you within 24 hours.");
+    setSubmitting(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/contact/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setFormData({ name: "", email: "", company: "", phone: "", subject: "", message: "", priority: "medium" });
+        alert("Message sent successfully! We'll get back to you within 24 hours.");
+      } else {
+        alert(data.error || "Failed to send message. Please try again.");
+      }
+    } catch (err) {
+      console.error("Contact form error:", err);
+      alert("Failed to send message. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const toggleFaq = (index) => {
@@ -601,9 +614,9 @@ const Contact = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="contact_form-submit">
+                  <button type="submit" className="contact_form-submit" disabled={submitting}>
                     <FaPaperPlane size={16} />
-                    Send Message
+                    {submitting ? "Sending..." : "Send Message"}
                   </button>
                 </form>
               </div>
@@ -849,9 +862,6 @@ const Contact = () => {
           <div className="contact_footer-bottom">
             <p className="contact_copyright">
               © 2025 FashionTally. All rights reserved.
-            </p>
-            <p className="contact_powered_by">
-              Product of <span style={{ color: "#c9a227", fontWeight: 600 }}>TALLY</span> AFRICA LTD
             </p>
             <div className="contact_footer-legal">
               <a href="/privacy-policy">Privacy Policy</a>

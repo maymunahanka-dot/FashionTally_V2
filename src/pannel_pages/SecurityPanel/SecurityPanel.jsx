@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
-import {
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-} from "firebase/auth";
-import { auth } from "../../backend/firebase.config";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import {
   getLoginTypeFromUserData,
@@ -97,50 +91,39 @@ const SecurityPanel = ({ onClose }) => {
     setErrors({});
 
     try {
-      // Re-authenticate user with current password
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        passwordData.currentPassword
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/change-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            currentPassword: passwordData.currentPassword,
+            newPassword: passwordData.newPassword,
+          }),
+        }
       );
-      await reauthenticateWithCredential(auth.currentUser, credential);
+      const data = await res.json();
 
-      // Update password
-      await updatePassword(auth.currentUser, passwordData.newPassword);
+      if (!data.success) {
+        const msg = data.error || "Failed to update password";
+        if (msg.toLowerCase().includes("current password")) {
+          setErrors({ currentPassword: msg });
+        } else {
+          setErrors({ general: msg });
+        }
+        return;
+      }
 
-      // Reset form and show success message
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setSuccessMessage("Password updated successfully!");
-
-      // Auto-close panel after 2 seconds
-      setTimeout(() => {
-        onClose();
-      }, 2000);
+      setTimeout(() => onClose(), 2000);
     } catch (error) {
       console.error("Error updating password:", error);
-
-      let errorMessage = "Failed to update password. Please try again.";
-
-      if (error.code === "auth/wrong-password") {
-        errorMessage = "Current password is incorrect";
-        setErrors({ currentPassword: errorMessage });
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "New password is too weak";
-        setErrors({ newPassword: errorMessage });
-      } else if (error.code === "auth/requires-recent-login") {
-        errorMessage =
-          "Please log out and log back in before changing your password";
-        setErrors({ general: errorMessage });
-      } else if (error.code === "auth/too-many-requests") {
-        errorMessage = "Too many failed attempts. Please try again later";
-        setErrors({ general: errorMessage });
-      } else {
-        setErrors({ general: errorMessage });
-      }
+      setErrors({ general: "Failed to update password. Please try again." });
     } finally {
       setIsUpdating(false);
     }

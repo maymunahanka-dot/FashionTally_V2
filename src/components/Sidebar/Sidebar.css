@@ -1,7 +1,7 @@
 /* ===== SIDEBAR COMPONENT USING GLOBAL THEME SYSTEM ===== */
 
 .sidebar {
-  width: 280px;
+  width: 220px;
   height: 100vh;
   background-color: var(--bg-primary);
   border-right: 1px solid var(--border-primary);
@@ -118,7 +118,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1rem 0;
+  padding: 1rem 0 0 0;
 }
 
 .sidebar-menu {
@@ -148,7 +148,7 @@
   transition: all 0.2s ease;
   border-radius: 0;
   font-family: inherit;
-  padding: 20px 20px;
+  padding: 8px 14px;
 }
 
 .sidebar-link:hover {
@@ -178,7 +178,7 @@
   color: #ffffff !important;
   font-weight: 600;
   border-radius: 15px;
-  padding: 25px 20px;
+  padding: 16px 14px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -196,8 +196,8 @@
 }
 
 .sidebar-icon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   transition: color 0.3s ease;
 }
@@ -207,7 +207,7 @@
   text-align: left;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   font-weight: 300;
-  font-size: 18px;
+  font-size: 13px;
   color: var(--primary-color);
   transition: color 0.3s ease;
 }
@@ -224,12 +224,117 @@
 .sidebar-settings {
   margin-top: auto;
   padding: 1rem 15px;
-  border-top: 1px solid var(--border-secondary);
   transition: border-color 0.3s ease;
 }
 
 .sidebar-settings .sidebar-link {
   margin: 0;
+}
+
+/* App Download Buttons */
+.sidebar-app-downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-secondary);
+}
+
+/* Expert Support Button */
+.sidebar-support-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  text-decoration: none;
+  background-color: transparent;
+  border: 1px solid var(--border-primary);
+  margin-bottom: 2px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.sidebar-support-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.sidebar-support-btn:active {
+  transform: translateY(0);
+  opacity: 0.75;
+}
+
+.support-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+.support-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: Arial, sans-serif;
+  white-space: nowrap;
+}
+
+.sidebar-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  text-decoration: none;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+}
+
+body.dark-theme .sidebar-download-btn {
+  background-color: #1e1e1e;
+  border-color: #333333;
+}
+
+.sidebar-download-btn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.sidebar-download-btn:active {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
+.store-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+.store-btn-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.store-btn-sub {
+  font-size: 8px;
+  color: var(--text-secondary);
+  font-family: Arial, sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.store-btn-main {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: Arial, sans-serif;
+  white-space: nowrap;
 }
 
 /* Draggable Lever Handle */
@@ -258,7 +363,7 @@
 }
 
 .sidebar-lever-open {
-  left: 280px;
+  left: 220px;
   transform: translateY(-50%) rotate(180deg);
 }
 

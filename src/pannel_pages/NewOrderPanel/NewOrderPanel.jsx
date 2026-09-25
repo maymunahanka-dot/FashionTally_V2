@@ -1,22 +1,10 @@
 import { useState, useEffect, useContext } from "react";
 import { X } from "lucide-react";
-import {
-  addDoc,
-  collection,
-  doc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Input from "../../components/Input";
 import "./NewOrderPanel.css";
 
-const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
+const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSuccess }) => {
   // Individual useState for each input field
   const [client, setClient] = useState("");
   const [clientName, setClientName] = useState("");
@@ -41,41 +29,22 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
 
   const { user } = useContext(NewAuthContext);
 
-  // Load clients when component mounts
+  // Load clients from backend
   useEffect(() => {
     const loadClients = async () => {
-      if (!user?.email) {
-        console.log("❌ NewOrderPanel: No user email, skipping client load");
-        return;
-      }
-
+      if (!user?.email) return;
       try {
-        console.log("🔄 NewOrderPanel: Loading clients for user:", user.email);
-        // Get effective email (main admin's email for team members)
-        const effectiveEmail = getEffectiveUserEmail(user);
-        console.log("📧 NewOrderPanel: Using effective email:", effectiveEmail);
-
-        const clientsQuery = query(
-          collection(db, "fashiontally_clients"),
-          where("userEmail", "==", effectiveEmail),
-          orderBy("name", "asc")
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/client/list`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        const snapshot = await getDocs(clientsQuery);
-        const clientsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        console.log(
-          "✅ NewOrderPanel: Loaded clients:",
-          clientsData.length,
-          clientsData
-        );
-        setClients(clientsData);
+        const data = await res.json();
+        if (data.success) setClients(data.data);
       } catch (error) {
         console.error("❌ NewOrderPanel: Error loading clients:", error);
       }
     };
-
     loadClients();
   }, [user?.email]);
 
@@ -93,14 +62,14 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
       );
       setOrderType(
         mapCategoryToOrderType(
-          initialData.category || initialData.originalData?.category
+          initialData.garmentType || initialData.category || initialData.originalData?.category
         )
       );
       setDesignStyleName(
-        initialData.title || initialData.originalData?.garmentDescription || initialData.originalData?.name || ""
+        initialData.garmentDescription || initialData.name || initialData.title || initialData.originalData?.name || ""
       );
-      setFabricType(initialData.originalData?.fabric || initialData.originalData?.materials?.[0] || "");
-      setQuantity(String(initialData.originalData?.quantity || initialData.quantity || "1"));
+      setFabricType(initialData.fabric || initialData.originalData?.materials?.[0] || "");
+      setQuantity("8");
       // Convert measurements object to array format
       const existingMeasurements =
         initialData.measurements ||
@@ -121,7 +90,9 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
       );
       setDeliveryDate(
         initialData.dueDate
-          ? initialData.dueDate.toISOString().split("T")[0]
+          ? (initialData.dueDate instanceof Date
+              ? initialData.dueDate.toISOString().split("T")[0]
+              : String(initialData.dueDate).split("T")[0])
           : ""
       );
       setBasePrice(
@@ -135,15 +106,12 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
       );
       setDepositPaid(
         String(
-          initialData.deposit ||
-            initialData.originalData?.deposit ||
-            initialData.depositPaid ||
+          initialData.depositPaid ||
             initialData.originalData?.depositPaid ||
             "0"
         )
       );
       setSpecialInstructions(
-        initialData.specialInstructions || initialData.originalData?.specialInstructions ||
         initialData.description || initialData.originalData?.description || ""
       );
       // Load additional items
@@ -494,78 +462,70 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null }) => {
     setLoading(true);
 
     try {
-      // Prepare additional items for database
-      const preparedAdditionalItems = additionalItems
-        .filter(
-          (item) =>
-            item.name &&
-            item.name.trim() !== "" &&
-            item.price &&
-            item.price.toString().trim() !== ""
-        )
-        .map((item) => ({
-          name: item.name.trim(),
-          price: parseFloat(item.price) || 0,
-        }));
-
-      // Calculate total price including additional items
+      const token = localStorage.getItem("authToken");
       const totalPrice = calculateTotalAmount();
 
-      // Prepare the order data in tally-main format
-      const orderData = {
-        type: "order",
-        name: designStyleName,
-        garmentDescription: designStyleName,
+      // Prepare additional items — strip the local UI `id` field
+      const preparedAdditionalItems = additionalItems
+        .filter((item) => item.name?.trim() && item.price !== "")
+        .map(({ name, price }) => ({
+          name: name.trim(),
+          price: parseFloat(price) || 0,
+        }));
+
+      const orderPayload = {
+        clientId: client || "",
+        clientName: clientName || "",
+        clientPhone: clientPhone || "",
+        clientEmail: clientEmail || "",
         garmentType: mapOrderTypeToCategory(orderType),
-        category: mapOrderTypeToCategory(orderType),
-        orderType: orderType,
-        status: editMode ? (initialData?.originalData?.status || "pending") : "pending",
-        description: specialInstructions || "",
-        specialInstructions: specialInstructions || "",
-        price: totalPrice,
+        garmentDescription: designStyleName,
+        name: designStyleName,
+        fabric: fabricType || "",
+        quantity: parseFloat(quantity) || 1,
+        measurements: prepareMeasurementsForDatabase(measurements),
+        dueDate: deliveryDate || "",
         basePrice: parseFloat(basePrice) || 0,
         additionalItems: preparedAdditionalItems,
+        price: totalPrice,
         deposit: parseFloat(depositPaid) || 0,
         depositPaid: parseFloat(depositPaid) || 0,
         balance: calculateBalance(),
         balanceDue: calculateBalance(),
-        paymentStatus: parseFloat(depositPaid) > 0 ? "partial" : "unpaid",
-        quantity: parseFloat(quantity) || 1,
-        dueDate: deliveryDate || "",
-        orderDate: deliveryDate || "",
-        clientId: client || clientPhone || "",
-        clientName: clientName || "",
-        clientEmail: clientEmail || "",
-        clientPhone: clientPhone || "",
-        color: "",
-        fabric: fabricType || "",
-        measurements: prepareMeasurementsForDatabase(measurements),
-        materials: fabricType ? [fabricType] : [],
-        images: [],
-        notes: specialInstructions || "",
-        userEmail: getEffectiveUserEmail(user),
-        tailorId: getEffectiveUserEmail(user),
-        updatedAt: new Date().toISOString(),
+        specialInstructions: specialInstructions || "",
+        status: "in-progress",
+        paymentStatus: "partial",
       };
 
+      let res;
       if (editMode && initialData?.id) {
-        // Update existing order
-        await updateDoc(
-          doc(db, "fashiontally_designs", initialData.id),
-          orderData
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/order/edit/${initialData.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(orderPayload),
+          }
         );
-        console.log("Order updated successfully");
       } else {
-        // Create new order
-        await addDoc(collection(db, "fashiontally_designs"), orderData);
-        console.log("Order created successfully");
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/order/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(orderPayload),
+          }
+        );
       }
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to save order");
 
       // Reset form only if not in edit mode
       if (!editMode) {
         resetForm();
       }
-
+      onSuccess && onSuccess();
       // Close panel
       onClose();
     } catch (error) {

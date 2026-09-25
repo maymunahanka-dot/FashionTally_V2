@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
 
@@ -17,6 +15,7 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { RiApps2AiLine } from "react-icons/ri";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { IoClose } from "react-icons/io5";
+import { MdSupportAgent } from "react-icons/md";
 
 import "./Sidebar.css";
 import logo from "../../assets/Image/logog.png";
@@ -93,14 +92,13 @@ const Sidebar = () => {
       icon: <TbUserStar className="sidebar-icon" />,
       path: "/dashboard/crm",
     },
+    {
+      id: "settings",
+      label: "More Settings",
+      icon: <IoSettingsOutline className="sidebar-icon" />,
+      path: "/dashboard/settings",
+    },
   ];
-
-  const settingsItem = {
-    id: "settings",
-    label: "More Settings",
-    icon: <IoSettingsOutline className="sidebar-icon" />,
-    path: "/dashboard/settings",
-  };
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -154,44 +152,26 @@ const Sidebar = () => {
   useEffect(() => {
     const loadBrandData = async () => {
       if (!user?.email) return;
-
       try {
         const effectiveEmail = getEffectiveUserEmail(user);
-
-        // First, try to get from brand settings collection
-        const brandRef = doc(db, "fashiontally_brand_settings", effectiveEmail);
-        const brandDoc = await getDoc(brandRef);
-
-        if (brandDoc.exists()) {
-          const data = brandDoc.data();
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${effectiveEmail}`
+        );
+        const data = await res.json();
+        if (data.success && data.data) {
+          const d = data.data;
           setBrandData({
-            businessName: data.businessName || "",
-            businessAddress: data.businessAddress || "",
-            businessPhone: data.businessPhone || "",
-            businessEmail: data.businessEmail || "",
-            logoUrl: data.logoUrl || "",
+            businessName:    d.businessName || "",
+            businessAddress: d.businessAddress || "",
+            businessPhone:   d.businessPhone || "",
+            businessEmail:   d.businessEmail || "",
+            logoUrl:         d.logoUrl || "",
           });
-        } else {
-          // Fallback to user collection
-          const userRef = doc(db, "fashiontally_users", effectiveEmail);
-          const userDoc = await getDoc(userRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setBrandData({
-              businessName: userData.businessName || "",
-              businessAddress: userData.address || "",
-              businessPhone: userData.phone || "",
-              businessEmail: userData.email || "",
-              logoUrl: userData.logoUrl || userData.profilePicture || "",
-            });
-          }
         }
       } catch (error) {
         console.error("Error loading brand data:", error);
       }
     };
-
     loadBrandData();
   }, [user]);
 
@@ -314,16 +294,55 @@ const Sidebar = () => {
             ))}
           </ul>
 
+          {/* Bottom Section */}
           <div className="sidebar-settings">
-            <button
-              className={`sidebar-link ${
-                isActive(settingsItem.path) ? "sidebar-link-active" : ""
-              }`}
-              onClick={() => handleNavigation(settingsItem.path)}
-            >
-              {settingsItem.icon}
-              <span className="sidebar-label">{settingsItem.label}</span>
-            </button>
+            {/* App Download Buttons */}
+            <div className="sidebar-app-downloads">
+              {/* Expert Support */}
+              <a
+                href="https://wa.me/2347070274857"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-support-btn"
+              >
+                <MdSupportAgent className="support-icon" />
+                <span className="support-label">Expert Support</span>
+              </a>
+
+              <a
+                href="https://play.google.com/store/apps/details?id=com.fashion.fashiontally&pli=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-download-btn"
+              >
+                {/* Google Play SVG */}
+                <svg className="store-icon" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M48 59.5v393c0 17 19.4 26.7 32.7 16.2l176-139.5-176-139.5L48.7 43.3C48.3 45.3 48 47.4 48 59.5z" fill="#32BBFF"/>
+                  <path d="M400.3 240.5l-54.5-34.3-67.8 50.6 67.8 50.6 55.4-34.9c15.8-9.9 15.8-22.1-.9-32z" fill="#FFD400"/>
+                  <path d="M80.7 475.7c4.7 3.7 10.5 5.5 16.3 5.5 6.2 0 12.4-1.9 17.8-5.7l218.2-137.3-67.8-50.6L80.7 475.7z" fill="#FF3333"/>
+                  <path d="M114.8 36.5L333 173.8l-67.8 50.6L47 58.7c5.3-17.1 21-28.8 36.5-28.8 10.8 0 21.8 4.3 31.3 6.6z" fill="#00DB00"/>
+                </svg>
+                <div className="store-btn-text">
+                  <span className="store-btn-sub">Get it on</span>
+                  <span className="store-btn-main">Google Play</span>
+                </div>
+              </a>
+              <a
+                href="https://apps.apple.com/gb/app/fashion-tally/id6769135696"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-download-btn"
+              >
+                {/* Apple SVG */}
+                <svg className="store-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="currentColor"/>
+                </svg>
+                <div className="store-btn-text">
+                  <span className="store-btn-sub">Download on the</span>
+                  <span className="store-btn-main">App Store</span>
+                </div>
+              </a>
+            </div>
           </div>
         </nav>
       </div>

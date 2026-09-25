@@ -1,13 +1,5 @@
 import { useState, useEffect, useContext } from "react";
 import { Search, Filter, Plus, Phone, Mail, ChevronRight } from "lucide-react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import SlideInMenu from "../../../../components/SlideInMenu";
@@ -20,7 +12,6 @@ import InvoiceViewPanel from "../../../../pannel_pages/InvoiceViewPanel/InvoiceV
 import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
 import OrderDetailsPanel from "../../../../pannel_pages/OrderDetailsPanel/OrderDetailsPanel";
 import Button from "../../../../components/button/Button";
-import PageLoading from "../../../../components/Loading/PageLoading";
 import "./ClientsManagement.css";
 
 const ClientsManagement = () => {
@@ -45,76 +36,64 @@ const ClientsManagement = () => {
 
   const { user } = useContext(NewAuthContext);
 
-  // Fetch clients from Firebase with real-time updates
+  const refreshClients = async () => {
+    if (!user?.email) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/client/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setClients(data.data.map((c) => ({
+          ...c,
+          id: c.id || c._id,
+          createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
+          updatedAt: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+          lastOrder: c.lastOrder ? new Date(c.lastOrder) : null,
+        })));
+      }
+    } catch (error) {
+      console.error("Error refreshing clients:", error);
+    }
+  };
+
+  // Fetch clients from backend
   useEffect(() => {
-    if (!db || !user?.email) {
+    if (!user?.email) {
       setLoading(false);
       setClients([]);
       return;
     }
 
-    setLoading(true);
-
-    // Get effective email (main admin's email for team members)
-    const effectiveEmail = getEffectiveUserEmail(user);
-
-    // Set up the query to filter by effective user's email
-    const clientQuery = query(
-      collection(db, "fashiontally_clients"),
-      where("userEmail", "==", effectiveEmail),
-      orderBy("name", "asc")
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      clientQuery,
-      (snapshot) => {
-        const clientsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          
-          // Helper function to safely convert dates
-          const toDate = (dateValue) => {
-            if (!dateValue) return null;
-            if (dateValue.toDate && typeof dateValue.toDate === 'function') {
-              return dateValue.toDate();
-            }
-            if (dateValue instanceof Date) {
-              return dateValue;
-            }
-            if (typeof dateValue === 'string') {
-              return new Date(dateValue);
-            }
-            return null;
-          };
-          
-          return {
-            id: doc.id, // This is the tenant-scoped ID
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: data.address || "",
-            status: data.status,
-            notes: data.notes || "",
-            createdAt: toDate(data.createdAt) || new Date(),
-            updatedAt: toDate(data.updatedAt) || new Date(),
-            totalSpent: data.totalSpent || 0,
-            lastOrder: toDate(data.lastOrder),
-            hasMeasurements: data.hasMeasurements || false,
-            measurementsUpdatedAt: toDate(data.measurementsUpdatedAt),
-          };
-        });
-
-        setClients(clientsData);
-        setLoading(false);
-      },
-      (error) => {
+    const fetchClients = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/client/list`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (data.success) {
+          const clientsData = data.data.map((c) => ({
+            ...c,
+            id: c.id || c._id,
+            createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
+            updatedAt: c.updatedAt ? new Date(c.updatedAt) : new Date(),
+            lastOrder: c.lastOrder ? new Date(c.lastOrder) : null,
+          }));
+          setClients(clientsData);
+        }
+      } catch (error) {
         console.error("Error fetching clients:", error);
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
+    fetchClients();
   }, [user?.email]);
 
   // Filter and search clients
@@ -384,6 +363,7 @@ const ClientsManagement = () => {
           onClose={() => { setShowAddClient(false); setEditingClient(null); }}
           editMode={!!editingClient}
           clientData={editingClient}
+          onSuccess={refreshClients}
         />
       </SlideInMenu>
 

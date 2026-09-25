@@ -1,29 +1,9 @@
 import { useState, useEffect, useContext } from "react";
 import {
-  Search,
-  Filter,
-  Plus,
-  Calendar,
-  Clock,
-  MapPin,
-  Mail,
-  Bell,
-  Video,
-  Edit3,
-  Trash2,
+  Search, Filter, Plus, Calendar, Clock, MapPin,
+  Mail, Bell, Video, Edit3, Trash2,
 } from "lucide-react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import Button from "../../../../components/button/Button";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import ScheduleAppointmentPanel from "../../../../pannel_pages/ScheduleAppointmentPanel/ScheduleAppointmentPanel";
@@ -45,69 +25,36 @@ const Appointments = () => {
 
   const { user } = useContext(NewAuthContext);
 
-  // Fetch appointments from Firebase with real-time updates
-  useEffect(() => {
-    if (!db || !user?.email) {
-      setLoading(false);
-      setAppointments([]);
-      return;
-    }
-
+  const fetchAppointments = async () => {
+    if (!user?.email) { setLoading(false); setAppointments([]); return; }
     setLoading(true);
-
-    // Get effective email (main admin's email for team members)
-    const effectiveEmail = getEffectiveUserEmail(user);
-
-    // Set up the query to filter by effective user's email
-    const appointmentsQuery = query(
-      collection(db, "fashiontally_appointments"),
-      where("userEmail", "==", effectiveEmail),
-      orderBy("date", "desc")
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      appointmentsQuery,
-      (snapshot) => {
-        const appointmentsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.purpose || data.appointmentType || "Appointment",
-            client: data.clientName || "Unknown Client",
-            date: data.date || "",
-            time: data.time || "",
-            location: data.location || "Shop",
-            email: data.email || "",
-            phone: data.phone || "",
-            description: data.notes || "",
-            status: mapStatusFromDB(data.status),
-            type: data.location === "Video Call" ? "video-call" : "in-person",
-            duration: data.duration || "1hr",
-            purpose: data.purpose || data.appointmentType || "",
-            notes: data.notes || "",
-            createdAt: data.createdAt?.toDate
-              ? data.createdAt.toDate()
-              : data.createdAt
-              ? new Date(data.createdAt)
-              : new Date(),
-            // Store original data for editing
-            originalData: data,
-          };
-        });
-
-        setAppointments(appointmentsData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching appointments:", error);
-        setLoading(false);
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/appointment/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setAppointments(data.data.map((a) => ({
+          ...a,
+          id: a.id || a._id,
+          title: a.purpose || a.appointmentType || "Appointment",
+          client: a.clientName || "Unknown Client",
+          description: a.notes || "",
+          status: mapStatusFromDB(a.status),
+          type: a.location === "Video Call" ? "video-call" : "in-person",
+          createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
+        })));
       }
-    );
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Clean up the listener when component unmounts
-    return () => unsubscribe();
-  }, [user?.email]);
+  useEffect(() => { fetchAppointments(); }, [user?.email]);
 
   // Map database status to UI status
   const mapStatusFromDB = (dbStatus) => {
@@ -177,16 +124,16 @@ const Appointments = () => {
 
   const handleDeleteAppointment = async (appointmentId, appointmentTitle) => {
     if (!user?.email) return;
-
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete the appointment "${appointmentTitle}"? This action cannot be undone.`
-    );
-
-    if (!confirmDelete) return;
-
+    if (!window.confirm(`Are you sure you want to delete "${appointmentTitle}"?`)) return;
     try {
-      await deleteDoc(doc(db, "fashiontally_appointments", appointmentId));
-      console.log("Appointment deleted successfully");
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/appointment/delete/${appointmentId}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) fetchAppointments();
+      else alert("Failed to delete appointment. Please try again.");
     } catch (error) {
       console.error("Error deleting appointment:", error);
       alert("Failed to delete appointment. Please try again.");
@@ -483,6 +430,7 @@ const Appointments = () => {
           onSubmit={handleScheduleAppointment}
           editingAppointment={editingAppointment}
           editMode={editMode}
+          onSuccess={fetchAppointments}
         />
       </SlideInMenu>
 

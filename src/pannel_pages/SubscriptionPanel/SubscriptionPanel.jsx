@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Check, Crown, Clock, X, XCircle } from "lucide-react";
+import { ArrowLeft, Check, Crown, Clock, X, XCircle, CreditCard, Receipt, CheckCircle2, AlertCircle } from "lucide-react";
 import Button from "../../components/button/Button";
 import { useSubscription } from "../../hooks/use-subscription";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { removeTestSubscription } from "../../lib/subscription-check";
 import { getPlanPricing } from "../../lib/payment";
-import { db } from "../../backend/firebase.config";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import "./SubscriptionPanel.css";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
 
@@ -20,6 +17,9 @@ const SubscriptionPanel = ({ onClose }) => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [activeTab, setActiveTab] = useState("plan");
+  const [payments, setPayments] = useState([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
 
   const subscriptionPlans = [
     {
@@ -131,36 +131,43 @@ const SubscriptionPanel = ({ onClose }) => {
   const handleCancelSubscription = async () => {
     if (!user?.email) return;
 
-    if (!cancelReason) {
-      alert("Please select a reason for cancellation");
+    if (!cancelReason.trim()) {
+      alert("Please provide a reason for cancellation");
       return;
     }
 
     setLoading(true);
     try {
-      // Save cancellation data to database
-      await addDoc(collection(db, "subscription_cancellations"), {
-        userEmail: user.email,
-        userId: user.uid,
-        userName: user.displayName || user.name || "Unknown",
-        planType: subscription.planType,
-        subscriptionType: subscription.subscriptionType,
-        reason: cancelReason,
-        cancelledAt: serverTimestamp(),
-        subscriptionEndDate: subscription.subscriptionEndDate,
-        isTrialActive: subscription.isTrialActive,
-      });
+      const token = localStorage.getItem("authToken");
 
-      // Cancel the subscription
-      const success = await removeTestSubscription(user.email, user.uid);
-      if (success) {
-        alert(
-          "Subscription cancelled successfully. No refunds will be processed."
-        );
+      // Save cancellation record + reset subscription via backend
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/subscription-cancelation/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            userEmail: user.email,
+            userId: user.uid,
+            userName: user.displayName || user.name || "Unknown",
+            planType: subscription.planType,
+            subscriptionType: subscription.subscriptionType,
+            reason: cancelReason,
+            subscriptionEndDate: subscription.subscriptionEndDate,
+            isTrialActive: subscription.isTrialActive,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Subscription cancelled successfully. No refunds will be processed.");
         setShowCancelModal(false);
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        setTimeout(() => window.location.reload(), 1000);
       } else {
         alert("Failed to cancel subscription. Please contact support.");
       }
@@ -235,6 +242,29 @@ const SubscriptionPanel = ({ onClose }) => {
     }
   }, [subscription.loading]);
 
+  // Fetch payments when payments tab is opened
+  useEffect(() => {
+    if (activeTab === "payments" && user?.email) {
+      const fetchPayments = async () => {
+        setPaymentsLoading(true);
+        try {
+          const token = localStorage.getItem("authToken");
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/api/payment/list`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const data = await res.json();
+          if (data.success) setPayments(data.data);
+        } catch (err) {
+          console.error("Error fetching payments:", err);
+        } finally {
+          setPaymentsLoading(false);
+        }
+      };
+      fetchPayments();
+    }
+  }, [activeTab, user?.email]);
+
   return (
     <div className="sub_panel" data-theme={actualTheme}>
       {/* Loading Overlay */}
@@ -258,8 +288,28 @@ const SubscriptionPanel = ({ onClose }) => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="sub_tabs">
+        <button
+          className={`sub_tab_btn ${activeTab === "plan" ? "active" : ""}`}
+          onClick={() => setActiveTab("plan")}
+        >
+          <Crown size={16} />
+          Plan
+        </button>
+        <button
+          className={`sub_tab_btn ${activeTab === "payments" ? "active" : ""}`}
+          onClick={() => setActiveTab("payments")}
+        >
+          <CreditCard size={16} />
+          Payments
+        </button>
+      </div>
+
       {/* Content */}
       <div className="sub_content">
+        {activeTab === "plan" ? (
+        <>
         {/* Current Subscription Status */}
         {subscription.isSubscribed && (
           <div className="current_subscription_status">
@@ -420,6 +470,53 @@ const SubscriptionPanel = ({ onClose }) => {
             <li>• Monthly billing</li>
           </ul>
         </div>
+        </>
+        ) : (
+        /* Payments Tab */
+        <div className="sub_payments_tab">
+          {paymentsLoading ? (
+            <div className="sub_payments_loading">
+              <div className="sub_loading_spinner"></div>
+              <p>Loading payment history...</p>
+            </div>
+          ) : payments.length === 0 ? (
+            <div className="sub_no_payments">
+              <Receipt size={48} className="sub_no_payments_icon" />
+              <h3>No payments yet</h3>
+              <p>Your payment history will appear here after your first subscription payment.</p>
+            </div>
+          ) : (
+            <div className="sub_payments_list">
+              {payments.map((payment, index) => (
+                <div key={payment.id || index} className="sub_payment_card">
+                  <div className="sub_payment_icon_wrap">
+                    {payment.status === "successful" ? (
+                      <CheckCircle2 size={20} className="sub_payment_icon success" />
+                    ) : (
+                      <AlertCircle size={20} className="sub_payment_icon failed" />
+                    )}
+                  </div>
+                  <div className="sub_payment_info">
+                    <p className="sub_payment_plan">{payment.plantype || "Subscription"} Plan</p>
+                    <p className="sub_payment_date">
+                      {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    </p>
+                    {payment.transactionId && (
+                      <p className="sub_payment_ref">Ref: {payment.transactionId}</p>
+                    )}
+                  </div>
+                  <div className="sub_payment_right">
+                    <p className="sub_payment_amount">₦{(payment.planPrice || 0).toLocaleString()}</p>
+                    <span className={`sub_payment_status ${payment.status === "successful" ? "success" : "failed"}`}>
+                      {payment.status === "successful" ? "Paid" : payment.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        )}
       </div>
 
       {/* Cancellation Modal */}

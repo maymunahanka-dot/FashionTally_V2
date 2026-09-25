@@ -151,21 +151,12 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
         .toUpperCase(),
     },
     orderDetails: {
-      item: order.title || order.originalData?.garmentDescription || "Untitled Order",
-      fabric: order.originalData?.fabric || order.originalData?.materials?.[0] || "Not specified",
-      orderType: (() => {
-        const raw = order.originalData?.orderType;
-        const labels = {
-          wedding_gown: "Wedding Gown", evening_dress: "Evening Dress",
-          casual_wear: "Casual Wear", traditional_wear: "Traditional Wear",
-          suit: "Suit", alterations: "Alterations", custom_design: "Custom Design",
-        };
-        return labels[raw] || order.originalData?.garmentType || order.category || "Not specified";
-      })(),
+      item: order.title || "Untitled Order",
+      fabric: order.fabric || order.originalData?.materials?.[0] || "Not specified",
       deliveryDate: order.dueDate
-        ? order.dueDate.toLocaleDateString()
+        ? (order.dueDate instanceof Date ? order.dueDate.toLocaleDateString() : new Date(order.dueDate).toLocaleDateString())
         : "Not set",
-      customItems: order.originalData?.specialInstructions || order.originalData?.description || "No additional details",
+      customItems: order.specialInstructions || order.originalData?.description || "No additional details",
     },
     measurements: formatMeasurements(
       order.measurements || order.originalData?.measurements
@@ -175,22 +166,19 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
         order.basePrice ||
         order.originalData?.basePrice ||
         order.price ||
-        order.originalData?.price ||
         0,
       additionalItems: (
         order.additionalItems ||
         order.originalData?.additionalItems ||
         []
-      ).reduce((sum, item) => sum + (item.price || 0), 0),
+      ).reduce((sum, item) => sum + (Number(item.price) || 0), 0),
       totalAmount: order.price || order.originalData?.price || 0,
-      depositPaid: order.deposit || order.depositPaid || order.originalData?.deposit || order.originalData?.depositPaid || 0,
+      depositPaid: order.depositPaid || order.deposit || order.originalData?.depositPaid || 0,
       balanceDue:
-        order.balance ||
         order.balanceDue ||
-        order.originalData?.balance ||
+        order.balance ||
         order.originalData?.balanceDue ||
-        (order.price || order.originalData?.price || 0) -
-          (order.deposit || order.depositPaid || order.originalData?.deposit || order.originalData?.depositPaid || 0),
+        (order.price || 0) - (order.depositPaid || order.deposit || 0),
       additionalItemsList:
         order.additionalItems || order.originalData?.additionalItems || [],
     },
@@ -301,7 +289,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
                   <p className="odp_detail-main">
                     {orderDetails.orderDetails.item}
                   </p>
-                  <p className="odp_detail-sub">{orderDetails.orderDetails.orderType}</p>
+                  <p className="odp_detail-sub">Custom Dress</p>
                 </div>
               </div>
             </div>
@@ -317,21 +305,6 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
                     {orderDetails.orderDetails.fabric}
                   </p>
                   <p className="odp_detail-sub">Material</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="odp_detail-column">
-              <div className="odp_detail-item">
-                <div className="odp_detail-header">
-                  <Package size={20} className="odp_detail-icon" />
-                  <span className="odp_detail-label">Order Type</span>
-                </div>
-                <div className="odp_detail-content">
-                  <p className="odp_detail-main">
-                    {orderDetails.orderDetails.orderType}
-                  </p>
-                  <p className="odp_detail-sub">Type</p>
                 </div>
               </div>
             </div>
@@ -452,16 +425,8 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
           </div>
         </div>
 
-        {/* Special Instructions */}
-        {orderDetails.orderDetails.customItems && orderDetails.orderDetails.customItems !== "No additional details" && (
-          <div className="odp_section">
-            <h3 className="odp_section-title">Special Instructions / Notes</h3>
-            <p className="odp_notes-text">{orderDetails.orderDetails.customItems}</p>
-          </div>
-        )}
-
         {/* Actions */}
-        <div className="odp_actions">
+        {/* <div className="odp_actions">
           <Button
             variant="secondary"
             size="large"
@@ -479,7 +444,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
           >
             Send Update
           </Button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

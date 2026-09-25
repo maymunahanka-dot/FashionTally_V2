@@ -1,18 +1,10 @@
 import { useState, useContext } from "react";
 import { X, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
-import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Input from "../../components/Input";
 import "./AddTransactionPanel.css";
 
-const AddTransactionPanel = ({
-  onClose,
-  onSubmit,
-  editingTransaction,
-  editMode,
-}) => {
+const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, onSuccess }) => {
   const { user } = useContext(NewAuthContext);
   const [loading, setLoading] = useState(false);
 
@@ -93,44 +85,44 @@ const AddTransactionPanel = ({
     setLoading(true);
 
     try {
-      const transactionData = {
+      const token = localStorage.getItem("authToken");
+      const payload = {
         description,
         amount: parseFloat(amount),
         type: transactionType === "income" ? "Income" : "Expense",
         category,
-        date: new Date(date),
-        paymentMethod: paymentMethod
-          .replace("_", " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()),
+        date: date || new Date().toISOString(),
+        paymentMethod: paymentMethod.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase()),
         reference: reference || `TXN-${Date.now().toString().slice(-6)}`,
         notes,
-        userEmail: getEffectiveUserEmail(user),
-        updatedAt: new Date(),
       };
 
-      console.log("Saving transaction:", transactionData);
-
+      let res;
       if (editMode && editingTransaction?.id) {
-        // Update existing transaction
-        await updateDoc(
-          doc(db, "fashiontally_transactions", editingTransaction.id),
-          transactionData
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/transaction/edit/${editingTransaction.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          }
         );
-        console.log("Transaction updated successfully");
       } else {
-        // Create new transaction
-        transactionData.createdAt = new Date();
-        await addDoc(
-          collection(db, "fashiontally_transactions"),
-          transactionData
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/transaction/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(payload),
+          }
         );
-        console.log("Transaction created successfully");
       }
 
-      if (onSubmit) {
-        onSubmit(transactionData);
-      }
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || "Failed to save transaction");
 
+      if (onSubmit) onSubmit(payload);
+      onSuccess && onSuccess();
       onClose();
     } catch (error) {
       console.error("Error saving transaction:", error);

@@ -1,18 +1,6 @@
 import { useState, useEffect, useContext } from "react";
-import {
-  Plus,
-  FileText,
-  Eye,
-  Download,
-  Share,
-  Pencil,
-  Trash2,
-  AlertCircle,
-} from "lucide-react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../../backend/firebase.config";
+import { Plus, FileText, Eye, Download, Share, Pencil, Trash2, AlertCircle } from "lucide-react";
 import NewAuthContext from "../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../utils/teamUtils";
 import "./ClientInvoice.css";
 
 const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
@@ -20,75 +8,35 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch invoices for this client
   useEffect(() => {
     const fetchInvoices = async () => {
-      if (!client?.email || !user?.email || !db) {
-        setLoading(false);
-        return;
-      }
-
+      if (!client?.email || !user?.email) { setLoading(false); return; }
       setLoading(true);
-
       try {
-        // Get effective email (main admin's email for team members)
-        const effectiveEmail = getEffectiveUserEmail(user);
-
-        // Query invoices by userEmail only (no composite index needed)
-        const invoicesQuery = query(
-          collection(db, "fashiontally_invoices"),
-          where("userEmail", "==", effectiveEmail)
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/invoice/list`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        const snapshot = await getDocs(invoicesQuery);
-
-        const allInvoices = snapshot.docs.map((doc) => {
-          const data = doc.data();
-
-          // Helper to safely convert dates
-          const convertDate = (dateField) => {
-            if (!dateField) return new Date();
-            if (dateField.toDate && typeof dateField.toDate === "function") {
-              return dateField.toDate();
-            }
-            if (dateField instanceof Date) {
-              return dateField;
-            }
-            return new Date(dateField);
-          };
-
-          return {
-            id: doc.id,
-            invoiceNumber: data.invoiceNumber,
-            clientName: data.clientName,
-            clientEmail: data.clientEmail,
-            amount: data.amount || 0,
-            status: data.status,
-            createdDate: convertDate(data.createdDate),
-            dueDate: convertDate(data.dueDate),
-            items: data.items || [],
-            createdAt: convertDate(data.createdAt),
-            ...data,
-          };
-        });
-
-        // Filter by client email in JavaScript
-        const invoicesData = allInvoices
-          .filter((invoice) => invoice.clientEmail === client.email)
-          .sort((a, b) => b.createdAt - a.createdAt); // Sort by date descending
-
-        console.log(
-          `📄 Loaded ${invoicesData.length} invoices for client:`,
-          client.email
-        );
-        setInvoices(invoicesData);
+        const data = await res.json();
+        if (data.success) {
+          const clientInvoices = data.data
+            .filter((inv) => inv.clientEmail === client.email)
+            .map((inv) => ({
+              ...inv,
+              createdDate: inv.createdDate ? new Date(inv.createdDate) : new Date(inv.createdAt),
+              dueDate: inv.dueDate ? new Date(inv.dueDate) : null,
+              createdAt: inv.createdAt ? new Date(inv.createdAt) : new Date(),
+            }))
+            .sort((a, b) => b.createdAt - a.createdAt);
+          setInvoices(clientInvoices);
+        }
       } catch (error) {
         console.error("Error fetching client invoices:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchInvoices();
   }, [client?.email, user?.email]);
 
@@ -213,12 +161,12 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
                       {formatDate(invoice.createdDate)}
                     </span>
                     <div
-                      className={`invoice_u_status_badge ${invoice.status.toLowerCase()}`}
+                      className={`invoice_u_status_badge ${(invoice.status || 'unpaid').toLowerCase()}`}
                     >
                       {invoice.status === "Overdue" && (
                         <AlertCircle size={14} />
                       )}
-                      {invoice.status}
+                      {invoice.status || 'Unpaid'}
                     </div>
                   </div>
                 </div>

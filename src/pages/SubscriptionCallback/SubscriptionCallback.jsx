@@ -1,11 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useNewAuth } from "../../contexts/NewAuthContext";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
-import { findUserDoc } from "../../lib/subscription-check";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing";
 import Button from "../../components/button/Button";
 import "./SubscriptionCallback.css";
@@ -29,14 +26,15 @@ const SubscriptionCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { actualTheme } = useTheme();
-  const { user, refreshUserData, loading: authLoading } = useNewAuth();
+  const { refreshUserData, loading: authLoading } = useNewAuth();
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
   const [processed, setProcessed] = useState(false);
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    // Wait until auth is done loading and not already processed
-    if (authLoading || processed) return;
+    if (authLoading || hasRun.current) return;
+    hasRun.current = true;
 
     const handleCallback = async () => {
       setProcessed(true);
@@ -53,33 +51,65 @@ const SubscriptionCallback = () => {
             Date.now() + 30 * 24 * 60 * 60 * 1000
           ).toISOString();
 
-          if (user?.email) {
+          const token = localStorage.getItem("authToken");
+          if (token) {
             try {
-              const userDoc = await findUserDoc(user.email, user.uid);
-              if (userDoc) {
-                const userRef = doc(db, "fashiontally_users", userDoc.id);
-                await updateDoc(userRef, {
-                  isSubscribed: true,
-                  subscriptionType: "paid",
-                  planType: planName,
-                  subscriptionEndDate: subscriptionEndDate,
-                  isTrialActive: false,
-                  payment_amount: SUBSCRIPTION_PRICING[planName.toLowerCase()]?.monthly || 0,
-                  payment_date: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  txRef: txRef || "",
-                  transactionId: transactionId || "",
-                });
-                console.log("✅ Firestore subscription updated successfully");
-                await refreshUserData();
+              // Step 1: Create payment record
+              await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/payment/create`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    id: `PAY-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                    plantype: planName,
+                    planPrice: SUBSCRIPTION_PRICING[planName.toLowerCase()]?.monthly || 0,
+                    status: "successful",
+                    gateway: "flutterwave",
+                    transactionId: txRef || "",
+                    providerTransactionId: transactionId || "",
+                    paidAt: new Date().toISOString(),
+                  }),
+                }
+              );
+
+              // Step 2: Update user subscription
+              const res = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/user/edit`,
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    isSubscribed: true,
+                    subscriptionType: "paid",
+                    planType: planName,
+                    subscriptionEndDate,
+                    isTrialActive: false,
+                    payment_amount: SUBSCRIPTION_PRICING[planName.toLowerCase()]?.monthly || 0,
+                    payment_date: new Date().toISOString(),
+                    txRef: txRef || "",
+                    transactionId: transactionId || "",
+                  }),
+                }
+              );
+              const data = await res.json();
+              if (data.success) {
+                console.log("✅ MongoDB subscription updated successfully");
+                refreshUserData && await refreshUserData();
               } else {
-                console.error("❌ User document not found in Firestore");
+                console.error("❌ Failed to update subscription:", data.error);
               }
             } catch (err) {
-              console.error("❌ Failed to update Firestore:", err);
+              console.error("❌ Failed to update subscription:", err);
             }
           } else {
-            console.error("❌ No user found after auth loaded");
+            console.error("❌ No auth token found");
           }
 
           localStorage.removeItem("pending_plan");
@@ -103,7 +133,7 @@ const SubscriptionCallback = () => {
     };
 
     handleCallback();
-  }, [authLoading, processed, searchParams, navigate, user]);
+  }, [authLoading, processed, searchParams, navigate]);
 
   const handleRetry = () => {
     navigate("/subscription");

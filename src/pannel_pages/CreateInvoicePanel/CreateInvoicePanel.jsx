@@ -1,24 +1,11 @@
 import { useState, useEffect, useContext } from "react";
 import { X, Plus, Calendar } from "lucide-react";
-import {
-  addDoc,
-  collection,
-  doc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import "./CreateInvoicePanel.css";
 
-const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
+const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess }) => {
   // Form state
   const [clientName, setClientName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,8 +16,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [status, setStatus] = useState("Unpaid");
-  const [amountPaid, setAmountPaid] = useState(0);
-  const [discount, setDiscount] = useState("");
+  const [discount, setDiscount] = useState(0);
   const [taxRate, setTaxRate] = useState(7.5);
   const [items, setItems] = useState([
     {
@@ -39,7 +25,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
       category: "Labor",
       description: "",
       quantity: "",
-      price: "",
+      price: 0,
       inventoryItemId: "",
       inventoryItemName: "",
     },
@@ -85,7 +71,6 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
       setNotes(selectedInvoice.notes || "");
       setPaymentMethod(selectedInvoice.paymentMethod || "Cash");
       setStatus(selectedInvoice.status || "Unpaid");
-      setAmountPaid(selectedInvoice.amountPaid || 0);
       setDiscount(selectedInvoice.discount || 0);
       setTaxRate(7.5); // Always fixed at 7.5%
       setRecordAsIncome(false); // Don't record as income when editing
@@ -101,7 +86,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
             category: "Labor",
             description: "",
             quantity: "",
-            price: "",
+            price: 0,
             inventoryItemId: "",
             inventoryItemName: "",
           },
@@ -144,33 +129,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
 
   const loadClients = async () => {
     try {
-      console.log(
-        "🔄 CreateInvoicePanel: Loading clients for user:",
-        user?.email
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/client/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Get effective email (main admin's email for team members)
-      const effectiveEmail = getEffectiveUserEmail(user);
-      console.log(
-        "📧 CreateInvoicePanel: Using effective email:",
-        effectiveEmail
-      );
-
-      const q = query(
-        collection(db, "fashiontally_clients"),
-        where("userEmail", "==", effectiveEmail),
-        orderBy("name", "asc")
-      );
-      const snapshot = await getDocs(q);
-      const clientsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      console.log(
-        "✅ CreateInvoicePanel: Loaded clients:",
-        clientsData.length,
-        clientsData
-      );
-      setClients(clientsData);
+      const data = await res.json();
+      if (data.success) setClients(data.data);
     } catch (error) {
       console.error("❌ CreateInvoicePanel: Error loading clients:", error);
     }
@@ -178,68 +143,23 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
 
   const loadInventoryItems = async () => {
     try {
-      // Get effective email (main admin's email for team members)
-      const effectiveEmail = getEffectiveUserEmail(user);
-
-      const q = query(
-        collection(db, "fashiontally_inventory"),
-        where("userEmail", "==", effectiveEmail)
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/inventory/list`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      const snapshot = await getDocs(q);
-      const inventoryData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setInventoryItems(inventoryData);
+      const data = await res.json();
+      if (data.success) setInventoryItems(data.data);
     } catch (error) {
       console.error("Error loading inventory:", error);
     }
   };
 
-  // Generate auto-incrementing invoice number
-  const generateInvoiceNumber = async () => {
-    try {
-      // Get effective email (main admin's email for team members)
-      const effectiveEmail = getEffectiveUserEmail(user);
-
-      const q = query(
-        collection(db, "fashiontally_invoices"),
-        where("userEmail", "==", effectiveEmail),
-        orderBy("createdAt", "desc"),
-        limit(1)
-      );
-      const snapshot = await getDocs(q);
-
-      if (snapshot.empty) {
-        return "INV-2024-001";
-      }
-
-      const lastInvoice = snapshot.docs[0].data();
-      const lastNumber = lastInvoice.invoiceNumber;
-
-      // Extract number from format INV-YYYY-NNN
-      const match = lastNumber.match(/INV-(\d{4})-(\d{3})/);
-      if (match) {
-        const year = new Date().getFullYear();
-        const lastYear = parseInt(match[1]);
-        const lastSeq = parseInt(match[2]);
-
-        if (year === lastYear) {
-          // Same year, increment sequence
-          const newSeq = (lastSeq + 1).toString().padStart(3, "0");
-          return `INV-${year}-${newSeq}`;
-        } else {
-          // New year, reset sequence
-          return `INV-${year}-001`;
-        }
-      }
-
-      // Fallback if format doesn't match
-      return `INV-${new Date().getFullYear()}-001`;
-    } catch (error) {
-      console.error("Error generating invoice number:", error);
-      return `INV-${new Date().getFullYear()}-001`;
-    }
+  // Generate invoice number based on timestamp
+  const generateInvoiceNumber = () => {
+    const year = new Date().getFullYear();
+    const seq = Date.now().toString().slice(-4);
+    return `INV-${year}-${seq}`;
   };
 
   const clearError = (fieldName) => {
@@ -274,7 +194,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
               inventoryItemId: inventoryItemId,
               inventoryItemName: selectedItem.name,
               description: selectedItem.name,
-              price: selectedItem.price || "",
+              price: selectedItem.price || 0,
               category: selectedItem.category,
               // Reset quantity to 1 when selecting new item
               quantity: "",
@@ -298,7 +218,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
         category: "Labor",
         description: "",
         quantity: "",
-        price: "",
+        price: 0,
         inventoryItemId: "",
         inventoryItemName: "",
       },
@@ -320,11 +240,11 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
   };
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
+    return items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   };
 
   const calculateDiscountAmount = () => {
-    return (calculateSubtotal() * (Number(discount) || 0)) / 100;
+    return (calculateSubtotal() * discount) / 100;
   };
 
   const calculateTaxAmount = () => {
@@ -391,26 +311,23 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
       const taxAmount = calculateTaxAmount();
       const total = calculateTotal();
 
-      const invoiceData = {
-        invoiceNumber: isEditMode
-          ? selectedInvoice.invoiceNumber
-          : await generateInvoiceNumber(),
+      const token = localStorage.getItem("authToken");
+      const invoicePayload = {
+        invoiceNumber: isEditMode ? selectedInvoice.invoiceNumber : generateInvoiceNumber(),
         clientName: clientName.trim(),
         clientEmail: email.trim(),
         clientPhone: phone.trim(),
         clientAddress: address.trim(),
         status,
         paymentMethod,
-        createdDate: invoiceDate ? new Date(invoiceDate) : new Date(),
-        dueDate: new Date(dueDate),
+        createdDate: invoiceDate || new Date().toISOString(),
+        dueDate: dueDate || "",
         items: items.map((item) => ({
           itemType: item.itemType,
           category: item.category,
           description: item.description.trim(),
           quantity: item.quantity,
           price: item.price,
-          inventoryItemId: item.inventoryItemId || null,
-          inventoryItemName: item.inventoryItemName || null,
         })),
         discount,
         taxRate,
@@ -418,124 +335,56 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
         discountAmount,
         taxAmount,
         amount: total,
-        amountPaid: status === "Partially Paid" ? parseFloat(amountPaid) || 0 : status === "Paid" ? total : 0,
-        balanceDue: status === "Partially Paid" ? total - (parseFloat(amountPaid) || 0) : status === "Paid" ? 0 : total,
         notes: notes.trim(),
-        userEmail: getEffectiveUserEmail(user),
-        createdAt: selectedInvoice?.createdAt || new Date(),
-        updatedAt: new Date(),
       };
 
-      let invoiceId;
-
+      let res;
       if (isEditMode && selectedInvoice?.id) {
-        // Update existing invoice
-        await updateDoc(
-          doc(db, "fashiontally_invoices", selectedInvoice.id),
-          invoiceData
-        );
-        invoiceId = selectedInvoice.id;
-        console.log("Invoice updated successfully");
-
-        // Update the related finance transaction if it exists and user wants to update
-        if (updateFinanceTransaction) {
-          try {
-            const transactionQuery = query(
-              collection(db, "fashiontally_transactions"),
-              where("userEmail", "==", getEffectiveUserEmail(user)),
-              where("reference", "==", selectedInvoice.invoiceNumber),
-              where("type", "==", "Income")
-            );
-            const transactionSnapshot = await getDocs(transactionQuery);
-
-            if (!transactionSnapshot.empty) {
-              // Update the first matching transaction
-              const transactionDoc = transactionSnapshot.docs[0];
-              
-              await updateDoc(doc(db, "fashiontally_transactions", transactionDoc.id), {
-                description: `Invoice payment: ${invoiceData.invoiceNumber} - ${clientName.trim()}`,
-                amount: total,
-                paymentMethod: paymentMethod,
-                date: invoiceDate ? new Date(invoiceDate) : new Date(),
-                notes: `Auto-generated from invoice: ${invoiceData.invoiceNumber}\nClient: ${clientName.trim()}\nStatus: ${status}\nItems: ${items.length}`,
-                updatedAt: new Date(),
-              });
-              console.log("Related finance transaction updated successfully");
-            }
-          } catch (error) {
-            console.error("Error updating related transaction:", error);
-            // Don't fail the whole operation if transaction update fails
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/invoice/edit/${selectedInvoice.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(invoicePayload),
           }
-        }
-      } else {
-        // Create new invoice
-        const docRef = await addDoc(
-          collection(db, "fashiontally_invoices"),
-          invoiceData
         );
-        invoiceId = docRef.id;
-        console.log("Invoice created successfully");
+      } else {
+        res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/invoice/create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify(invoicePayload),
+          }
+        );
+      }
 
-        // Create finance transaction if recordAsIncome is true
-        if (recordAsIncome) {
-          const transactionData = {
-            description: `Invoice payment: ${invoiceData.invoiceNumber} - ${clientName.trim()}`,
-            amount: total,
-            type: "Income",
-            category: "Sales",
-            date: invoiceDate ? new Date(invoiceDate) : new Date(),
-            paymentMethod: paymentMethod,
-            reference: invoiceData.invoiceNumber,
-            notes: `Auto-generated from invoice: ${invoiceData.invoiceNumber}\nClient: ${clientName.trim()}\nStatus: ${status}\nItems: ${items.length}`,
-            userEmail: getEffectiveUserEmail(user),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || "Failed to save invoice");
 
-          await addDoc(
-            collection(db, "fashiontally_transactions"),
-            transactionData
-          );
-          console.log("Finance transaction created successfully");
-        }
-
-        // Update inventory for items (only for new invoices)
+      // Deduct inventory quantities for new invoices
+      if (!isEditMode) {
+        const token2 = localStorage.getItem("authToken");
         for (const item of items) {
           if (item.itemType === "Item" && item.inventoryItemId) {
-            const inventoryRef = doc(
-              db,
-              "fashiontally_inventory",
-              item.inventoryItemId
-            );
-            const currentItem = inventoryItems.find(
-              (inv) => inv.id === item.inventoryItemId
-            );
-
-            if (currentItem) {
-              const newQuantity = currentItem.quantity - item.quantity;
-              const newStatus =
-                newQuantity <= 0
-                  ? "Out of Stock"
-                  : newQuantity <= 3
-                  ? "Low Stock"
-                  : "In Stock";
-
-              await updateDoc(inventoryRef, {
-                quantity: newQuantity,
-                status: newStatus,
-                lastUsedInInvoice: {
-                  invoiceId: invoiceId,
-                  invoiceNumber: invoiceData.invoiceNumber,
-                  quantityUsed: item.quantity,
-                  date: new Date(),
-                },
-                updatedAt: new Date(),
-              });
+            const invItem = inventoryItems.find((i) => i.id === item.inventoryItemId);
+            if (invItem) {
+              const newQty = Math.max(0, (invItem.quantity || 0) - item.quantity);
+              const newStatus = newQty <= 0 ? "Out of Stock" : newQty <= (invItem.reorderPoint || 3) ? "Low Stock" : "In Stock";
+              await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/inventory/edit/${item.inventoryItemId}`,
+                {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token2}` },
+                  body: JSON.stringify({ quantity: newQty, status: newStatus }),
+                }
+              );
             }
           }
         }
       }
 
+      onSuccess && onSuccess();
       // Reset form and close
       setClientName("");
       setEmail("");
@@ -551,12 +400,12 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
           category: "Labor",
           description: "",
           quantity: "",
-          price: "",
+          price: 0,
           inventoryItemId: "",
           inventoryItemName: "",
         },
       ]);
-      setDiscount("");
+      setDiscount(0);
       setTaxRate(7.5);
       setStatus("Unpaid");
       setPaymentMethod("Cash");
@@ -733,8 +582,6 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
           </div>
         </div>
 
-        {/* Amount Paid is shown inside the summary section below */}
-
         {/* Items Section */}
         <div className="create_invoice_section">
           <div className="create_invoice_items_header">
@@ -770,7 +617,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                             inventoryItemId: "",
                             inventoryItemName: "",
                             description: "",
-                            price: "",
+                            price: 0,
                           };
                         } else {
                           return {
@@ -780,7 +627,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                             inventoryItemId: "",
                             inventoryItemName: "",
                             description: "",
-                            price: "",
+                            price: 0,
                             quantity: "",
                           };
                         }
@@ -872,13 +719,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                   <Input
                     label="Quantity"
                     type="number"
-                    placeholder="Quantity"
+                    placeholder=""
                     value={item.quantity}
                     onChange={(e) =>
                       updateItem(
                         index,
                         "quantity",
-                        e.target.value === "" ? "" : parseInt(e.target.value) || 1
+                        e.target.value === "" ? "" : parseInt(e.target.value) || ""
                       )
                     }
                     variant="rounded"
@@ -900,14 +747,11 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
                   <Input
                     label="Price"
                     type="number"
-                    placeholder="Price"
-                    value={item.price}
+                    placeholder="₦0"
+                    value={item.price === 0 ? "" : item.price}
+                    onFocus={(e) => { if (parseFloat(e.target.value) === 0) updateItem(index, "price", ""); }}
                     onChange={(e) =>
-                      updateItem(
-                        index,
-                        "price",
-                        e.target.value === "" ? "" : parseFloat(e.target.value) || 0
-                      )
+                      updateItem(index, "price", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)
                     }
                     variant="rounded"
                     min="0"
@@ -946,9 +790,10 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
             <Input
               label="Discount (%)"
               type="number"
-              placeholder="Discount (%)"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+              placeholder="0"
+              value={discount === 0 ? "" : discount}
+              onFocus={(e) => { if (parseFloat(e.target.value) === 0) setDiscount(""); }}
+              onChange={(e) => setDiscount(e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)}
               variant="rounded"
               min="0"
               max="100"
@@ -1076,27 +921,6 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode }) => {
               {formatCurrency(calculateTotal())}
             </span>
           </div>
-          {status === "Partially Paid" && (
-            <>
-              <div className="create_invoice_summary_row create_invoice_summary_partial">
-                <span className="create_invoice_summary_label">Amount Paid</span>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={amountPaid}
-                  onChange={(e) => setAmountPaid(e.target.value)}
-                  min={0}
-                  className="create_invoice_amount_paid_input"
-                />
-              </div>
-              <div className="create_invoice_summary_row create_invoice_summary_total create_invoice_summary_balance">
-                <span className="create_invoice_summary_label">Balance Due</span>
-                <span className="create_invoice_summary_value create_invoice_balance_amount">
-                  {formatCurrency(Math.max(0, calculateTotal() - (parseFloat(amountPaid) || 0)))}
-                </span>
-              </div>
-            </>
-          )}
         </div>
 
         {/* Error Display */}
