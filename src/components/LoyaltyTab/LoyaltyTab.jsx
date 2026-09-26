@@ -24,7 +24,7 @@ import SlideInMenu from "../SlideInMenu/SlideInMenu";
 import AddLoyaltyMemberPanel from "../../pannel_pages/AddLoyaltyMemberPanel";
 import "./LoyaltyTab.css";
 
-const LoyaltyTab = () => {
+const LoyaltyTab = ({ openAddPanel, onAddPanelHandled }) => {
   const { user } = useNewAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
@@ -54,6 +54,14 @@ const LoyaltyTab = () => {
   useEffect(() => {
     loadMembers();
   }, [user?.email]);
+
+  // Open panel when triggered from parent (mobile FAB)
+  useEffect(() => {
+    if (openAddPanel) {
+      setIsAddPanelOpen(true);
+      if (onAddPanelHandled) onAddPanelHandled();
+    }
+  }, [openAddPanel]);
 
   // Handle add/update member
   const handleSubmitMember = async (memberData) => {

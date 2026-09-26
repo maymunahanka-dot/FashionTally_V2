@@ -4,7 +4,7 @@
 .ticket-fab {
   position: fixed;
   bottom: 28px;
-  right: 28px;
+  left: 28px;
   z-index: 1200;
   display: flex;
   align-items: center;
@@ -38,7 +38,8 @@
 .ticket-panel {
   position: fixed;
   bottom: 84px;
-  right: 28px;
+  left: 28px;
+  right: auto;
   z-index: 1300;
   width: 380px;
   height: 600px;
@@ -514,12 +515,13 @@
 /* Mobile */
 @media (max-width: 480px) {
   .ticket-panel {
-    right: 12px;
+    left: 12px;
+    right: auto;
     bottom: 76px;
     width: calc(100vw - 24px);
     max-height: 75vh;
   }
-  .ticket-fab { right: 16px; bottom: 16px; }
+  .ticket-fab { left: 16px; right: auto; bottom: 16px; }
 }
 
 /* ── Error banner ── */
