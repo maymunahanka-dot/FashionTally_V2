@@ -7,7 +7,6 @@ import "./CRM.css";
 
 const CRM = () => {
   const [activeTab, setActiveTab] = useState("Loyalty");
-  const [triggerAddPanel, setTriggerAddPanel] = useState(false);
 
   // CRM data using JSON structure
   const crmData = {
@@ -107,11 +106,11 @@ const CRM = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case "Loyalty":
-        return <LoyaltyTab openAddPanel={triggerAddPanel} onAddPanelHandled={() => setTriggerAddPanel(false)} />;
+        return <LoyaltyTab />;
       case "Feedback":
         return <FeedbackTab />;
       default:
-        return <LoyaltyTab openAddPanel={triggerAddPanel} onAddPanelHandled={() => setTriggerAddPanel(false)} />;
+        return <LoyaltyTab />;
     }
   };
 
@@ -134,7 +133,6 @@ const CRM = () => {
             size="large"
             icon={<Plus size={24} />}
             className="crm_ipolsbbb"
-            onClick={() => { setActiveTab("Loyalty"); setTriggerAddPanel(true); }}
           />
         </div>
         <h2 className="stats-period">{crmData.month}</h2>

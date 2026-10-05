@@ -300,7 +300,7 @@ const Sidebar = () => {
             <div className="sidebar-app-downloads">
               {/* Expert Support */}
               <a
-                href="https://wa.me/2349123124709"
+                href="https://wa.me/2347070274857"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="sidebar-support-btn"

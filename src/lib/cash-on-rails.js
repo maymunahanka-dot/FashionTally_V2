@@ -12,73 +12,34 @@ export async function initiatePayment(paymentData) {
 
     console.log("🚀 Initiating Cash on Rails payment:", paymentData);
 
-    // Get live secret key from environment variables
-    const cashOnRailsSecret = import.meta.env.VITE_CASHONRAILS_LIVE_SECRET;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    if (!cashOnRailsSecret) {
-      throw new Error("Cash on Rails secret key not configured");
-    }
-
-    console.log("Using Live Secret Key...");
-
-    const corInitializeUrl =
-      "https://mainapi.cashonrails.com/api/v1/transaction/initialize";
-
-    // Get callback URL from environment variable
-    const callback_url = import.meta.env.VITE_CALLBACK_URL_LIVE;
-
-    const corPayload = {
-      email: email,
-      first_name: name,
-      last_name: phone, // Using phone as last name for now
-      amount: planPrice.toString(),
-      currency: "NGN",
-      reference: `subscription-${userId}-${Date.now()}`,
-      redirectUrl: callback_url,
-    };
-
-    console.log("💳 Initializing Cash On Rails with payload:", corPayload);
-
-    const response = await fetch(corInitializeUrl, {
+    const response = await fetch(`${backendUrl}/api/payment-cor/initialize`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${cashOnRailsSecret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(corPayload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, name, phone, plantype, planPrice, userId }),
     });
 
     const data = await response.json();
-    console.log("💳 Cash on Rails response:", data);
+    console.log("💳 Payment-cor response:", data);
 
     if (response.ok && data.success) {
-      const paymentLink = data.data?.authorization_url;
+      const paymentLink      = data.data?.paymentLink;
       const transactionReference = data.data?.transactionRef;
 
-      if (!paymentLink || !transactionReference) {
-        console.error("COR Response missing data:", data);
+      if (!paymentLink) {
         throw new Error("Provider failed to generate payment link");
       }
 
-      console.log(
-        `✅ Payment link generated successfully: ${transactionReference}`
-      );
-
-      return {
-        success: true,
-        paymentLink: paymentLink,
-        txRef: transactionReference,
-        data: data.data,
-      };
-    } else {
-      throw new Error(data.message || "Payment initiation failed");
+      console.log("✅ Payment link generated:", transactionReference);
+      return { success: true, paymentLink, txRef: transactionReference, data: data.data };
     }
+
+    throw new Error(data.error || "Payment initiation failed");
+
   } catch (error) {
     console.error("❌ Cash on Rails payment error:", error);
-    return {
-      success: false,
-      message: error.message || "Payment initiation failed",
-    };
+    return { success: false, message: error.message || "Payment initiation failed" };
   }
 }
 
