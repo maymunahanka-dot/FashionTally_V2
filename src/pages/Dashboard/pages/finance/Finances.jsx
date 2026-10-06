@@ -49,7 +49,7 @@ const Finances = () => {
           createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
           updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
           date: t.date ? new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        })));
+        })).sort((a, b) => b.createdAt - a.createdAt));
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);

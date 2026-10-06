@@ -96,20 +96,26 @@ const ClientsManagement = () => {
     fetchClients();
   }, [user?.email]);
 
-  // Filter and search clients
-  const filteredClients = clients.filter((client) => {
-    const matchesSearch =
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter and search clients — newest first
+  const filteredClients = clients
+    .filter((client) => {
+      const matchesSearch =
+        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilter =
-      filterStatus === "all" ||
-      (filterStatus === "active" && client.status === "Active") ||
-      (filterStatus === "inactive" && client.status === "Inactive");
+      const matchesFilter =
+        filterStatus === "all" ||
+        (filterStatus === "active" && client.status === "Active") ||
+        (filterStatus === "inactive" && client.status === "Inactive");
 
-    return matchesSearch && matchesFilter;
-  });
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt || 0);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt || 0);
+      return dateB - dateA;
+    });
 
   const handleClientClick = (client) => {
     setSelectedClient(client);

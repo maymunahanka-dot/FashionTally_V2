@@ -86,19 +86,28 @@ const Designs = () => {
     }
   };
 
-  // Filter designs based on search and category
-  const filteredDesigns = designs.filter((design) => {
-    const matchesSearch = design.name
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      activeCategory === "All Designs" || design.category === activeCategory;
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "active" && design.status === "Active") ||
-      (filterStatus === "archived" && design.status === "Archived");
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // Filter designs based on search and category — newest first
+  const filteredDesigns = designs
+    .filter((design) => {
+      const matchesSearch = design.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        activeCategory === "All Designs" || design.category === activeCategory;
+      const matchesStatus =
+        filterStatus === "all" ||
+        (filterStatus === "active" && design.status === "Active") ||
+        (filterStatus === "archived" && design.status === "Archived");
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+    .sort((a, b) => {
+      const toMs = (d) => {
+        if (!d) return 0;
+        if (d?.seconds) return d.seconds * 1000;
+        return new Date(d).getTime() || 0;
+      };
+      return toMs(b.createdAt) - toMs(a.createdAt);
+    });
 
   const formatPrice = (price) => {
     if (!price) return "₦0";

@@ -66,7 +66,7 @@ const Invoice = () => {
           dueDate: toDate(inv.dueDate),
           createdAt: toDate(inv.createdAt),
           updatedAt: toDate(inv.updatedAt),
-        })));
+        })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
       }
     } catch (error) {
       console.error("Error fetching invoices:", error);

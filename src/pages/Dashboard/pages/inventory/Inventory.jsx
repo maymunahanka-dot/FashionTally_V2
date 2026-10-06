@@ -107,25 +107,31 @@ const Inventory = () => {
     (item) => item.status === "Out of Stock"
   ).length;
 
-  // Filter inventory based on search, category, and status
-  const filteredInventory = inventory.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter inventory based on search, category, and status — newest first
+  const filteredInventory = inventory
+    .filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesCategory =
-      activeCategory === "All" || item.category === activeCategory;
+      const matchesCategory =
+        activeCategory === "All" || item.category === activeCategory;
 
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "sufficient" && item.status === "In Stock") ||
-      (filterStatus === "low" && item.status === "Low Stock") ||
-      (filterStatus === "out" && item.status === "Out of Stock");
+      const matchesStatus =
+        filterStatus === "all" ||
+        (filterStatus === "sufficient" && item.status === "In Stock") ||
+        (filterStatus === "low" && item.status === "Low Stock") ||
+        (filterStatus === "out" && item.status === "Out of Stock");
 
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+    .sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt || 0);
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt || 0);
+      return dateB - dateA;
+    });
 
   const formatCurrency = (amount) => {
     return `₦${amount.toLocaleString()}`;

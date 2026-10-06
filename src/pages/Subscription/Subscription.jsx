@@ -15,6 +15,7 @@ import {
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { initiatePayment } from "../../lib/cash-on-rails";
+import { initiateFlutterwavePayment } from "../../lib/flutterwave";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import "./Subscription.css";
@@ -133,6 +134,7 @@ export default function SubscriptionPage() {
   const [step] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [gateway] = useState("flutterwave");
   const [paymentForm, setPaymentForm] = useState({
     firstName: "",
     lastName: "",
@@ -179,22 +181,36 @@ export default function SubscriptionPage() {
 
     setLoading(true);
     try {
-      const result = await initiatePayment({
-        email: paymentForm.email,
-        name: paymentForm.firstName,
-        phone: paymentForm.phoneNumber,
-        plantype: selectedPlan.name,
+      const paymentData = {
+        email:     paymentForm.email,
+        name:      paymentForm.firstName,
+        phone:     paymentForm.phoneNumber,
+        plantype:  selectedPlan.name,
         planPrice: selectedPlan.monthlyPrice,
-        userId: user?.uid,
-      });
+        userId:    user?.uid,
+      };
 
-      if (result.success) {
-        // Save plan name so callback page can use it
-        localStorage.setItem("pending_plan", selectedPlan.name);
-        // Redirect to Cash on Rails payment page
-        window.location.href = result.paymentLink;
+      if (gateway === "flutterwave") {
+        // Flutterwave: opens inline popup, handles redirect itself
+        localStorage.setItem("pending_plan",    selectedPlan.name);
+        localStorage.setItem("payment_gateway", "flutterwave");
+        const result = await initiateFlutterwavePayment(paymentData);
+        if (!result.success && result.message) {
+          // Only show error if it wasn't just the user closing the modal
+          if (result.message !== "Payment window closed") {
+            alert(result.message);
+          }
+        }
       } else {
-        throw new Error(result.message || "Failed to initiate payment");
+        // Cash on Rails: backend proxy → redirect
+        const result = await initiatePayment(paymentData);
+        if (result.success) {
+          localStorage.setItem("pending_plan",    selectedPlan.name);
+          localStorage.setItem("payment_gateway", "cashonrails");
+          window.location.href = result.paymentLink;
+        } else {
+          throw new Error(result.message || "Failed to initiate payment");
+        }
       }
     } catch (error) {
       console.error("Error initiating payment:", error);

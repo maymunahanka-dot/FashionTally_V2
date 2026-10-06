@@ -61,7 +61,7 @@ const OrderManagement = () => {
           measurements: o.measurements || {},
           fabric: o.fabric || (Array.isArray(o.materials) ? o.materials[0] : "") || "",
           specialInstructions: o.specialInstructions || o.description || "",
-        })));
+        })).sort((a, b) => b.createdAt - a.createdAt));
       } else {
         console.warn("[OrderManagement] success=false:", data);
       }
@@ -119,17 +119,28 @@ const OrderManagement = () => {
     (order) => order.status === "Pending Payment"
   ).length;
 
-  // Filter orders based on search and status
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.title
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "all" ||
-      order.status.toLowerCase().replace(" ", "-") ===
-        filterStatus.toLowerCase();
-    return matchesSearch && matchesStatus;
-  });
+  // Filter orders based on search and status — newest first
+  const filteredOrders = orders
+    .filter((order) => {
+      const matchesSearch = order.title
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "all" ||
+        order.status.toLowerCase().replace(" ", "-") ===
+          filterStatus.toLowerCase();
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const getTime = (val) => {
+        if (!val) return 0;
+        if (val instanceof Date) return isNaN(val) ? 0 : val.getTime();
+        if (val?.seconds) return val.seconds * 1000;
+        const d = new Date(val);
+        return isNaN(d) ? 0 : d.getTime();
+      };
+      return getTime(b.createdAt) - getTime(a.createdAt);
+    });
 
   const handleFilterSelect = (status) => {
     setFilterStatus(status);

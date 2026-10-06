@@ -45,7 +45,7 @@ const Appointments = () => {
           status: mapStatusFromDB(a.status),
           type: a.location === "Video Call" ? "video-call" : "in-person",
           createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
-        })));
+        })).sort((a, b) => b.createdAt - a.createdAt));
       }
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -88,16 +88,18 @@ const Appointments = () => {
     );
   }).length;
 
-  // Filter appointments based on search and status
-  const filteredAppointments = appointments.filter((appointment) => {
-    const matchesSearch =
-      appointment.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "all" ||
-      appointment.status.toLowerCase() === filterStatus.toLowerCase();
-    return matchesSearch && matchesStatus;
-  });
+  // Filter appointments based on search and status — newest first
+  const filteredAppointments = appointments
+    .filter((appointment) => {
+      const matchesSearch =
+        appointment.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        appointment.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        filterStatus === "all" ||
+        appointment.status.toLowerCase() === filterStatus.toLowerCase();
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => b.createdAt - a.createdAt);
 
   const handleFilterSelect = (status) => {
     setFilterStatus(status);
