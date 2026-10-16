@@ -271,7 +271,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
                 { value: "cash", label: "Cash" },
                 { value: "bank_transfer", label: "Bank Transfer" },
                 { value: "credit_card", label: "Credit Card" },
-                { value: "check", label: "Check" },
+                { value: "credit_card", label: "Credit Card" },
                 { value: "other", label: "Other" },
               ]}
             />
