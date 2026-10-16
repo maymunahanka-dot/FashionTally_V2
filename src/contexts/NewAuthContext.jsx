@@ -25,8 +25,16 @@ export const NewAuthProvider = ({ children }) => {
 
     if (storedUser && storedToken) {
       try {
-        setUser(JSON.parse(storedUser));
-        setIsAuthenticated(true);
+        // Check JWT expiry without a library — decode the payload
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          // Token already expired — clear session silently
+          localStorage.removeItem("newAuthUser");
+          localStorage.removeItem("authToken");
+        } else {
+          setUser(JSON.parse(storedUser));
+          setIsAuthenticated(true);
+        }
       } catch {
         localStorage.removeItem("newAuthUser");
         localStorage.removeItem("authToken");

@@ -472,7 +472,7 @@ const Home = () => {
               <div className="dashboardd-card">
                 <div className="dashboardd-contentt">
                   <div className="dashboardd-header">
-                    <h3 className="dashboardd-title">dashboardd Overview</h3>
+                    <h3 className="dashboardd-title">dashboard Overview</h3>
                     <span className="live-badge">Live</span>
                   </div>
                   <div className="dashboardd-stats">
