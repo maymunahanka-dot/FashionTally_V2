@@ -6,6 +6,7 @@ import {
   Edit,
   Trash2,
   AlertTriangle,
+  ArrowUpDown,
 } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
@@ -15,12 +16,15 @@ import InventoryDetailsPanel from "../../../../pannel_pages/InventoryDetailsPane
 import Loading from "../../../../components/Loading/Loading";
 import "./Inventory.css";
 import Button from "../../../../components/button/Button";
+import { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.inventory");
+  const [showSort, setShowSort] = useState(false);
   const [showAddInventory, setShowAddInventory] = useState(false);
   const [showManageCategories, setShowManageCategories] = useState(false);
   const [showItemDetail, setShowItemDetail] = useState(false);
@@ -128,9 +132,28 @@ const Inventory = () => {
       return matchesSearch && matchesCategory && matchesStatus;
     })
     .sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt || 0);
-      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt || 0);
-      return dateB - dateA;
+      const toTime = (value) => {
+        if (!value) return 0;
+        const date = value instanceof Date ? value : new Date(value);
+        const time = date.getTime();
+        return Number.isNaN(time) ? 0 : time;
+      };
+
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+
+      if (sortBy === "quantity") {
+        return (b.quantity || 0) - (a.quantity || 0);
+      }
+
+      if (sortBy === "price") {
+        return (b.price || 0) - (a.price || 0);
+      }
+
+      const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
     });
 
   const formatCurrency = (amount) => {
@@ -339,6 +362,7 @@ const Inventory = () => {
       <div className="jkj">
         {/* Search and Add Inventory Section */}
         <div className="inventory_controls">
+          <div className="search-sort-row">
           <div className="inventory_search_section">
             <div className="inventory_search_input_container">
               <Search className="inventory_search_icon" size={20} />
@@ -351,7 +375,10 @@ const Inventory = () => {
               />
               <button
                 className="inventory_filter_btn_inside"
-                onClick={() => setShowFilter(!showFilter)}
+                onClick={() => {
+                  setShowFilter(!showFilter);
+                  setShowSort(false);
+                }}
               >
                 <Filter size={20} />
               </button>
@@ -416,6 +443,51 @@ const Inventory = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="clients-sort">
+            <Button
+              variant="outline"
+              size="medium"
+              icon={<ArrowUpDown size={18} />}
+              iconPosition="left"
+              active={showSort}
+              onClick={() => {
+                setShowSort((open) => !open);
+                setShowFilter(false);
+              }}
+              className="sort-by-btn"
+              aria-label="Sort by"
+            >
+              Sort by
+            </Button>
+            {showSort && (
+              <div className="sort-dropdown" role="menu">
+                {[
+                  { value: "newest", label: "Newest" },
+                  { value: "oldest", label: "Oldest" },
+                  { value: "name-asc", label: "Name (A–Z)" },
+                  { value: "name-desc", label: "Name (Z–A)" },
+                  { value: "quantity", label: "Quantity" },
+                  { value: "price", label: "Price" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={sortBy === option.value}
+                    className={`sort-option${sortBy === option.value ? " active" : ""}`}
+                    onClick={() => {
+                      setSortBy(option.value);
+                      setShowSort(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           </div>
 
           <button

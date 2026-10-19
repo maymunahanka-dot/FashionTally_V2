@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Filter, Plus, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { useNewAuth } from "../../../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import {
@@ -7,6 +7,7 @@ import {
   deleteDesign,
 } from "../../../../backend/services/crmService";
 import Button from "../../../../components/button/Button";
+import { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import AddDesignPanel from "../../../../pannel_pages/AddDesignPanel/AddDesignPanel";
 import DesignDetailsPanel from "../../../../pannel_pages/DesignDetailsPanel/DesignDetailsPanel";
@@ -21,6 +22,8 @@ const Designs = () => {
   const [activeCategory, setActiveCategory] = useState("All Designs");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.designs");
+  const [showSort, setShowSort] = useState(false);
   const [showAddDesignPanel, setShowAddDesignPanel] = useState(false);
   const [showDesignDetailsPanel, setShowDesignDetailsPanel] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState(null);
@@ -104,9 +107,21 @@ const Designs = () => {
       const toMs = (d) => {
         if (!d) return 0;
         if (d?.seconds) return d.seconds * 1000;
-        return new Date(d).getTime() || 0;
+        const time = new Date(d).getTime();
+        return Number.isNaN(time) ? 0 : time;
       };
-      return toMs(b.createdAt) - toMs(a.createdAt);
+
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+
+      if (sortBy === "price") {
+        return (Number(b.price) || 0) - (Number(a.price) || 0);
+      }
+
+      const createdDiff = toMs(b.createdAt) - toMs(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
     });
 
   const formatPrice = (price) => {
@@ -162,6 +177,7 @@ const Designs = () => {
 
       {/* Search and Add Design Section */}
       <div className="designs-controls">
+        <div className="search-sort-row">
         <div className="design_search_section">
           <div className="design_search_input_container">
             <Search className="design_search_icon" size={20} />
@@ -174,7 +190,10 @@ const Designs = () => {
             />
             <button
               className="design_filter_btn"
-              onClick={() => setShowFilter(!showFilter)}
+              onClick={() => {
+                setShowFilter(!showFilter);
+                setShowSort(false);
+              }}
             >
               <Filter size={20} />
             </button>
@@ -230,6 +249,50 @@ const Designs = () => {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="clients-sort">
+          <Button
+            variant="outline"
+            size="medium"
+            icon={<ArrowUpDown size={18} />}
+            iconPosition="left"
+            active={showSort}
+            onClick={() => {
+              setShowSort((open) => !open);
+              setShowFilter(false);
+            }}
+            className="sort-by-btn"
+            aria-label="Sort by"
+          >
+            Sort by
+          </Button>
+          {showSort && (
+            <div className="sort-dropdown" role="menu">
+              {[
+                { value: "newest", label: "Newest" },
+                { value: "oldest", label: "Oldest" },
+                { value: "name-asc", label: "Name (A–Z)" },
+                { value: "name-desc", label: "Name (Z–A)" },
+                { value: "price", label: "Price" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sortBy === option.value}
+                  className={`sort-option${sortBy === option.value ? " active" : ""}`}
+                  onClick={() => {
+                    setSortBy(option.value);
+                    setShowSort(false);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         </div>
 
         <Button

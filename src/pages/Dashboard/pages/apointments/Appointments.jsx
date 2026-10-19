@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import Button from "../../../../components/button/Button";
+import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import ScheduleAppointmentPanel from "../../../../pannel_pages/ScheduleAppointmentPanel/ScheduleAppointmentPanel";
 import AppointmentDetailsPanel from "../../../../pannel_pages/AppointmentDetailsPanel/AppointmentDetailsPanel";
@@ -15,6 +16,8 @@ const Appointments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.appointments");
+  const [showSort, setShowSort] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -99,7 +102,23 @@ const Appointments = () => {
         appointment.status.toLowerCase() === filterStatus.toLowerCase();
       return matchesSearch && matchesStatus;
     })
-    .sort((a, b) => b.createdAt - a.createdAt);
+    .sort((a, b) => {
+      const toTime = (value) => {
+        if (!value) return 0;
+        const date = value instanceof Date ? value : new Date(value);
+        const time = date.getTime();
+        return Number.isNaN(time) ? 0 : time;
+      };
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.client || "").localeCompare(b.client || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+      if (sortBy === "date") {
+        return toTime(b.date) - toTime(a.date);
+      }
+      const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
+    });
 
   const handleFilterSelect = (status) => {
     setFilterStatus(status);
@@ -173,6 +192,7 @@ const Appointments = () => {
 
       {/* Search and Schedule Section */}
       <div className="app_appointments_controls">
+        <div className="search-sort-row">
         <div className="app_search_section">
           <div className="app_search_input_container">
             <Search className="app_search_icon" size={20} />
@@ -185,7 +205,10 @@ const Appointments = () => {
             />
             <button
               className="app_filter_btn_inside"
-              onClick={() => setShowFilter(!showFilter)}
+              onClick={() => {
+                setShowFilter(!showFilter);
+                setShowSort(false);
+              }}
             >
               <Filter size={20} />
             </button>
@@ -229,6 +252,23 @@ const Appointments = () => {
               </div>
             )}
           </div>
+        </div>
+        <SortByButton
+          value={sortBy}
+          onChange={setSortBy}
+          open={showSort}
+          onToggle={() => {
+            setShowSort((open) => !open);
+            setShowFilter(false);
+          }}
+          options={[
+            { value: "newest", label: "Newest" },
+            { value: "oldest", label: "Oldest" },
+            { value: "name-asc", label: "Client (A–Z)" },
+            { value: "name-desc", label: "Client (Z–A)" },
+            { value: "date", label: "Date" },
+          ]}
+        />
         </div>
 
         <Button

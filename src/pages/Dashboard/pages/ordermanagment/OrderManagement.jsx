@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Search, Filter, Plus, Package } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import Button from "../../../../components/button/Button";
+import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
 import OrderDetailsPanel from "../../../../pannel_pages/OrderDetailsPanel/OrderDetailsPanel";
@@ -12,6 +13,8 @@ const OrderManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.orders");
+  const [showSort, setShowSort] = useState(false);
   const [showNewOrder, setShowNewOrder] = useState(false);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -139,7 +142,15 @@ const OrderManagement = () => {
         const d = new Date(val);
         return isNaN(d) ? 0 : d.getTime();
       };
-      return getTime(b.createdAt) - getTime(a.createdAt);
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+      if (sortBy === "price") {
+        return (Number(b.price) || Number(b.basePrice) || 0) - (Number(a.price) || Number(a.basePrice) || 0);
+      }
+      const createdDiff = getTime(b.createdAt) - getTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
     });
 
   const handleFilterSelect = (status) => {
@@ -231,6 +242,7 @@ const OrderManagement = () => {
       <div className="o_m_jkj">
         {/* Search and Add Order Section */}
         <div className="o_m_order_controls">
+          <div className="search-sort-row">
           <div className="o_m_search_section">
             <div className="o_m_search_input_container">
               <Search className="o_m_search_icon" size={20} />
@@ -243,7 +255,10 @@ const OrderManagement = () => {
               />
               <button
                 className="o_m_filter_btn_inside"
-                onClick={() => setShowFilter(!showFilter)}
+                onClick={() => {
+                  setShowFilter(!showFilter);
+                  setShowSort(false);
+                }}
               >
                 <Filter size={20} />
               </button>
@@ -295,6 +310,23 @@ const OrderManagement = () => {
                 </div>
               )}
             </div>
+          </div>
+          <SortByButton
+            value={sortBy}
+            onChange={setSortBy}
+            open={showSort}
+            onToggle={() => {
+              setShowSort((open) => !open);
+              setShowFilter(false);
+            }}
+            options={[
+              { value: "newest", label: "Newest" },
+              { value: "oldest", label: "Oldest" },
+              { value: "name-asc", label: "Name (A–Z)" },
+              { value: "name-desc", label: "Name (Z–A)" },
+              { value: "price", label: "Price" },
+            ]}
+          />
           </div>
 
           <button

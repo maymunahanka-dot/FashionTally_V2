@@ -23,6 +23,24 @@ const DashboardOverview = () => {
   const navigate = useNavigate();
   const { user, signOut } = useNewAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount]             = useState(0);
+
+  // Fetch unread notification count for the bell badge
+  useEffect(() => {
+    if (!user?.email) return;
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/notifications/user/list`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setUnreadCount(data.data.filter((n) => !n.isRead).length);
+        }
+      })
+      .catch(() => {});
+  }, [user?.email]);
   const [showAddInventory, setShowAddInventory] = useState(false);
   const [showNewOrder, setShowNewOrder] = useState(false);
   const [showAddClient, setShowAddClient] = useState(false);
@@ -307,9 +325,17 @@ const DashboardOverview = () => {
               Here's an overview of your fashion business
             </p>
           </div>
-          <button className="search-btn" onClick={handleLogout}>
-            <TbLogout className="search-icon" size={34} color="#dc2626" />
-          </button>
+          <div className="welcome-banner-actions">
+            <button className="notif-bell-btn" onClick={() => setShowNotifications(true)} title="Notifications">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              {unreadCount > 0 && (
+                <span className="notif-bell-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -320,7 +346,7 @@ const DashboardOverview = () => {
         position="rightt"
         width="480px"
       >
-        <DashboardNotification onClose={() => setShowNotifications(false)} />
+        <DashboardNotification onClose={() => setShowNotifications(false)} onReadChange={setUnreadCount} />
       </SlideInMenu>
 
       {/* Add Inventory Panel */}

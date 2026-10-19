@@ -1,15 +1,5 @@
-/**
- * public/firebase-messaging-sw.js
- *
- * Firebase Cloud Messaging Service Worker.
- * Handles push notifications when the browser tab is closed or in the background.
- *
- * IMPORTANT: This file must stay in the /public folder so it is served
- * from the root URL as /firebase-messaging-sw.js
- *
- * Update the firebaseConfig values below to match your project.
- * These CANNOT use import.meta.env — service workers don't support Vite env vars.
- */
+// firebase-messaging-sw.js
+// Must be at the root of the domain for Firebase Web Push to work on all browsers including Safari
 
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
@@ -25,36 +15,16 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background / closed tab push notifications
+// Handle background messages (when tab is not active)
 messaging.onBackgroundMessage((payload) => {
   console.log("[SW] Background message received:", payload);
 
-  const title = payload.notification?.title || "FashionTally";
-  const body  = payload.notification?.body  || "";
+  const { title, body, icon } = payload.notification || {};
 
-  self.registration.showNotification(title, {
-    body,
-    icon:  "/favicon.ico",   // update to your app icon path
+  self.registration.showNotification(title || "FashionTally", {
+    body:  body  || "",
+    icon:  icon  || "/favicon.ico",
     badge: "/favicon.ico",
     data:  payload.data || {},
   });
-});
-
-// Optional: handle notification click — open/focus the app tab
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      // If a tab is already open, focus it
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && "focus" in client) {
-          return client.focus();
-        }
-      }
-      // Otherwise open a new tab
-      if (clients.openWindow) {
-        return clients.openWindow("/dashboard");
-      }
-    })
-  );
 });

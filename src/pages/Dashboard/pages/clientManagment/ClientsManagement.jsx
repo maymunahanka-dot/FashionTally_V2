@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Search, Filter, Plus, Phone, Mail, ChevronRight } from "lucide-react";
+import { Search, Filter, Plus, Phone, Mail, ChevronRight, ArrowUpDown } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import SlideInMenu from "../../../../components/SlideInMenu";
@@ -12,12 +12,15 @@ import InvoiceViewPanel from "../../../../pannel_pages/InvoiceViewPanel/InvoiceV
 import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
 import OrderDetailsPanel from "../../../../pannel_pages/OrderDetailsPanel/OrderDetailsPanel";
 import Button from "../../../../components/button/Button";
+import { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import "./ClientsManagement.css";
 
 const ClientsManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.clients");
+  const [showSort, setShowSort] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showAddClient, setShowAddClient] = useState(false);
@@ -96,13 +99,21 @@ const ClientsManagement = () => {
     fetchClients();
   }, [user?.email]);
 
-  // Filter and search clients — newest first
+  const toTime = (value) => {
+    if (!value) return 0;
+    const date = value instanceof Date ? value : new Date(value);
+    const time = date.getTime();
+    return Number.isNaN(time) ? 0 : time;
+  };
+
+  // Filter, search, then sort
   const filteredClients = clients
     .filter((client) => {
-      const matchesSearch =
-        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const haystack = [client.name, client.phone, client.email]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesSearch = haystack.includes(searchTerm.toLowerCase());
 
       const matchesFilter =
         filterStatus === "all" ||
@@ -112,9 +123,24 @@ const ClientsManagement = () => {
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt || 0);
-      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt || 0);
-      return dateB - dateA;
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const nameA = (a.name || "").toLowerCase();
+        const nameB = (b.name || "").toLowerCase();
+        const compared = nameA.localeCompare(nameB);
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+
+      if (sortBy === "last-order") {
+        const orderA = toTime(a.lastOrder);
+        const orderB = toTime(b.lastOrder);
+        if (orderA === 0 && orderB === 0) return toTime(b.createdAt) - toTime(a.createdAt);
+        if (orderA === 0) return 1;
+        if (orderB === 0) return -1;
+        return orderB - orderA;
+      }
+
+      const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
     });
 
   const handleClientClick = (client) => {
@@ -270,6 +296,7 @@ const ClientsManagement = () => {
 
       {/* Search and Add Client Section */}
       <div className="clients-controls">
+        <div className="search-sort-row">
         <div className="search-section">
           <div className="search-input-containerr">
             <Search className="search-icon" size={20} />
@@ -335,6 +362,50 @@ const ClientsManagement = () => {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="clients-sort">
+          <Button
+            variant="outline"
+            size="medium"
+            icon={<ArrowUpDown size={18} />}
+            iconPosition="left"
+            active={showSort}
+            onClick={() => {
+              setShowSort((open) => !open);
+              setShowFilter(false);
+            }}
+            className="sort-by-btn"
+            aria-label="Sort by"
+          >
+            Sort by
+          </Button>
+          {showSort && (
+            <div className="sort-dropdown" role="menu">
+              {[
+                { value: "newest", label: "Newest" },
+                { value: "oldest", label: "Oldest" },
+                { value: "name-asc", label: "Name (A–Z)" },
+                { value: "name-desc", label: "Name (Z–A)" },
+                { value: "last-order", label: "Last order" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sortBy === option.value}
+                  className={`sort-option${sortBy === option.value ? " active" : ""}`}
+                  onClick={() => {
+                    setSortBy(option.value);
+                    setShowSort(false);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         </div>
 
         <Button

@@ -5,6 +5,32 @@ import { requestAndRegisterToken, removeDeviceToken } from "../backend/services/
 
 const NewAuthContext = createContext();
 
+function getTokenExpiryMs(token) {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    const json = atob(part.replace(/-/g, "+").replace(/_/g, "/"));
+    const payload = JSON.parse(json);
+    return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+  } catch {
+    return 0;
+  }
+}
+
+function isTokenExpired(token) {
+  const expiry = getTokenExpiryMs(token);
+  if (expiry === null) return false;
+  return expiry <= Date.now();
+}
+
+function isProtectedPath(path) {
+  return (
+    path.startsWith("/dashboard") ||
+    path === "/subscription" ||
+    path.startsWith("/subscription-demo")
+  );
+}
+
 export const useNewAuth = () => {
   const context = useContext(NewAuthContext);
   if (!context) {
@@ -18,26 +44,29 @@ export const NewAuthProvider = ({ children }) => {
   const [loading, setLoading]             = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ── Restore session from localStorage on mount ──────────────
+  const clearSession = () => {
+    localStorage.removeItem("newAuthUser");
+    localStorage.removeItem("authToken");
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  // ── Restore session and check token expiry once on page load ─
   useEffect(() => {
     const storedUser  = localStorage.getItem("newAuthUser");
     const storedToken = localStorage.getItem("authToken");
 
-    if (storedUser && storedToken) {
+    if (storedUser && storedToken && !isTokenExpired(storedToken)) {
       try {
-        // Check JWT expiry without a library — decode the payload
-        const payload = JSON.parse(atob(storedToken.split('.')[1]));
-        if (payload.exp && payload.exp * 1000 < Date.now()) {
-          // Token already expired — clear session silently
-          localStorage.removeItem("newAuthUser");
-          localStorage.removeItem("authToken");
-        } else {
-          setUser(JSON.parse(storedUser));
-          setIsAuthenticated(true);
-        }
+        setUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
       } catch {
-        localStorage.removeItem("newAuthUser");
-        localStorage.removeItem("authToken");
+        clearSession();
+      }
+    } else if (storedToken && isTokenExpired(storedToken)) {
+      clearSession();
+      if (isProtectedPath(window.location.pathname)) {
+        window.location.replace("/login");
       }
     }
     setLoading(false);

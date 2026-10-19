@@ -20,6 +20,7 @@ import {
   calculateLoyaltyStats,
 } from "../../backend/services/crmService";
 import Button from "../button/Button";
+import SortByButton, { useSavedSort } from "../SortByButton/SortByButton";
 import SlideInMenu from "../SlideInMenu/SlideInMenu";
 import AddLoyaltyMemberPanel from "../../pannel_pages/AddLoyaltyMemberPanel";
 import "./LoyaltyTab.css";
@@ -28,6 +29,8 @@ const LoyaltyTab = () => {
   const { user } = useNewAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.loyalty");
+  const [showSort, setShowSort] = useState(false);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false);
@@ -111,12 +114,31 @@ const LoyaltyTab = () => {
   };
 
   // Filter members based on search
-  const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredMembers = members
+    .filter((member) => {
+      const matchesSearch =
+        member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      const toTime = (value) => {
+        if (!value) return 0;
+        if (value?.seconds) return value.seconds * 1000;
+        if (typeof value?.toDate === "function") return value.toDate().getTime();
+        const time = new Date(value).getTime();
+        return Number.isNaN(time) ? 0 : time;
+      };
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+      if (sortBy === "points") {
+        return (Number(b.points) || 0) - (Number(a.points) || 0);
+      }
+      const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
+    });
 
   const renderAvatarIcon = (level) => {
     switch (level) {
@@ -196,6 +218,7 @@ const LoyaltyTab = () => {
     <div className="loyalty_tab">
       {/* Search and Add Customer Section */}
       <div className="loyalty_controls">
+        <div className="search-sort-row">
         <div className="loyalty_search_section">
           <div className="loyalty_search_input_container">
             <Search className="loyalty_search_icon" size={20} />
@@ -208,11 +231,31 @@ const LoyaltyTab = () => {
             />
             <button
               className="loyalty_filter_btn_inside"
-              onClick={() => setShowFilter(!showFilter)}
+              onClick={() => {
+                setShowFilter(!showFilter);
+                setShowSort(false);
+              }}
             >
               <Filter size={20} />
             </button>
           </div>
+        </div>
+        <SortByButton
+          value={sortBy}
+          onChange={setSortBy}
+          open={showSort}
+          onToggle={() => {
+            setShowSort((open) => !open);
+            setShowFilter(false);
+          }}
+          options={[
+            { value: "newest", label: "Newest" },
+            { value: "oldest", label: "Oldest" },
+            { value: "name-asc", label: "Name (A–Z)" },
+            { value: "name-desc", label: "Name (Z–A)" },
+            { value: "points", label: "Points" },
+          ]}
+        />
         </div>
 
         <Button

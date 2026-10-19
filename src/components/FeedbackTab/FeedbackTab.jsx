@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Button from "../button/Button";
+import SortByButton, { useSavedSort } from "../SortByButton/SortByButton";
 import SlideInMenu from "../SlideInMenu/SlideInMenu";
 import AddFeedbackPanel from "../../pannel_pages/AddFeedbackPanel/AddFeedbackPanel";
 import { useNewAuth } from "../../contexts/NewAuthContext";
@@ -27,6 +28,8 @@ import "./FeedbackTab.css";
 
 const FeedbackTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.feedback");
+  const [showSort, setShowSort] = useState(false);
   const [feedbackData, setFeedbackData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
@@ -173,12 +176,31 @@ const FeedbackTab = () => {
     setReplyText("");
   };
 
-  const filteredFeedback = feedbackData.filter(
-    (feedback) =>
-      feedback.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.productName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFeedback = feedbackData
+    .filter(
+      (feedback) =>
+        feedback.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        feedback.comment?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        feedback.productName?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const toTime = (value) => {
+        if (!value) return 0;
+        if (value?.seconds) return value.seconds * 1000;
+        if (typeof value?.toDate === "function") return value.toDate().getTime();
+        const time = new Date(value).getTime();
+        return Number.isNaN(time) ? 0 : time;
+      };
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.clientName || "").localeCompare(b.clientName || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+      if (sortBy === "rating") {
+        return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+      }
+      const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
+    });
 
   const stats = calculateFeedbackStats(feedbackData);
 
@@ -235,6 +257,7 @@ const FeedbackTab = () => {
     <div className="feedback_tabb">
       {/* Search Section */}
       <div className="feedback_search_section">
+        <div className="search-sort-row">
         <div className="feedback_search_container">
           <Search className="feedback_search_icon" size={20} />
           <input
@@ -247,6 +270,20 @@ const FeedbackTab = () => {
           <button className="feedback_filter_btn">
             <Filter size={20} />
           </button>
+        </div>
+        <SortByButton
+          value={sortBy}
+          onChange={setSortBy}
+          open={showSort}
+          onToggle={() => setShowSort((open) => !open)}
+          options={[
+            { value: "newest", label: "Newest" },
+            { value: "oldest", label: "Oldest" },
+            { value: "name-asc", label: "Name (A–Z)" },
+            { value: "name-desc", label: "Name (Z–A)" },
+            { value: "rating", label: "Rating" },
+          ]}
+        />
         </div>
         <Button
           variant="primary"

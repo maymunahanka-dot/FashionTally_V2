@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import Button from "../../../../components/button/Button";
+import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import AddTransactionPanel from "../../../../pannel_pages/AddTransactionPanel";
 import TransactionDetailsPanel from "../../../../pannel_pages/TransactionDetailsPanel/TransactionDetailsPanel";
@@ -15,6 +16,8 @@ const Finances = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterType, setFilterType] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.finances");
+  const [showSort, setShowSort] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
@@ -217,6 +220,22 @@ const Finances = () => {
     })();
 
     return matchesSearch && matchesType && matchesDate;
+  }).sort((a, b) => {
+    const toTime = (value) => {
+      if (!value) return 0;
+      const date = value instanceof Date ? value : new Date(value);
+      const time = date.getTime();
+      return Number.isNaN(time) ? 0 : time;
+    };
+    if (sortBy === "name-asc" || sortBy === "name-desc") {
+      const compared = (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
+      return sortBy === "name-asc" ? compared : -compared;
+    }
+    if (sortBy === "amount") {
+      return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+    }
+    const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+    return sortBy === "oldest" ? -createdDiff : createdDiff;
   });
 
   const formatCurrency = (amount) => {
@@ -275,6 +294,7 @@ const Finances = () => {
       <div className="finn_jkj">
         {/* Search and Add Transaction Section */}
         <div className="finn_finance_controls">
+          <div className="search-sort-row">
           <div className="finn_search_section">
             <div className="finn_search_input_container">
               <Search className="finn_search_icon" size={20} />
@@ -287,7 +307,10 @@ const Finances = () => {
               />
               <button
                 className="finn_filter_btn_inside"
-                onClick={() => setShowFilter(!showFilter)}
+                onClick={() => {
+                  setShowFilter(!showFilter);
+                  setShowSort(false);
+                }}
               >
                 <Filter size={20} />
               </button>
@@ -338,6 +361,23 @@ const Finances = () => {
                 </div>
               )}
             </div>
+          </div>
+          <SortByButton
+            value={sortBy}
+            onChange={setSortBy}
+            open={showSort}
+            onToggle={() => {
+              setShowSort((open) => !open);
+              setShowFilter(false);
+            }}
+            options={[
+              { value: "newest", label: "Newest" },
+              { value: "oldest", label: "Oldest" },
+              { value: "name-asc", label: "Name (A–Z)" },
+              { value: "name-desc", label: "Name (Z–A)" },
+              { value: "amount", label: "Amount" },
+            ]}
+          />
           </div>
 
           <button

@@ -10,17 +10,13 @@ import {
   Trash2,
   FileText,
 } from "lucide-react";
-import {
-  doc,
-  getDoc,
-} from "firebase/firestore";
-import { db } from "../../../../backend/firebase.config";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import Button from "../../../../components/button/Button";
+import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import CreateInvoicePanel from "../../../../pannel_pages/CreateInvoicePanel";
 import InvoiceViewPanel from "../../../../pannel_pages/InvoiceViewPanel";
@@ -38,6 +34,8 @@ const Invoice = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useSavedSort("ft.sort.invoices");
+  const [showSort, setShowSort] = useState(false);
   const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const [showViewInvoice, setShowViewInvoice] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -212,23 +210,41 @@ const Invoice = () => {
   };
 
   // Filter invoices based on search and status
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredInvoices = invoices
+    .filter((invoice) => {
+      const matchesSearch =
+        invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.clientEmail?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "paid" && invoice.status === "Paid") ||
-      (filterStatus === "pending" && invoice.status === "Unpaid") ||
-      (filterStatus === "overdue" &&
-        invoice.status === "Unpaid" &&
-        invoice.dueDate &&
-        invoice.dueDate < new Date());
+      const matchesStatus =
+        filterStatus === "all" ||
+        (filterStatus === "paid" && invoice.status === "Paid") ||
+        (filterStatus === "pending" && invoice.status === "Unpaid") ||
+        (filterStatus === "overdue" &&
+          invoice.status === "Unpaid" &&
+          invoice.dueDate &&
+          invoice.dueDate < new Date());
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const toTime = (value) => {
+        if (!value) return 0;
+        const date = value instanceof Date ? value : new Date(value);
+        const time = date.getTime();
+        return Number.isNaN(time) ? 0 : time;
+      };
+      if (sortBy === "name-asc" || sortBy === "name-desc") {
+        const compared = (a.clientName || "").localeCompare(b.clientName || "", undefined, { sensitivity: "base" });
+        return sortBy === "name-asc" ? compared : -compared;
+      }
+      if (sortBy === "amount") {
+        return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+      }
+      const createdDiff = toTime(b.createdAt) - toTime(a.createdAt);
+      return sortBy === "oldest" ? -createdDiff : createdDiff;
+    });
 
   const handleFilterSelect = (status) => {
     setFilterStatus(status);
@@ -770,10 +786,6 @@ const Invoice = () => {
     try {
       const effectiveEmail = getEffectiveUserEmail(user);
 
-      // Fetch brand data
-      const brandRef = doc(db, "fashiontally_brand_settings", effectiveEmail);
-      const brandDoc = await getDoc(brandRef);
-
       let companyData = {
         businessName: "------",
         address: "------",
@@ -782,10 +794,17 @@ const Invoice = () => {
         logoUrl: "",
         primaryColor: "#1f2937",
         secondaryColor: "#666666",
+        bankName: "------",
+        accountNumber: "------",
+        accountName: "------",
       };
 
-      if (brandDoc.exists()) {
-        const data = brandDoc.data();
+      const brandRes = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${encodeURIComponent(effectiveEmail)}`
+      );
+      const brandJson = await brandRes.json();
+      if (brandJson.success && brandJson.data) {
+        const data = brandJson.data;
         companyData = {
           businessName: data.businessName || "------",
           address: data.businessAddress || "------",
@@ -798,35 +817,32 @@ const Invoice = () => {
           accountNumber: data.accountNumber || "------",
           accountName: data.accountName || "------",
         };
-      } else {
-        const userRef = doc(db, "fashiontally_users", effectiveEmail);
-        const userDoc = await getDoc(userRef);
-
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          companyData = {
-            businessName: userData.businessName || "------",
-            address: userData.address || "------",
-            phone: userData.phone || "------",
-            email: userData.email || "------",
-            logoUrl: "",
-            primaryColor: "#1f2937",
-            secondaryColor: "#666666",
-            bankName: "------",
-            accountNumber: "------",
-            accountName: "------",
-          };
-        }
       }
+
+      const toPdfDate = (value) => {
+        if (!value) return null;
+        if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+        if (typeof value.toDate === "function") return value.toDate();
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+      };
+
+      const pdfInvoice = {
+        ...invoice,
+        createdDate: toPdfDate(invoice.createdDate || invoice.createdAt),
+        dueDate: toPdfDate(invoice.dueDate),
+        amount: Number(invoice.amount) || 0,
+        subtotal: Number(invoice.subtotal) || 0,
+        taxAmount: Number(invoice.taxAmount) || 0,
+        discountAmount: Number(invoice.discountAmount) || 0,
+        items: Array.isArray(invoice.items) ? invoice.items : [],
+      };
 
       // Create temporary container off-screen
       const tempContainer = document.createElement("div");
       tempContainer.style.position = "fixed";
       tempContainer.style.left = "-9999px";
       tempContainer.style.top = "0";
-      tempContainer.style.width = "794px"; // A4 width in px
-      tempContainer.style.background = "#ffffff";
-
       document.body.appendChild(tempContainer);
 
       let root;
@@ -834,9 +850,8 @@ const Invoice = () => {
       try {
         root = createRoot(tempContainer);
 
-        // Render component
         root.render(
-          <InvoicePDFComponent data={invoice} company={companyData} />
+          <InvoicePDFComponent data={pdfInvoice} company={companyData} />
         );
 
         // Wait for component to render and all images to load
@@ -895,13 +910,12 @@ const Invoice = () => {
           throw new Error("Invoice element not rendered");
         }
 
-        // Generate canvas (iPhone safe scale)
         const canvas = await html2canvas(invoiceElement, {
-          scale: 2, // IMPORTANT: do not use devicePixelRatio on iOS
+          scale: window.devicePixelRatio * 2,
           backgroundColor: "#ffffff",
           useCORS: true,
           logging: false,
-          allowTaint: false,
+          allowTaint: true,
         });
 
         const imgData = canvas.toDataURL("image/png");
@@ -1041,6 +1055,7 @@ const Invoice = () => {
       <div className="inv_jkj">
         {/* Search and Create Invoice Section */}
         <div className="inv_invoice_controls">
+          <div className="search-sort-row">
           <div className="inv_search_section">
             <div className="inv_search_input_container">
               <Search className="inv_search_icon" size={20} />
@@ -1053,7 +1068,10 @@ const Invoice = () => {
               />
               <button
                 className="inv_filter_btn_inside"
-                onClick={() => setShowFilter(!showFilter)}
+                onClick={() => {
+                  setShowFilter(!showFilter);
+                  setShowSort(false);
+                }}
               >
                 <Filter size={20} />
               </button>
@@ -1097,6 +1115,23 @@ const Invoice = () => {
                 </div>
               )}
             </div>
+          </div>
+          <SortByButton
+            value={sortBy}
+            onChange={setSortBy}
+            open={showSort}
+            onToggle={() => {
+              setShowSort((open) => !open);
+              setShowFilter(false);
+            }}
+            options={[
+              { value: "newest", label: "Newest" },
+              { value: "oldest", label: "Oldest" },
+              { value: "name-asc", label: "Client (A–Z)" },
+              { value: "name-desc", label: "Client (Z–A)" },
+              { value: "amount", label: "Amount" },
+            ]}
+          />
           </div>
 
           <button
@@ -1149,7 +1184,10 @@ const Invoice = () => {
                 </button>
                 <button
                   className="inv_action_btn inv_pdf_btn"
-                  onClick={() => handleDownloadPDF(invoice)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownloadPDF(invoice);
+                  }}
                   disabled={downloadingPDF === invoice.id}
                 >
                   <Download size={16} />
