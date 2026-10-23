@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Download, Share2, Calendar, Edit3, Trash2 } from "lucide-react";
 import Button from "../../components/button/Button";
 import { useTheme } from "../../contexts/ThemeContext";
+import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./TransactionDetailsPanel.css";
 
 const TransactionDetailsPanel = ({
@@ -39,10 +40,6 @@ const TransactionDetailsPanel = ({
     subtotal: transaction.amount,
     totalAmount: transaction.amount,
     notes: transaction.notes,
-  };
-
-  const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
   };
 
   const handleEdit = () => {
@@ -136,8 +133,11 @@ const TransactionDetailsPanel = ({
                   transactionDetails.isIncome ? "income" : "expense"
                 }`}
               >
-                {transactionDetails.isIncome ? "+" : "-"}
-                {formatCurrency(transactionDetails.amount)}
+                <MoneyAmount
+                  amount={transactionDetails.amount}
+                  prefix={transactionDetails.isIncome ? "+" : "-"}
+                  align="end"
+                />
               </span>
             </div>
           </div>
@@ -200,7 +200,7 @@ const TransactionDetailsPanel = ({
           <div className="tdp_breakdown_item">
             <span className="tdp_breakdown_label">Subtotal</span>
             <span className="tdp_breakdown_value">
-              {formatCurrency(transactionDetails.subtotal)}
+              <MoneyAmount amount={transactionDetails.subtotal} align="end" />
             </span>
           </div>
 
@@ -211,8 +211,11 @@ const TransactionDetailsPanel = ({
                 transactionDetails.isIncome ? "income" : "expense"
               }`}
             >
-              {transactionDetails.isIncome ? "+" : "-"}
-              {formatCurrency(transactionDetails.totalAmount)}
+              <MoneyAmount
+                amount={transactionDetails.totalAmount}
+                prefix={transactionDetails.isIncome ? "+" : "-"}
+                align="end"
+              />
             </span>
           </div>
         </div>

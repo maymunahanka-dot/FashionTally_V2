@@ -8,6 +8,7 @@ import {
   Plus,
   MoreHorizontal,
   Trash2,
+  Image,
 } from "lucide-react";
 import Button from "../button/Button";
 import SortByButton, { useSavedSort } from "../SortByButton/SortByButton";
@@ -320,6 +321,14 @@ const FeedbackTab = () => {
         ) : (
           filteredFeedback.map((feedback) => (
             <div key={feedback.id} className="feedback_card">
+              {feedback.imageUrl ? (
+                <img src={feedback.imageUrl} alt="" className="feedback_card_photo" />
+              ) : (
+                <div className="feedback_card_photo feedback_card_photo_placeholder" aria-hidden="true">
+                  <Image size={28} />
+                </div>
+              )}
+              <div className="feedback_card_body">
               {/* Feedback Header */}
               <div className="feedback_card_header">
                 <div className="feedback_card_left">
@@ -385,19 +394,11 @@ const FeedbackTab = () => {
                 <p className="feedback_review_text">
                   {feedback.comment || "No comment provided"}
                 </p>
-                <p className="feedback_service">
-                  Service: {feedback.productName || "General Service"}
-                </p>
-                {feedback.orderNumber && (
-                  <p className="feedback_order">
-                    Order: {feedback.orderNumber}
-                  </p>
-                )}
-                {feedback.invoiceNumber && (
-                  <p className="feedback_invoice">
-                    Invoice: {feedback.invoiceNumber}
-                  </p>
-                )}
+                <div className="feedback_meta">
+                  <span>{feedback.productName || "General Service"}</span>
+                  {feedback.orderNumber && <span>Order {feedback.orderNumber}</span>}
+                  {feedback.invoiceNumber && <span>Invoice {feedback.invoiceNumber}</span>}
+                </div>
               </div>
 
               {/* Response Section */}
@@ -473,6 +474,7 @@ const FeedbackTab = () => {
                     </Button>
                   </div>
                 )}
+              </div>
             </div>
           ))
         )}

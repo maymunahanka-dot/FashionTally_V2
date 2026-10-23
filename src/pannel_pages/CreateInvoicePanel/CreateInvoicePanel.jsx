@@ -1,8 +1,10 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { X, Plus, Calendar } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
+import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
+import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./CreateInvoicePanel.css";
 
 const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess }) => {
@@ -40,6 +42,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   const [updateFinanceTransaction, setUpdateFinanceTransaction] = useState(true); // For edit mode
 
   const { user } = useContext(NewAuthContext);
+  const pricesTouched = useRef(false);
+  const { currency, usdToNgn, symbol, toNaira } = useDisplayCurrency();
 
   // Load clients and inventory when component mounts
   useEffect(() => {
@@ -72,7 +76,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       setPaymentMethod(selectedInvoice.paymentMethod || "Cash");
       setStatus(selectedInvoice.status || "Unpaid");
       setDiscount(selectedInvoice.discount || 0);
-      setTaxRate(7.5); // Always fixed at 7.5%
+      setTaxRate(selectedInvoice.taxRate ?? 7.5);
       setRecordAsIncome(false); // Don't record as income when editing
       setUpdateFinanceTransaction(true); // Default to true for editing
       setItems(
@@ -126,6 +130,21 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       setUpdateFinanceTransaction(true); // Not used for new invoices
     }
   }, [isEditMode, selectedInvoice]);
+
+  useEffect(() => {
+    pricesTouched.current = false;
+  }, [isEditMode, selectedInvoice]);
+
+  useEffect(() => {
+    if (pricesTouched.current || !isEditMode || !selectedInvoice?.items || currency !== "USD" || !usdToNgn) return;
+    setItems(
+      selectedInvoice.items.map((item, index) => ({
+        ...item,
+        id: item.id || Date.now() + index,
+        price: Number(((Number(item.price) || 0) / usdToNgn).toFixed(2)),
+      }))
+    );
+  }, [currency, usdToNgn, isEditMode, selectedInvoice]);
 
   const loadClients = async () => {
     try {
@@ -194,7 +213,10 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
               inventoryItemId: inventoryItemId,
               inventoryItemName: selectedItem.name,
               description: selectedItem.name,
-              price: selectedItem.price || 0,
+              price:
+                currency === "USD" && usdToNgn
+                  ? Number(((selectedItem.price || 0) / usdToNgn).toFixed(2))
+                  : selectedItem.price || 0,
               category: selectedItem.category,
               // Reset quantity to 1 when selecting new item
               quantity: "",
@@ -227,6 +249,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   };
 
   const updateItem = (index, field, value) => {
+    if (field === "price") pricesTouched.current = true;
     const updatedItems = items.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     );
@@ -306,10 +329,10 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
     setErrors({});
 
     try {
-      const subtotal = calculateSubtotal();
-      const discountAmount = calculateDiscountAmount();
-      const taxAmount = calculateTaxAmount();
-      const total = calculateTotal();
+      const subtotal = toNaira(calculateSubtotal());
+      const discountAmount = toNaira(calculateDiscountAmount());
+      const taxAmount = toNaira(calculateTaxAmount());
+      const total = toNaira(calculateTotal());
 
       const token = localStorage.getItem("authToken");
       const invoicePayload = {
@@ -327,7 +350,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           category: item.category,
           description: item.description.trim(),
           quantity: item.quantity,
-          price: item.price,
+          price: toNaira(item.price),
         })),
         discount,
         taxRate,
@@ -415,14 +438,18 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       onClose();
     } catch (error) {
       console.error("Error saving invoice:", error);
-      setErrors({ submit: "Failed to save invoice. Please try again." });
+      setErrors({ submit: error.message || "Failed to save invoice. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
+    const num = Number(amount) || 0;
+    if (currency === "USD") {
+      return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return `₦${num.toLocaleString()}`;
   };
 
   return (
@@ -745,9 +772,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
                 </div>
                 <div className="create_invoice_form_group create_invoice_form_group_third">
                   <Input
-                    label="Price"
+                    label={`Price (${symbol})`}
                     type="number"
-                    placeholder="₦0"
+                    placeholder={currency === "USD" ? "$0" : "₦0"}
                     value={item.price === 0 ? "" : item.price}
                     onFocus={(e) => { if (parseFloat(e.target.value) === 0) updateItem(index, "price", ""); }}
                     onChange={(e) =>
@@ -803,13 +830,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
             <Input
               label="Tax Rate (%)"
               type="number"
-              placeholder="7.5"
-              value={taxRate}
-              onChange={(e) => {}} // Read-only, no changes allowed
+              placeholder="0"
+              value={taxRate === 0 ? "" : taxRate}
+              onFocus={(e) => { if (parseFloat(e.target.value) === 0) setTaxRate(""); }}
+              onChange={(e) => setTaxRate(e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)}
               variant="rounded"
               min="0"
               max="100"
-              disabled={true}
             />
           </div>
         </div>
@@ -888,6 +915,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
             </div>
           </div>
         )} */}
+
+        <CurrencyHint currency={currency} usdToNgn={usdToNgn} amount={calculateTotal()} />
 
         {/* Summary Section */}
         <div className="create_invoice_summary">

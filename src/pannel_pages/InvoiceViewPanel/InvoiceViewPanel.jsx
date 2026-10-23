@@ -5,6 +5,7 @@ import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
+import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./InvoiceViewPanel.css";
 
 const InvoiceViewPanel = ({ onClose, invoice }) => {
@@ -169,10 +170,6 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
         taxRate: 7.5,
       };
 
-  const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
-  };
-
   // PDF Component for rendering (matches tally-main design)
   const InvoicePDFComponent = ({ data, company }) => {
     const primaryColor = company.primaryColor || "#1f2937";
@@ -254,7 +251,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
             Balance Due
           </p>
           <p style={{ fontSize: "24px", fontWeight: "bold", margin: 0 }}>
-            ₦{data.total.toLocaleString()}
+            <MoneyAmount amount={data.total} align="end" />
           </p>
         </div>
 
@@ -443,10 +440,10 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
                   {item.quantity}
                 </td>
                 <td style={{ padding: "12px", textAlign: "right" }}>
-                  ₦{item.price.toLocaleString()}
+                  <MoneyAmount amount={item.price} align="end" />
                 </td>
                 <td style={{ padding: "12px", textAlign: "right" }}>
-                  ₦{(item.quantity * item.price).toLocaleString()}
+                  <MoneyAmount amount={item.quantity * item.price} align="end" />
                 </td>
               </tr>
             ))}
@@ -465,7 +462,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
           <div style={{ display: "flex", gap: "64px", marginBottom: "12px" }}>
             <span style={{ fontWeight: 600, color: "#374151" }}>Sub Total</span>
             <span style={{ width: "160px", textAlign: "right" }}>
-              ₦{data.subtotal.toLocaleString()}
+              <MoneyAmount amount={data.subtotal} align="end" />
             </span>
           </div>
 
@@ -475,7 +472,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
                 Discount ({data.discount}%)
               </span>
               <span style={{ width: "160px", textAlign: "right" }}>
-                -₦{data.discountAmount.toLocaleString()}
+                <MoneyAmount amount={data.discountAmount} prefix="-" align="end" />
               </span>
             </div>
           )}
@@ -485,7 +482,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
               Tax ({data.taxRate}%)
             </span>
             <span style={{ width: "160px", textAlign: "right" }}>
-              ₦{data.taxAmount.toLocaleString()}
+              <MoneyAmount amount={data.taxAmount} align="end" />
             </span>
           </div>
 
@@ -500,7 +497,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
           >
             <span>Total</span>
             <span style={{ width: "160px", textAlign: "right" }}>
-              ₦{data.total.toLocaleString()}
+              <MoneyAmount amount={data.total} align="end" />
             </span>
           </div>
 
@@ -523,7 +520,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
                 fontWeight: "bold",
               }}
             >
-              ₦{data.total.toLocaleString()}
+              <MoneyAmount amount={data.total} align="end" />
             </span>
           </div>
         </div>
@@ -831,10 +828,10 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
               <div className="inv_l_item_description">{item.description}</div>
               <div className="inv_l_item_qty">{item.quantity}</div>
               <div className="inv_l_item_price">
-                {formatCurrency(item.price)}
+                <MoneyAmount amount={item.price} align="end" />
               </div>
               <div className="inv_l_item_amount">
-                {formatCurrency(item.quantity * item.price)}
+                <MoneyAmount amount={item.quantity * item.price} align="end" />
               </div>
             </div>
           ))}
@@ -854,7 +851,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
           <div className="inv_l_total_row">
             <span className="inv_l_total_label">Subtotal</span>
             <span className="inv_l_total_value">
-              {formatCurrency(invoiceData.subtotal)}
+              <MoneyAmount amount={invoiceData.subtotal} align="end" />
             </span>
           </div>
           {invoiceData.discountAmount > 0 && (
@@ -863,7 +860,7 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
                 Discount ({invoiceData.discount}%)
               </span>
               <span className="inv_l_total_value">
-                -{formatCurrency(invoiceData.discountAmount)}
+                <MoneyAmount amount={invoiceData.discountAmount} prefix="-" align="end" />
               </span>
             </div>
           )}
@@ -872,13 +869,13 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
               Tax ({invoiceData.taxRate}%)
             </span>
             <span className="inv_l_total_value">
-              {formatCurrency(invoiceData.taxAmount)}
+              <MoneyAmount amount={invoiceData.taxAmount} align="end" />
             </span>
           </div>
           <div className="inv_l_total_row inv_l_grand_total">
             <span className="inv_l_total_label">Total:</span>
             <span className="inv_l_total_value inv_l_grand_total_amount">
-              {formatCurrency(invoiceData.total)}
+              <MoneyAmount amount={invoiceData.total} align="end" />
             </span>
           </div>
         </div>

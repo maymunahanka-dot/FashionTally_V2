@@ -39,15 +39,18 @@ export const getFeedback = async (userEmail) => {
 /**
  * Add new feedback — via backend
  */
-export const addFeedback = async (feedbackData, userEmail) => {
+export const addFeedback = async (feedbackData, userEmail, imageFile) => {
   try {
     const token = localStorage.getItem('authToken');
+    const body = new FormData();
+    body.append('data', JSON.stringify(feedbackData));
+    if (imageFile) body.append('image', imageFile);
     const res = await fetch(
       `${import.meta.env.VITE_BACKEND_URL}/api/feedback/create`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(feedbackData),
+        headers: { Authorization: `Bearer ${token}` },
+        body,
       }
     );
     const data = await res.json();
@@ -109,15 +112,18 @@ export const deleteFeedback = async (feedbackId) => {
 /**
  * Update feedback — via backend
  */
-export const updateFeedback = async (feedbackId, updateData) => {
+export const updateFeedback = async (feedbackId, updateData, imageFile) => {
   try {
     const token = localStorage.getItem('authToken');
+    const body = new FormData();
+    body.append('data', JSON.stringify(updateData));
+    if (imageFile) body.append('image', imageFile);
     const res = await fetch(
       `${import.meta.env.VITE_BACKEND_URL}/api/feedback/edit/${feedbackId}`,
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(updateData),
+        headers: { Authorization: `Bearer ${token}` },
+        body,
       }
     );
     const data = await res.json();

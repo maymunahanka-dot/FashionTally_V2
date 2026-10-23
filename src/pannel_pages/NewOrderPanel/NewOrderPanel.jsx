@@ -1,7 +1,9 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { X } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input";
+import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
+import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./NewOrderPanel.css";
 
 const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSuccess }) => {
@@ -28,6 +30,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
   const [errors, setErrors] = useState({});
 
   const { user } = useContext(NewAuthContext);
+  const pricesTouched = useRef(false);
+  const { currency, usdToNgn, symbol, toNaira } = useDisplayCurrency();
 
   // Load clients from backend
   useEffect(() => {
@@ -141,6 +145,46 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
       });
     }
   }, [editMode, initialData]);
+
+  useEffect(() => {
+    pricesTouched.current = false;
+  }, [editMode, initialData]);
+
+  useEffect(() => {
+    if (pricesTouched.current || !editMode || !initialData) return;
+    if (currency === "USD" && !usdToNgn) return;
+    const asEntry = (value) => {
+      const naira = Number(value) || 0;
+      return (naira / usdToNgn).toFixed(2);
+    };
+    if (currency !== "USD") return;
+    setBasePrice(
+      asEntry(
+        initialData.basePrice ||
+          initialData.originalData?.basePrice ||
+          initialData.price ||
+          initialData.originalData?.price ||
+          0
+      )
+    );
+    setDepositPaid(
+      asEntry(
+        initialData.depositPaid ||
+          initialData.originalData?.depositPaid ||
+          initialData.deposit ||
+          0
+      )
+    );
+    const existingAdditionalItems =
+      initialData.additionalItems || initialData.originalData?.additionalItems || [];
+    setAdditionalItems(
+      existingAdditionalItems.map((item, index) => ({
+        id: Date.now() + index + 1000,
+        name: item.name || "",
+        price: asEntry(item.price || 0),
+      }))
+    );
+  }, [currency, usdToNgn, editMode, initialData]);
 
   // Map category to order type
   const mapCategoryToOrderType = (category) => {
@@ -463,15 +507,16 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
 
     try {
       const token = localStorage.getItem("authToken");
-      const totalPrice = calculateTotalAmount();
-
-      // Prepare additional items — strip the local UI `id` field
       const preparedAdditionalItems = additionalItems
         .filter((item) => item.name?.trim() && item.price !== "")
         .map(({ name, price }) => ({
           name: name.trim(),
-          price: parseFloat(price) || 0,
+          price: toNaira(price),
         }));
+      const base = toNaira(basePrice);
+      const deposit = toNaira(depositPaid);
+      const itemsTotal = preparedAdditionalItems.reduce((sum, item) => sum + item.price, 0);
+      const totalPrice = base + itemsTotal;
 
       const orderPayload = {
         clientId: client || "",
@@ -485,13 +530,13 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
         quantity: parseFloat(quantity) || 1,
         measurements: prepareMeasurementsForDatabase(measurements),
         dueDate: deliveryDate || "",
-        basePrice: parseFloat(basePrice) || 0,
+        basePrice: base,
         additionalItems: preparedAdditionalItems,
         price: totalPrice,
-        deposit: parseFloat(depositPaid) || 0,
-        depositPaid: parseFloat(depositPaid) || 0,
-        balance: calculateBalance(),
-        balanceDue: calculateBalance(),
+        deposit,
+        depositPaid: deposit,
+        balance: totalPrice - deposit,
+        balanceDue: totalPrice - deposit,
         specialInstructions: specialInstructions || "",
         status: "in-progress",
         paymentStatus: "partial",
@@ -530,7 +575,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
       onClose();
     } catch (error) {
       console.error("Error saving order:", error);
-      alert("Failed to save order. Please try again.");
+      alert(error.message || "Failed to save order. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -788,10 +833,13 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
               <div className="new_oda_form_group new_oda_form_group_half">
                 <Input
                   type="number"
-                  label="Base Price (₦)"
-                  placeholder="e.g., 50000"
+                  label={`Base Price (${symbol})`}
+                  placeholder={currency === "USD" ? "e.g., 50" : "e.g., 50000"}
                   value={basePrice}
-                  onChange={(e) => handleInputChange("basePrice", e)}
+                  onChange={(e) => {
+                    pricesTouched.current = true;
+                    handleInputChange("basePrice", e);
+                  }}
                   error={errors.basePrice}
                   required
                   variant="rounded"
@@ -800,10 +848,13 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
               <div className="new_oda_form_group new_oda_form_group_half">
                 <Input
                   type="number"
-                  label="Deposit Paid (₦)"
-                  placeholder="e.g., 25000"
+                  label={`Deposit Paid (${symbol})`}
+                  placeholder={currency === "USD" ? "e.g., 20" : "e.g., 25000"}
                   value={depositPaid}
-                  onChange={(e) => handleInputChange("depositPaid", e)}
+                  onChange={(e) => {
+                    pricesTouched.current = true;
+                    handleInputChange("depositPaid", e);
+                  }}
                   variant="rounded"
                 />
               </div>
@@ -846,11 +897,12 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                         />
                         <Input
                           type="number"
-                          placeholder="Price (₦)"
+                          placeholder={`Price (${symbol})`}
                           value={item.price}
-                          onChange={(e) =>
-                            handleItemChange(item.id, "price", e.target.value)
-                          }
+                          onChange={(e) => {
+                            pricesTouched.current = true;
+                            handleItemChange(item.id, "price", e.target.value);
+                          }}
                           variant="rounded"
                         />
                       </div>
@@ -868,23 +920,27 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             </div>
 
             {/* Totals */}
+            <CurrencyHint currency={currency} usdToNgn={usdToNgn} amount={calculateTotalAmount()} />
             <div className="new_oda_totals">
               <div className="new_oda_total_row">
                 <span className="new_oda_total_label">Total Amount:</span>
                 <span className="new_oda_total_value">
-                  ₦{calculateTotalAmount().toLocaleString()}
+                  {currency === "USD" ? "$" : "₦"}
+                  {calculateTotalAmount().toLocaleString()}
                 </span>
               </div>
               <div className="new_oda_total_row">
                 <span className="new_oda_total_label">Deposit:</span>
                 <span className="new_oda_total_value">
-                  ₦{(parseFloat(depositPaid) || 0).toLocaleString()}
+                  {currency === "USD" ? "$" : "₦"}
+                  {(parseFloat(depositPaid) || 0).toLocaleString()}
                 </span>
               </div>
               <div className="new_oda_total_row new_oda_balance_row">
                 <span className="new_oda_total_label">Balance:</span>
                 <span className="new_oda_balance_value">
-                  ₦{calculateBalance().toLocaleString()}
+                  {currency === "USD" ? "$" : "₦"}
+                  {calculateBalance().toLocaleString()}
                 </span>
               </div>
             </div>

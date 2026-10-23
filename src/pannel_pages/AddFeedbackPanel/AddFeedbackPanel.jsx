@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { X, Star } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Upload, X, Star } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import {
@@ -35,6 +35,10 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [imagePreview, setImagePreview] = useState(editingFeedback?.imageUrl || null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imageUrl, setImageUrl] = useState(editingFeedback?.imageUrl || "");
+  const fileInputRef = useRef(null);
 
   // Fetch clients, orders, and invoices on component mount
   useEffect(() => {
@@ -186,10 +190,11 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
           invoiceNumber: formData.invoiceNumber,
           status: formData.status,
           isPublic: formData.isPublic,
+          imageUrl: imageUrl || "",
         };
 
         console.log("Updating feedback:", updateData);
-        await updateFeedback(editingFeedback.id, updateData);
+        await updateFeedback(editingFeedback.id, updateData, imageFile);
         console.log("Feedback updated successfully");
       } else {
         // Create new feedback
@@ -201,11 +206,12 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         const feedbackData = {
           ...formData,
           clientId,
+          imageUrl: imageUrl || "",
         };
 
         console.log("Saving feedback with effective email:", effectiveEmail);
         console.log("Saving feedback:", feedbackData);
-        const docId = await addFeedback(feedbackData, effectiveEmail);
+        const docId = await addFeedback(feedbackData, effectiveEmail, imageFile);
         console.log("Feedback created successfully with ID:", docId);
       }
 
@@ -472,6 +478,54 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
               </span>
             </label>
           </div>
+        </div>
+
+        <div className="add_feedback_form_group">
+          <p className="add_feedback_upload_label">Photo (Optional)</p>
+          <div
+            className={`add_feedback_upload ${imagePreview ? "has_image" : ""}`}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
+            role="button"
+            tabIndex={0}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="add_feedback_file_input"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file?.type.startsWith("image/")) return;
+                if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+                setImageFile(file);
+                setImagePreview(URL.createObjectURL(file));
+              }}
+            />
+            {imagePreview ? (
+              <img src={imagePreview} alt="Feedback" className="add_feedback_preview_img" />
+            ) : (
+              <div className="add_feedback_upload_placeholder">
+                <Upload size={22} />
+                <span>Click to upload</span>
+              </div>
+            )}
+          </div>
+          {imagePreview && (
+            <button
+              type="button"
+              className="add_feedback_remove_img"
+              onClick={() => {
+                if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+                setImagePreview(null);
+                setImageFile(null);
+                setImageUrl("");
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+            >
+              Remove photo
+            </button>
+          )}
         </div>
 
         {/* Preview */}

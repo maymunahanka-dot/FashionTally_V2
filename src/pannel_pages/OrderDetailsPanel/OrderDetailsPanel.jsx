@@ -5,6 +5,7 @@ import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Button from "../../components/button/Button";
+import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./OrderDetailsPanel.css";
 
 const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
@@ -182,10 +183,6 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
       additionalItemsList:
         order.additionalItems || order.originalData?.additionalItems || [],
     },
-  };
-
-  const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
   };
 
   const getStatusColor = (status) => {
@@ -369,7 +366,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
             <div className="odp_pricing-row">
               <span className="odp_pricing-label">Base Price</span>
               <span className="odp_pricing-value">
-                {formatCurrency(orderDetails.pricing.basePrice)}
+                <MoneyAmount amount={orderDetails.pricing.basePrice} align="end" />
               </span>
             </div>
 
@@ -387,7 +384,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
                           {item.name}
                         </span>
                         <span className="odp_additional-item-price">
-                          {formatCurrency(item.price)}
+                          <MoneyAmount amount={item.price} align="end" />
                         </span>
                       </div>
                     )
@@ -398,7 +395,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
                     Additional Items Total
                   </span>
                   <span className="odp_pricing-value">
-                    {formatCurrency(orderDetails.pricing.additionalItems)}
+                    <MoneyAmount amount={orderDetails.pricing.additionalItems} align="end" />
                   </span>
                 </div>
               </>
@@ -407,19 +404,19 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
             <div className="odp_pricing-row odp_total">
               <span className="odp_pricing-label">Total Amount</span>
               <span className="odp_pricing-value">
-                {formatCurrency(orderDetails.pricing.totalAmount)}
+                <MoneyAmount amount={orderDetails.pricing.totalAmount} align="end" />
               </span>
             </div>
             <div className="odp_pricing-row odp_deposit">
               <span className="odp_pricing-label">Deposit Paid</span>
               <span className="odp_pricing-value odp_deposit-amount">
-                {formatCurrency(orderDetails.pricing.depositPaid)}
+                <MoneyAmount amount={orderDetails.pricing.depositPaid} align="end" />
               </span>
             </div>
             <div className="odp_pricing-row odp_balance">
               <span className="odp_pricing-label">Balance Due</span>
               <span className="odp_pricing-value odp_balance-amount">
-                {formatCurrency(orderDetails.pricing.balanceDue)}
+                <MoneyAmount amount={orderDetails.pricing.balanceDue} align="end" />
               </span>
             </div>
           </div>

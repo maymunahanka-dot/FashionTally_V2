@@ -1,8 +1,10 @@
-import { useState, useEffect, useContext } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect, useContext, useRef } from "react";
+import { Plus, Upload, X } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input/Input";
 import Button from "../../components/button/Button";
+import { getEffectiveUserEmail } from "../../utils/teamUtils";
+import { getUsdToNgnRate } from "../../utils/exchangeRate";
 import "./AddInventoryPanel.css";
 
 const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => {
@@ -11,13 +13,22 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
   const [sku, setSku] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
-  const [supplier, setSupplier] = useState("");
+  const [suppliers, setSuppliers] = useState([{ name: "", contact: "" }]);
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("");
   const [pricePerUnit, setPricePerUnit] = useState("");
+  const [storedNaira, setStoredNaira] = useState(null);
+  const [currency, setCurrency] = useState("NGN");
+  const [usdToNgn, setUsdToNgn] = useState(null);
+  const priceTouched = useRef(false);
   const [minStockAlert, setMinStockAlert] = useState("");
   const [color, setColor] = useState("");
   const [description, setDescription] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imageUrl, setImageUrl] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef(null);
   const [recordAsExpense, setRecordAsExpense] = useState(false); // Default to false (commented out feature)
   const [updateFinanceTransaction, setUpdateFinanceTransaction] = useState(true); // For edit mode
 
@@ -26,21 +37,54 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
 
   const { user } = useContext(NewAuthContext);
 
+  useEffect(() => {
+    const email = getEffectiveUserEmail(user);
+    if (!email) return;
+    let cancelled = false;
+
+    const loadCurrency = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${encodeURIComponent(email)}`
+        );
+        const data = await res.json();
+        const nextCurrency = data?.data?.inventoryCurrency === "USD" ? "USD" : "NGN";
+        if (!cancelled) setCurrency(nextCurrency);
+        if (nextCurrency === "USD") {
+          const rate = await getUsdToNgnRate();
+          if (!cancelled) setUsdToNgn(rate);
+        }
+      } catch (error) {
+        console.error("Error loading inventory currency:", error);
+      }
+    };
+
+    loadCurrency();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   // Populate form when editing
   useEffect(() => {
+    priceTouched.current = false;
     if (isEditMode && selectedItem) {
       setItemName(selectedItem.name || "");
       setSku(selectedItem.sku || selectedItem.code || "");
       setCategory(selectedItem.category || "");
       setSubcategory(selectedItem.subcategory || "");
-      setSupplier(selectedItem.supplierName || selectedItem.supplier || "");
+      setSuppliers(
+        selectedItem.suppliers?.some((entry) => entry?.name || entry?.contact)
+          ? selectedItem.suppliers.map((entry) => ({
+              name: entry.name || "",
+              contact: entry.contact || "",
+            }))
+          : [{ name: selectedItem.supplierName || selectedItem.supplier || "", contact: "" }]
+      );
       setQuantity(selectedItem.quantity?.toString() || "");
       setUnit(selectedItem.unit || "");
-      setPricePerUnit(
-        selectedItem.price?.toString() ||
-          selectedItem.pricePerUnit?.toString() ||
-          ""
-      );
+      const naira = Number(selectedItem.price ?? selectedItem.pricePerUnit);
+      setStoredNaira(Number.isFinite(naira) ? naira : null);
       setMinStockAlert(
         selectedItem.reorderPoint?.toString() ||
           selectedItem.minStock?.toString() ||
@@ -48,6 +92,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
       );
       setColor(selectedItem.color || "");
       setDescription(selectedItem.description || "");
+      setImageUrl(selectedItem.imageUrl || "");
+      setImagePreview(selectedItem.imageUrl || null);
+      setImageFile(null);
       setRecordAsExpense(false); // Don't record as expense when editing
       setUpdateFinanceTransaction(true); // Default to true for editing
     } else {
@@ -56,17 +103,53 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
       setSku("");
       setCategory("");
       setSubcategory("");
-      setSupplier("");
+      setSuppliers([{ name: "", contact: "" }]);
       setQuantity("");
       setUnit("");
+      setStoredNaira(null);
       setPricePerUnit("");
       setMinStockAlert("");
       setColor("");
       setDescription("");
+      setImageUrl("");
+      setImagePreview(null);
+      setImageFile(null);
       setRecordAsExpense(false); // Default to false (commented out feature)
       setUpdateFinanceTransaction(true); // Not used for new items
     }
   }, [isEditMode, selectedItem]);
+
+  useEffect(() => {
+    if (priceTouched.current || !isEditMode || storedNaira == null) return;
+    if (currency === "USD") {
+      if (!usdToNgn) return;
+      setPricePerUnit((storedNaira / usdToNgn).toFixed(2));
+      return;
+    }
+    setPricePerUnit(String(storedNaira));
+  }, [currency, usdToNgn, storedNaira, isEditMode]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
+
+  const handleImageUpload = (file) => {
+    if (file?.type.startsWith("image/")) {
+      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+      setImagePreview(URL.createObjectURL(file));
+      setImageFile(file);
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    setImagePreview(null);
+    setImageFile(null);
+    setImageUrl("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const clearError = (fieldName) => {
     if (errors[fieldName]) {
@@ -92,8 +175,8 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
       newErrors.category = "Category is required";
     }
 
-    if (!supplier.trim()) {
-      newErrors.supplier = "Supplier is required";
+    if (!suppliers.some((entry) => entry.name.trim())) {
+      newErrors.supplier = "At least one supplier name is required";
     }
 
     if (!quantity.trim()) {
@@ -151,15 +234,27 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         sku: sku.trim(),
         category,
         subcategory: subcategory.trim() || "",
-        supplierName: supplier.trim(),
+        suppliers: suppliers
+          .map((entry) => ({ name: entry.name.trim(), contact: entry.contact.trim() }))
+          .filter((entry) => entry.name || entry.contact),
+        supplierName: suppliers.map((entry) => entry.name.trim()).find(Boolean) || "",
         quantity: parseFloat(quantity) || 0,
         unit,
-        price: parseFloat(pricePerUnit) || 0,
+        price: (() => {
+          const entered = parseFloat(pricePerUnit) || 0;
+          if (currency !== "USD") return entered;
+          if (!usdToNgn) throw new Error("Exchange rate is still loading. Try again in a moment.");
+          return Math.round(entered * usdToNgn * 100) / 100;
+        })(),
         reorderPoint: parseFloat(minStockAlert) || 0,
         status: calculateStatus(quantity, minStockAlert),
         color: color.trim() || "",
         description: description.trim() || "",
+        imageUrl: imageUrl || "",
       };
+      const body = new FormData();
+      body.append("data", JSON.stringify(payload));
+      if (imageFile) body.append("image", imageFile);
 
       let res;
       if (isEditMode && selectedItem?.id) {
@@ -167,8 +262,8 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           `${import.meta.env.VITE_BACKEND_URL}/api/inventory/edit/${selectedItem.id}`,
           {
             method: "PUT",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(payload),
+            headers: { Authorization: `Bearer ${token}` },
+            body,
           }
         );
       } else {
@@ -176,8 +271,8 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           `${import.meta.env.VITE_BACKEND_URL}/api/inventory/create`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(payload),
+            headers: { Authorization: `Bearer ${token}` },
+            body,
           }
         );
       }
@@ -189,13 +284,14 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
       }
 
       setItemName(""); setSku(""); setCategory(""); setSubcategory("");
-      setSupplier(""); setQuantity(""); setUnit(""); setPricePerUnit("");
+      setSuppliers([{ name: "", contact: "" }]); setQuantity(""); setUnit(""); setPricePerUnit("");
       setMinStockAlert(""); setColor(""); setDescription("");
+      setImageUrl(""); setImagePreview(null); setImageFile(null);
       onSuccess && onSuccess();
       onClose();
     } catch (error) {
       console.error("Error saving inventory item:", error);
-      setErrors({ submit: "Failed to save inventory item. Please try again." });
+      setErrors({ submit: error.message || "Failed to save inventory item. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -282,22 +378,66 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           />
         </div>
 
-        {/* Supplier */}
         <div className="add_inv_form_group">
-          <Input
-            label="Supplier"
-            type="text"
-            placeholder="e.g., Lagos Textiles Ltd"
-            value={supplier}
-            onChange={(e) => {
-              setSupplier(e.target.value);
-              clearError("supplier");
-            }}
-            error={errors.supplier}
-            required
-            variant="rounded"
+          <p className="add_inv_upload_label">Suppliers</p>
+          {suppliers.map((entry, index) => (
+            <div className="add_inv_supplier_block" key={index}>
+              <div className="add_inv_supplier_head">
+                <span>{suppliers.length > 1 ? `Supplier ${index + 1}` : "Supplier"}</span>
+                {suppliers.length > 1 && (
+                  <button
+                    type="button"
+                    className="add_inv_supplier_remove"
+                    onClick={() => setSuppliers(suppliers.filter((_, i) => i !== index))}
+                    disabled={isSubmitting}
+                    aria-label="Remove supplier"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <div className="add_inv_supplier_fields">
+                <Input
+                  label="Name"
+                  type="text"
+                  placeholder="Lagos Textiles Ltd"
+                  value={entry.name}
+                  onChange={(e) => {
+                    const next = [...suppliers];
+                    next[index] = { ...next[index], name: e.target.value };
+                    setSuppliers(next);
+                    clearError("supplier");
+                  }}
+                  error={index === 0 ? errors.supplier : ""}
+                  required={index === 0}
+                  variant="rounded"
+                  disabled={isSubmitting}
+                />
+                <Input
+                  label="Contact"
+                  type="text"
+                  placeholder="Phone or email"
+                  value={entry.contact}
+                  onChange={(e) => {
+                    const next = [...suppliers];
+                    next[index] = { ...next[index], contact: e.target.value };
+                    setSuppliers(next);
+                  }}
+                  variant="rounded"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="add_inv_supplier_add"
+            onClick={() => setSuppliers([...suppliers, { name: "", contact: "" }])}
             disabled={isSubmitting}
-          />
+          >
+            <Plus size={16} />
+            Add another supplier
+          </button>
         </div>
 
         {/* Quantity and Unit Row */}
@@ -349,12 +489,13 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         <div className="add_inv_form_row">
           <div className="add_inv_form_group add_inv_form_group_half">
             <Input
-              label="Price per Unit (₦)"
+              label={currency === "USD" ? "Price per Unit ($)" : "Price per Unit (₦)"}
               type="number"
               placeholder="0"
               step="0.01"
               value={pricePerUnit}
               onChange={(e) => {
+                priceTouched.current = true;
                 setPricePerUnit(e.target.value);
                 clearError("pricePerUnit");
               }}
@@ -363,6 +504,15 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
               variant="rounded"
               disabled={isSubmitting}
             />
+            {currency === "USD" && (
+              <p className="add_inv_rate_hint">
+                {usdToNgn
+                  ? `$1 = ₦${usdToNgn.toLocaleString()} · saves as ₦${(
+                      (parseFloat(pricePerUnit) || 0) * usdToNgn
+                    ).toLocaleString()}`
+                  : "Loading the dollar exchange rate..."}
+              </p>
+            )}
           </div>
           <div className="add_inv_form_group add_inv_form_group_half">
             <Input
@@ -406,6 +556,40 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
             rows={4}
             disabled={isSubmitting}
           />
+        </div>
+
+        <div className="add_inv_form_group">
+          <p className="add_inv_upload_label">Item Image (Optional)</p>
+          <div
+            className={`add_inv_upload_area ${dragOver ? "drag_over" : ""} ${imagePreview ? "has_image" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); handleImageUpload(e.dataTransfer.files[0]); }}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
+            tabIndex={0}
+            role="button"
+            aria-label="Upload item image"
+          >
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} className="add_inv_file_input" />
+            {imagePreview ? (
+              <div className="add_inv_preview_wrap">
+                <img src={imagePreview} alt="Preview" className="add_inv_preview_img" />
+                <div className="add_inv_preview_overlay">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="add_inv_remove_img_btn">
+                    <X size={16} />
+                  </button>
+                  <span>Click to change</span>
+                </div>
+              </div>
+            ) : (
+              <div className="add_inv_upload_placeholder">
+                <div className="add_inv_upload_icon_wrap"><Upload size={28} /></div>
+                <p>Click or drag to upload</p>
+                <span>PNG, JPG up to 10MB</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Record as Expense Checkbox - Only show when creating new item */}

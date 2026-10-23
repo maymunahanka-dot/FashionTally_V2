@@ -17,6 +17,8 @@ import Loading from "../../../../components/Loading/Loading";
 import "./Inventory.css";
 import Button from "../../../../components/button/Button";
 import { useSavedSort } from "../../../../components/SortByButton/SortByButton";
+import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
+import { formatDollars, getUsdToNgnRate } from "../../../../utils/exchangeRate";
 
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,6 +35,8 @@ const Inventory = () => {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showDollars, setShowDollars] = useState(false);
+  const [usdToNgn, setUsdToNgn] = useState(null);
 
   const { user } = useContext(NewAuthContext);
 
@@ -71,6 +75,32 @@ const Inventory = () => {
   useEffect(() => {
     fetchInventory();
   }, [user?.email]);
+
+  useEffect(() => {
+    const email = getEffectiveUserEmail(user);
+    if (!email) return;
+    let cancelled = false;
+
+    const loadCurrency = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${encodeURIComponent(email)}`
+        );
+        const data = await res.json();
+        const useDollars = data?.data?.inventoryCurrency === "USD";
+        if (cancelled) return;
+        setShowDollars(useDollars);
+        setUsdToNgn(await getUsdToNgnRate());
+      } catch (error) {
+        console.error("Error loading exchange rate:", error);
+      }
+    };
+
+    loadCurrency();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const categories = [
     { name: "All", icon: "💰", color: "#16988d" },
@@ -291,7 +321,12 @@ const Inventory = () => {
             </div>
             <div className="inventory_stat_content">
               <p className="inventory_stat_value">
-                {formatCurrency(totalStockValue)}
+                {showDollars && usdToNgn ? formatDollars(totalStockValue, usdToNgn) : formatCurrency(totalStockValue)}
+                {usdToNgn ? (
+                  <span className="inventory_stat_exchange">
+                    {showDollars ? formatCurrency(totalStockValue) : formatDollars(totalStockValue, usdToNgn)}
+                  </span>
+                ) : null}
               </p>
               <p className="inventory_stat_subtitle">+10% from last month</p>
             </div>
@@ -615,7 +650,25 @@ const Inventory = () => {
                 <div className="inventory_detail_item">
                   <span className="inventory_detail_label">Price per Unit</span>
                   <span className="inventory_detail_value">
-                    {formatCurrency(item.pricePerUnit)}
+                    {usdToNgn ? (
+                      showDollars ? (
+                        <>
+                          <span>{formatDollars(item.pricePerUnit, usdToNgn)}</span>
+                          <span className="inventory_exchange">
+                            {formatCurrency(item.pricePerUnit)}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{formatCurrency(item.pricePerUnit)}</span>
+                          <span className="inventory_exchange">
+                            {formatDollars(item.pricePerUnit, usdToNgn)}
+                          </span>
+                        </>
+                      )
+                    ) : (
+                      formatCurrency(item.pricePerUnit)
+                    )}
                   </span>
                 </div>
                 <div className="inventory_detail_item">
@@ -635,7 +688,25 @@ const Inventory = () => {
                   <div className="inventory_stock_value">
                     <span className="inventory_stock_label">Stock Value</span>
                     <span className="inventory_stock_amount">
-                      {formatCurrency(item.stockValue)}
+                      {usdToNgn ? (
+                        showDollars ? (
+                          <>
+                            <span>{formatDollars(item.stockValue, usdToNgn)}</span>
+                            <span className="inventory_exchange">
+                              {formatCurrency(item.stockValue)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span>{formatCurrency(item.stockValue)}</span>
+                            <span className="inventory_exchange">
+                              {formatDollars(item.stockValue, usdToNgn)}
+                            </span>
+                          </>
+                        )
+                      ) : (
+                        formatCurrency(item.stockValue)
+                      )}
                     </span>
                   </div>
                   <div className="inventory_supplier_info">

@@ -1,13 +1,14 @@
 import { useState, useEffect, useContext } from "react";
 import {
   Search, Filter, Plus, Calendar, Clock, MapPin,
-  Mail, Bell, Video, Edit3, Trash2,
+  Mail, Video, Edit3, Trash2,
 } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import Button from "../../../../components/button/Button";
 import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import ScheduleAppointmentPanel from "../../../../pannel_pages/ScheduleAppointmentPanel/ScheduleAppointmentPanel";
+import BlockDaysPanel from "../../../../pannel_pages/BlockDaysPanel/BlockDaysPanel";
 import AppointmentDetailsPanel from "../../../../pannel_pages/AppointmentDetailsPanel/AppointmentDetailsPanel";
 import "./Appointments.css";
 import Loading from "./../../../../components/Loading/Loading";
@@ -19,6 +20,7 @@ const Appointments = () => {
   const [sortBy, setSortBy] = useSavedSort("ft.sort.appointments");
   const [showSort, setShowSort] = useState(false);
   const [showSchedulePanel, setShowSchedulePanel] = useState(false);
+  const [showBlockDays, setShowBlockDays] = useState(false);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [appointments, setAppointments] = useState([]);
@@ -272,6 +274,16 @@ const Appointments = () => {
         </div>
 
         <Button
+          variant="outline"
+          size="medium"
+          icon={<Calendar size={18} />}
+          iconPosition="left"
+          className="app_block_days_btn"
+          onClick={() => setShowBlockDays(true)}
+        >
+          Block days
+        </Button>
+        <Button
           variant="primary"
           size="medium"
           icon={<Plus size={20} />}
@@ -366,20 +378,14 @@ const Appointments = () => {
               style={{ cursor: "pointer" }}
             >
               <div className="app_appointment_header">
-                <div className="app_appointment_left_section">
-                  <div className="app_appointment_icon">
-                    <Calendar size={20} />
-                  </div>
-                  <div className="app_appointment_basic_info">
-                    <h3 className="app_appointment_title">
-                      {appointment.title}
-                    </h3>
-                    <p className="app_appointment_client">
-                      👤 {appointment.client}
-                    </p>
-                  </div>
+                <div className="app_appointment_basic_info">
+                  <h3 className="app_appointment_title">{appointment.title}</h3>
+                  <p className="app_appointment_client">{appointment.client}</p>
                 </div>
                 <div className="app_appointment_actions">
+                  <div className={`app_status_badge ${appointment.status.toLowerCase()}`}>
+                    {appointment.status}
+                  </div>
                   <button
                     className="app_action_btn app_edit_btn"
                     onClick={(e) => {
@@ -394,71 +400,52 @@ const Appointments = () => {
                     className="app_action_btn app_delete_btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteAppointment(
-                        appointment.id,
-                        appointment.title
-                      );
+                      handleDeleteAppointment(appointment.id, appointment.title);
                     }}
                     title="Delete appointment"
                   >
                     <Trash2 size={16} />
                   </button>
-                  <div
-                    className={`app_status_badge ${appointment.status.toLowerCase()}`}
-                  >
-                    {appointment.status}
-                  </div>
                 </div>
               </div>
 
-              <div className="app_appointment_details">
-                <div className="app_detail_item">
-                  <Clock className="app_detail_icon" size={16} />
-                  <span>
-                    {formatDate(appointment.date)} at {appointment.time}
-                  </span>
-                </div>
-                <div className="app_detail_item">
-                  {appointment.type === "video-call" ? (
-                    <Video className="app_detail_icon" size={16} />
-                  ) : (
-                    <MapPin className="app_detail_icon" size={16} />
-                  )}
-                  <span>{appointment.location}</span>
-                </div>
-                {appointment.email && (
-                  <div className="app_detail_item">
-                    <Mail className="app_detail_icon" size={16} />
-                    <span>{appointment.email}</span>
-                  </div>
-                )}
+              <div className="app_appointment_meta">
+                <span>
+                  <Clock size={15} />
+                  {formatDate(appointment.date)} · {appointment.time}
+                </span>
+                <span>
+                  {appointment.type === "video-call" ? <Video size={15} /> : <MapPin size={15} />}
+                  {appointment.location}
+                </span>
+                <span>{appointment.duration}</span>
               </div>
+
+              {appointment.email && (
+                <div className="app_appointment_email">
+                  <Mail size={15} />
+                  <span>{appointment.email}</span>
+                </div>
+              )}
 
               {appointment.description && (
                 <div className="app_appointment_description">
                   {appointment.description}
                 </div>
               )}
-
-              <div className="app_appointment_footer">
-                <div className="app_reminders">
-                  <div className="app_reminder_item">
-                    <Bell size={14} />
-                    <span>24hr reminder</span>
-                  </div>
-                  <div className="app_reminder_item">
-                    <Bell size={14} />
-                    <span>1hr reminder</span>
-                  </div>
-                </div>
-                <button className="app_duration_btn">
-                  Duration: {appointment.duration}
-                </button>
-              </div>
             </div>
           ))
         )}
       </div>
+
+      <SlideInMenu
+        isShow={showBlockDays}
+        onClose={() => setShowBlockDays(false)}
+        position="rightt"
+        width="420px"
+      >
+        <BlockDaysPanel onClose={() => setShowBlockDays(false)} />
+      </SlideInMenu>
 
       {/* Schedule Appointment Panel */}
       <SlideInMenu

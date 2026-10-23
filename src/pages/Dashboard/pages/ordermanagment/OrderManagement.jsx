@@ -8,6 +8,7 @@ import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
 import OrderDetailsPanel from "../../../../pannel_pages/OrderDetailsPanel/OrderDetailsPanel";
 import "./OrderManagement.css";
 import Loading from "../../../../components/Loading/Loading";
+import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 
 const OrderManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -174,10 +175,6 @@ const OrderManagement = () => {
     setShowNewOrder(false);
     setEditMode(false);
     setEditingOrder(null);
-  };
-
-  const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
   };
 
   return (
@@ -380,7 +377,7 @@ const OrderManagement = () => {
                     <h3 className="o_m_order_title_text">{order.title}</h3>
                   </div>
                   <div className="o_m_order_price">
-                    {formatCurrency(order.price)}
+                    <MoneyAmount amount={order.price} align="end" />
                   </div>
                 </div>
 

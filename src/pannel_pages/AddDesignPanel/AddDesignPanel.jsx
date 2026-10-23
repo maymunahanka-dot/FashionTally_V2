@@ -4,12 +4,16 @@ import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Input from "../../components/Input/Input";
 import Button from "../../components/button/Button";
+import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
+import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./AddDesignPanel.css";
 
 const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = null }) => {
   const { user } = useNewAuth();
   const { isDark } = useTheme();
   const fileInputRef = useRef(null);
+  const priceTouched = useRef(false);
+  const { currency, usdToNgn, symbol, toNaira, fromNaira } = useDisplayCurrency();
 
   const [formData, setFormData] = useState({
     name: "", category: "Uniforms", customCategory: "",
@@ -71,6 +75,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
   });
 
   useEffect(() => {
+    priceTouched.current = false;
     if (editMode && initialData) {
       setFormData({
         name: initialData.name || "",
@@ -103,10 +108,17 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
   }, [editMode, initialData]);
 
   useEffect(() => {
+    if (priceTouched.current || !editMode || !initialData) return;
+    if (currency === "USD" && !usdToNgn) return;
+    setFormData((prev) => ({ ...prev, price: fromNaira(initialData.price) }));
+  }, [currency, usdToNgn, editMode, initialData]);
+
+  useEffect(() => {
     return () => { if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview); };
   }, [imagePreview]);
 
   const handleInputChange = (field) => (e) => {
+    if (field === "price") priceTouched.current = true;
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
@@ -150,7 +162,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         category: formData.category,
         customCategory: formData.category === "Others" ? formData.customCategory.trim() : "",
         description: formData.description.trim(),
-        price: formData.price ? parseFloat(formData.price) : 0,
+        price: formData.price ? toNaira(formData.price) : 0,
         imageUrl: formData.imageUrl || "",
         clientId: formData.clientId || "",
         clientName: formData.clientName || "",
@@ -176,7 +188,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
       handleClose();
     } catch (error) {
       console.error("Error saving design:", error);
-      alert("Error saving design. Please try again.");
+      alert(error.message || "Error saving design. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -305,14 +317,15 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <div className="adp_section">
           <Input
             type="number"
-            label="Price (₦)"
-            placeholder="e.g., 85000"
+            label={`Price (${symbol})`}
+            placeholder={currency === "USD" ? "e.g., 50" : "e.g., 85000"}
             value={formData.price}
             onChange={handleInputChange("price")}
             error={errors.price}
             variant="rounded"
             min="0"
           />
+          <CurrencyHint currency={currency} usdToNgn={usdToNgn} amount={formData.price} />
         </div>
 
         {/* Description */}

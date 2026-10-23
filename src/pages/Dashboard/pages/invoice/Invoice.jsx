@@ -16,6 +16,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import Button from "../../../../components/button/Button";
+import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import CreateInvoicePanel from "../../../../pannel_pages/CreateInvoicePanel";
@@ -249,11 +250,6 @@ const Invoice = () => {
   const handleFilterSelect = (status) => {
     setFilterStatus(status);
     setShowFilter(false);
-  };
-
-  const formatCurrency = (amount) => {
-    const num = parseFloat(amount);
-    return `₦${isNaN(num) ? "0" : num.toLocaleString()}`;
   };
 
   // PDF Component for rendering (matches InvoiceViewPanel design)
@@ -1024,7 +1020,7 @@ const Invoice = () => {
               <h3 className="inv_stat_title">Total Invoices</h3>
               <p className="inv_stat_value">{stats.total}</p>
               <p className="inv_stat_subtitle">
-                {formatCurrency(stats.totalAmount)} total value
+                <MoneyAmount amount={stats.totalAmount} /> total value
               </p>
             </div>
           </div>
@@ -1033,7 +1029,7 @@ const Invoice = () => {
               <h3 className="inv_stat_title">Paid Invoices</h3>
               <p className="inv_stat_value">{stats.paid}</p>
               <p className="inv_stat_subtitle">
-                {formatCurrency(stats.paidAmount)} collected
+                <MoneyAmount amount={stats.paidAmount} /> collected
               </p>
             </div>
           </div>
@@ -1162,7 +1158,7 @@ const Invoice = () => {
                 </div>
                 <div className="inv_invoice_right_section">
                   <div className="inv_invoice_amount">
-                    {formatCurrency(invoice.amount)}
+                    <MoneyAmount amount={invoice.amount} align="end" />
                   </div>
                   <div
                     className={`inv_status_badge ${(invoice.status ?? "")

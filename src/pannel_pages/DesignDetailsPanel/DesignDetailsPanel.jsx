@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Edit3, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import Button from "../../components/button/Button";
+import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./DesignDetailsPanel.css";
 
 const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
@@ -44,11 +45,6 @@ const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
     // Handle add order functionality
     console.log("Adding order for design:", design);
     // You can add your order creation logic here
-  };
-
-  const formatPrice = (price) => {
-    if (!price) return "₦0";
-    return `₦${price.toLocaleString()}`;
   };
 
   const formatDate = (timestamp) => {
@@ -155,7 +151,7 @@ const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
           {design.price && (
             <div className="info-group">
               <label className="info-label">Selling Price</label>
-              <p className="info-value price">{formatPrice(design.price)}</p>
+              <p className="info-value price"><MoneyAmount amount={design.price} /></p>
             </div>
           )}
 

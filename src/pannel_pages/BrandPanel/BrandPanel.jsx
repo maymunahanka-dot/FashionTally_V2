@@ -29,6 +29,7 @@ const BrandPanel = ({ onClose }) => {
   const [secondaryColor, setSecondaryColor] = useState("#666666");
   const [footerText, setFooterText] = useState("");
   const [termsAndConditions, setTermsAndConditions] = useState("");
+  const [inventoryCurrency, setInventoryCurrency] = useState("NGN");
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,7 @@ const BrandPanel = ({ onClose }) => {
         setSecondaryColor(d.secondaryColor || "#666666");
         setFooterText(d.footerText || "");
         setTermsAndConditions(d.termsAndConditions || "");
+        setInventoryCurrency(d.inventoryCurrency === "USD" ? "USD" : "NGN");
       }
     } catch (error) {
       console.error("Error loading brand data:", error);
@@ -155,6 +157,7 @@ const BrandPanel = ({ onClose }) => {
         secondaryColor:    secondaryColor,
         footerText:        footerText,
         termsAndConditions: termsAndConditions,
+        inventoryCurrency: inventoryCurrency === "USD" ? "USD" : "NGN",
       };
 
       // Try edit first, fall back to create if not found
@@ -459,6 +462,24 @@ const BrandPanel = ({ onClose }) => {
             variant="rounded"
             rows={4}
           />
+        </div>
+
+        <div className="brand_form_group">
+          <label className="brand_section_label" htmlFor="inventoryCurrency">
+            Currency
+          </label>
+          <select
+            id="inventoryCurrency"
+            className="brand_currency_select"
+            value={inventoryCurrency}
+            onChange={(e) => setInventoryCurrency(e.target.value)}
+          >
+            <option value="NGN">Naira (₦)</option>
+            <option value="USD">Dollar ($)</option>
+          </select>
+          <p className="brand_currency_hint">
+            Used for inventory, designs, orders, invoices, and finances. Dollar amounts are converted to naira with the live exchange rate before they are saved.
+          </p>
         </div>
 
         {/* Bank Details Section */}

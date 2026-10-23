@@ -12,6 +12,7 @@ import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import AddDesignPanel from "../../../../pannel_pages/AddDesignPanel/AddDesignPanel";
 import DesignDetailsPanel from "../../../../pannel_pages/DesignDetailsPanel/DesignDetailsPanel";
 import designPlaceholder from "../../../../assets/Image/logo.png";
+import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 import PageLoading from "../../../../components/Loading/PageLoading";
 import Loading from "../../../../components/Loading/Loading";
 import "./Designs.css";
@@ -123,11 +124,6 @@ const Designs = () => {
       const createdDiff = toMs(b.createdAt) - toMs(a.createdAt);
       return sortBy === "oldest" ? -createdDiff : createdDiff;
     });
-
-  const formatPrice = (price) => {
-    if (!price) return "₦0";
-    return `₦${price.toLocaleString()}`;
-  };
 
   const formatDate = (timestamp) => {
     if (!timestamp) return "N/A";
@@ -385,7 +381,7 @@ const Designs = () => {
             <div className="design-info">
               <h3 className="design-title">{design.name}</h3>
               <p className="design-date">{formatDate(design.createdAt)}</p>
-              <p className="design-price">{formatPrice(design.price)}</p>
+              <p className="design-price"><MoneyAmount amount={design.price} /></p>
             </div>
           </div>
         ))}

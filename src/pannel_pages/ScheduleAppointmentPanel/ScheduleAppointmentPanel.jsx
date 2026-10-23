@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { X, Calendar, ExternalLink } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Button from "../../components/button/Button";
@@ -10,6 +10,8 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
   const { isDark } = useTheme();
   const { user } = useContext(NewAuthContext);
   const [loading, setLoading] = useState(false);
+  const [blockedDays, setBlockedDays] = useState({ blockWeekends: false, dates: [] });
+  const [dateError, setDateError] = useState("");
   const [showCalendarDialog, setShowCalendarDialog] = useState(false);
   const [savedAppointmentData, setSavedAppointmentData] = useState(null);
 
@@ -61,6 +63,33 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
 
   const locationOptions = ["Shop", "Client Location", "Video Call"];
 
+  useEffect(() => {
+    const loadBlockedDays = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/appointment/blocked-days`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) setBlockedDays(data.data || { blockWeekends: false, dates: [] });
+      } catch {
+        // Saving still checks blocked days on the server.
+      }
+    };
+    if (user?.email) loadBlockedDays();
+  }, [user?.email]);
+
+  const blockedMessage = (date) => {
+    if (!date) return "";
+    if (blockedDays.dates?.includes(date)) return "That day is blocked. Choose another date.";
+    if (blockedDays.blockWeekends) {
+      const [year, month, day] = date.split("-").map(Number);
+      const weekday = new Date(year, month - 1, day).getDay();
+      if (weekday === 0 || weekday === 6) return "Weekends are blocked. Choose a weekday.";
+    }
+    return "";
+  };
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -78,6 +107,12 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
 
     if (!formData.appointmentTitle || !formData.date || !formData.time) {
       alert("Please fill in all required fields");
+      return;
+    }
+
+    const blocked = blockedMessage(formData.date);
+    if (blocked) {
+      setDateError(blocked);
       return;
     }
 
@@ -139,7 +174,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
       }
     } catch (error) {
       console.error("Error saving appointment:", error);
-      alert("Failed to save appointment. Please try again.");
+      alert(error.message || "Failed to save appointment. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -265,9 +300,13 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
               type="date"
               label="Date *"
               value={formData.date}
-              onChange={(e) => handleInputChange("date", e.target.value)}
+              onChange={(e) => {
+                handleInputChange("date", e.target.value);
+                setDateError(blockedMessage(e.target.value));
+              }}
               required
               variant="rounded"
+              error={dateError}
             />
           </div>
 

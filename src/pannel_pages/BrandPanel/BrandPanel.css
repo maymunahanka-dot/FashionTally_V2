@@ -346,3 +346,21 @@
     align-self: flex-end;
   }
 }
+
+.brand_currency_select {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-primary, #e5e7eb);
+  border-radius: 12px;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #111827);
+  font-size: 0.95rem;
+}
+
+.brand_currency_hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-tertiary, #6b7280);
+  line-height: 1.4;
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   X,
   Package,
@@ -13,10 +13,42 @@ import {
   XCircle,
 } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
+import NewAuthContext from "../../contexts/NewAuthContext";
+import { getEffectiveUserEmail } from "../../utils/teamUtils";
+import { formatDollars, getUsdToNgnRate } from "../../utils/exchangeRate";
 import "./InventoryDetailsPanel.css";
 
 const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
   const { actualTheme } = useTheme();
+  const { user } = useContext(NewAuthContext);
+  const [showDollars, setShowDollars] = useState(false);
+  const [usdToNgn, setUsdToNgn] = useState(null);
+
+  useEffect(() => {
+    const email = getEffectiveUserEmail(user);
+    if (!email) return;
+    let cancelled = false;
+
+    const loadCurrency = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${encodeURIComponent(email)}`
+        );
+        const data = await res.json();
+        const useDollars = data?.data?.inventoryCurrency === "USD";
+        if (cancelled) return;
+        setShowDollars(useDollars);
+        setUsdToNgn(await getUsdToNgnRate());
+      } catch (error) {
+        console.error("Error loading exchange rate:", error);
+      }
+    };
+
+    loadCurrency();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   if (!selectedItem) {
     return null;
@@ -79,6 +111,11 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
   };
 
   const totalValue = selectedItem.price * selectedItem.quantity;
+  const suppliers = selectedItem.suppliers?.some((entry) => entry?.name || entry?.contact)
+    ? selectedItem.suppliers.filter((entry) => entry?.name || entry?.contact)
+    : (selectedItem.supplierName || selectedItem.supplier)
+      ? [{ name: selectedItem.supplierName || selectedItem.supplier, contact: "" }]
+      : [];
 
   return (
     <div className="inventory_detail_panel">
@@ -97,8 +134,19 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
 
       {/* Content */}
       <div className="inventory_detail_content">
+        <div className={`inventory_detail_hero ${selectedItem.imageUrl ? "has_image" : ""}`}>
+          {selectedItem.imageUrl && (
+            <div className="inventory_detail_image_wrap">
+              <img
+                src={selectedItem.imageUrl}
+                alt={selectedItem.name}
+                className="inventory_detail_image"
+              />
+            </div>
+          )}
+
         {/* Status Section */}
-        <div className="inventory_detail_section">
+        <div className="inventory_detail_section inventory_detail_hero_side">
           <div className="inventory_detail_section_header">
             {getStatusIcon(selectedItem.status)}
             <h3 className="inventory_detail_section_title">Status</h3>
@@ -123,6 +171,7 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
               </p>
             )}
           </div>
+        </div>
         </div>
 
         {/* Basic Information */}
@@ -159,13 +208,23 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
                 </div>
               </div>
 
-              <div className="inventory_detail_info_item">
+              <div className="inventory_detail_info_item inventory_detail_suppliers">
                 <div className="inventory_detail_info_label">
                   <User size={16} />
-                  Supplier
+                  {suppliers.length > 1 ? "Suppliers" : "Supplier"}
                 </div>
-                <div className="inventory_detail_info_value">
-                  {selectedItem.supplierName || selectedItem.supplier}
+                <div className="inventory_detail_supplier_list">
+                  {suppliers.length === 0 && (
+                    <div className="inventory_detail_info_value">—</div>
+                  )}
+                  {suppliers.map((entry, index) => (
+                    <div className="inventory_detail_supplier_card" key={`${entry.name}-${index}`}>
+                      <div className="inventory_detail_info_value">{entry.name || "Unnamed supplier"}</div>
+                      {entry.contact ? (
+                        <div className="inventory_detail_supplier_contact">{entry.contact}</div>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -175,8 +234,40 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
                   Unit Price
                 </div>
                 <div className="inventory_detail_info_value">
-                  {formatCurrency(
-                    selectedItem.price || selectedItem.pricePerUnit
+                  {usdToNgn ? (
+                    showDollars ? (
+                      <>
+                        <div>
+                          {formatDollars(
+                            selectedItem.price || selectedItem.pricePerUnit,
+                            usdToNgn
+                          )}
+                        </div>
+                        <div className="inventory_detail_exchange">
+                          {formatCurrency(
+                            selectedItem.price || selectedItem.pricePerUnit
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          {formatCurrency(
+                            selectedItem.price || selectedItem.pricePerUnit
+                          )}
+                        </div>
+                        <div className="inventory_detail_exchange">
+                          {formatDollars(
+                            selectedItem.price || selectedItem.pricePerUnit,
+                            usdToNgn
+                          )}
+                        </div>
+                      </>
+                    )
+                  ) : (
+                    formatCurrency(
+                      selectedItem.price || selectedItem.pricePerUnit
+                    )
                   )}
                 </div>
               </div>
@@ -244,14 +335,37 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
 
               <div className="inventory_detail_stock_card">
                 <div className="inventory_detail_stock_value inventory_detail_total_value">
-                  {formatCurrency(totalValue)}
+                  {usdToNgn ? (
+                    showDollars ? (
+                      <>
+                        <div>{formatDollars(totalValue, usdToNgn)}</div>
+                        <div className="inventory_detail_exchange">
+                          {formatCurrency(totalValue)}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>{formatCurrency(totalValue)}</div>
+                        <div className="inventory_detail_exchange">
+                          {formatDollars(totalValue, usdToNgn)}
+                        </div>
+                      </>
+                    )
+                  ) : (
+                    formatCurrency(totalValue)
+                  )}
                 </div>
                 <div className="inventory_detail_stock_label">Total Value</div>
                 <div className="inventory_detail_stock_unit">
                   {selectedItem.quantity} ×{" "}
-                  {formatCurrency(
-                    selectedItem.price || selectedItem.pricePerUnit
-                  )}
+                  {showDollars && usdToNgn
+                    ? formatDollars(
+                        selectedItem.price || selectedItem.pricePerUnit,
+                        usdToNgn
+                      )
+                    : formatCurrency(
+                        selectedItem.price || selectedItem.pricePerUnit
+                      )}
                 </div>
               </div>
             </div>

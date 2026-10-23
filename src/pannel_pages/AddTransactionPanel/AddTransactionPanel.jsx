@@ -1,12 +1,16 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { X, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input";
+import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
+import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./AddTransactionPanel.css";
 
 const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, onSuccess }) => {
   const { user } = useContext(NewAuthContext);
   const [loading, setLoading] = useState(false);
+  const amountTouched = useRef(false);
+  const { currency, usdToNgn, symbol, toNaira, fromNaira } = useDisplayCurrency();
 
   // Form state - initialize with editing data if available
   const [transactionType, setTransactionType] = useState(
@@ -37,6 +41,12 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
   const [notes, setNotes] = useState(editingTransaction?.notes || "");
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (amountTouched.current || !editingTransaction) return;
+    if (currency === "USD" && !usdToNgn) return;
+    setAmount(fromNaira(editingTransaction.amount));
+  }, [currency, usdToNgn, editingTransaction]);
 
   const clearError = (fieldName) => {
     if (errors[fieldName]) {
@@ -88,8 +98,8 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
       const token = localStorage.getItem("authToken");
       const payload = {
         description,
-        amount: parseFloat(amount),
-        type: transactionType === "income" ? "Income" : "Expense",
+        amount: toNaira(amount),
+        type: transactionType === "income" ? "income" : "expense",
         category,
         date: date || new Date().toISOString(),
         paymentMethod: paymentMethod.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase()),
@@ -126,14 +136,10 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
       onClose();
     } catch (error) {
       console.error("Error saving transaction:", error);
-      alert("Failed to save transaction. Please try again.");
+      alert(error.message || "Failed to save transaction. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
   };
 
   return (
@@ -180,11 +186,12 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         {/* Amount */}
         <div className="add_trans_form_group">
           <Input
-            label="Amount (₦) *"
+            label={`Amount (${symbol}) *`}
             type="number"
             placeholder="0"
             value={amount}
             onChange={(e) => {
+              amountTouched.current = true;
               setAmount(e.target.value);
               clearError("amount");
             }}
@@ -194,6 +201,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
             min="0"
             step="0.01"
           />
+          <CurrencyHint currency={currency} usdToNgn={usdToNgn} amount={amount} />
         </div>
 
         {/* Category */}

@@ -10,6 +10,7 @@ import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import AddTransactionPanel from "../../../../pannel_pages/AddTransactionPanel";
 import TransactionDetailsPanel from "../../../../pannel_pages/TransactionDetailsPanel/TransactionDetailsPanel";
 import FinanceChart from "../../../../components/FinanceChart";
+import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 import "./Finances.css";
 
 const Finances = () => {
@@ -40,19 +41,22 @@ const Finances = () => {
       );
       const data = await res.json();
       if (data.success) {
-        setTransactions(data.data.map((t) => ({
+        setTransactions(data.data.map((t) => {
+          const isIncome = String(t.type || "").toLowerCase().trim() === "income";
+          return {
           ...t,
           id: t.id || t._id,
           title: t.description || "Transaction",
-          type: t.type === "Income" ? "Sales" : "Purchase",
-          isIncome: t.type === "Income",
-          vendor: t.type === "Income" ? "Customer Payment" : "Vendor",
+          type: isIncome ? "Sales" : "Purchase",
+          isIncome,
+          vendor: isIncome ? "Customer Payment" : "Vendor",
           referenceNumber: t.reference || `TXN-${(t.id || "").slice(-6).toUpperCase()}`,
           status: "completed",
           createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
           updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
           date: t.date ? new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        })).sort((a, b) => b.createdAt - a.createdAt));
+          };
+        }).sort((a, b) => b.createdAt - a.createdAt));
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -238,10 +242,6 @@ const Finances = () => {
     return sortBy === "oldest" ? -createdDiff : createdDiff;
   });
 
-  const formatCurrency = (amount) => {
-    return `₦${amount.toLocaleString()}`;
-  };
-
   return (
     <div className="finn_finance_management">
       {/* Header */}
@@ -284,7 +284,7 @@ const Finances = () => {
             <div key={index} className="finn_stat_card">
               <div className="finn_stat_content">
                 <h3 className="finn_stat_title">{stat.label}</h3>
-                <p className="finn_stat_value">{formatCurrency(stat.value)}</p>
+                <p className="finn_stat_value"><MoneyAmount amount={stat.value} /></p>
               </div>
             </div>
           ))}
@@ -556,8 +556,11 @@ const Finances = () => {
                         transaction.isIncome ? "income" : "expense"
                       }`}
                     >
-                      {transaction.isIncome ? "+" : ""}₦
-                      {transaction.amount.toLocaleString()}
+                      <MoneyAmount
+                        amount={transaction.amount}
+                        prefix={transaction.isIncome ? "+" : ""}
+                        align="end"
+                      />
                     </div>
                   </div>
 
