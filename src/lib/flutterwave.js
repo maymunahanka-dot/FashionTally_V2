@@ -42,7 +42,10 @@ export async function initiateFlutterwavePayment(paymentData) {
 
     await loadFlutterwaveScript();
 
-    const txRef = `subscription-${userId || email}-${Date.now()}`;
+    const plan = String(plantype || "GROWTH").toUpperCase();
+    const userKey = String(userId || email || "user").replace(/-/g, "_");
+    // Format: subscription-{userKey}-{PLAN}-{timestamp} so webhook/verify can map the account + plan
+    const txRef = `subscription-${userKey}-${plan}-${Date.now()}`;
     const callbackUrl = `${window.location.origin}/subscription/callback`;
 
     return new Promise((resolve) => {
@@ -58,24 +61,49 @@ export async function initiateFlutterwavePayment(paymentData) {
           phone_number: phone,
           name,
         },
+        meta: {
+          userId: userId || "",
+          email: email || "",
+          plantype: plan,
+        },
         customizations: {
           title:       "FashionTally Subscription",
-          description: `${plantype} Plan — Monthly`,
+          description: `${plan} Plan — Monthly`,
           logo:        "https://www.fashiontally.com/favicon.ico",
         },
         callback: (response) => {
           console.log("Flutterwave callback:", response);
-          if (response.status === "successful" || response.status === "completed") {
-            // Save plan + gateway so callback page knows
-            localStorage.setItem("pending_plan",    plantype);
-            localStorage.setItem("payment_gateway", "flutterwave");
-            // Flutterwave redirect_url handles navigation automatically
+          const ok =
+            response.status === "successful" ||
+            response.status === "completed" ||
+            response.status === "success";
+
+          localStorage.setItem("pending_plan", plantype);
+          localStorage.setItem("payment_gateway", "flutterwave");
+          localStorage.setItem("pending_tx_ref", txRef);
+          localStorage.setItem(
+            "pending_payment_status",
+            ok ? "completed" : String(response.status || "failed")
+          );
+          if (response.transaction_id) {
+            localStorage.setItem("pending_transaction_id", String(response.transaction_id));
+          }
+
+          if (ok) {
+            // Force web callback. Use status=completed — Flutterwave redirect often uses that.
+            const params = new URLSearchParams({
+              status: "completed",
+              tx_ref: txRef,
+              transaction_id: String(response.transaction_id || ""),
+            });
+            window.location.href = `${callbackUrl}?${params.toString()}`;
             resolve({ success: true });
           } else {
             resolve({ success: false, message: "Payment was not completed" });
           }
         },
         onclose: () => {
+          // If they paid then closed, webhook still activates on the server.
           resolve({ success: false, message: "Payment window closed" });
         },
       });

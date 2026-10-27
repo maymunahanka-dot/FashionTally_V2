@@ -3,12 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, XCircle, Loader } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useNewAuth } from "../../contexts/NewAuthContext";
-import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing";
 import Button from "../../components/button/Button";
 import "./SubscriptionCallback.css";
 
-// Derive plan type from tx_ref: "subscription-{userId}-{timestamp}"
-// Plan is stored in localStorage before redirect so we can retrieve it here
 function getPlanFromStorage() {
   return localStorage.getItem("pending_plan") || "GROWTH";
 }
@@ -19,7 +16,18 @@ function getPlanType(planName) {
     GROWTH: "GROWTH",
     PROFESSIONAL: "PROFESSIONAL",
   };
-  return map[planName?.toUpperCase()] || "GROWTH";
+  return map[String(planName || "").toUpperCase()] || "GROWTH";
+}
+
+function planFromTxRef(txRef) {
+  const parts = String(txRef || "").split("-");
+  const maybe = String(parts[parts.length - 2] || "").toUpperCase();
+  return getPlanType(maybe);
+}
+
+function isPaidStatus(status) {
+  const value = String(status || "").toLowerCase();
+  return value === "successful" || value === "success" || value === "completed";
 }
 
 const SubscriptionCallback = () => {
@@ -29,7 +37,6 @@ const SubscriptionCallback = () => {
   const { refreshUserData, loading: authLoading } = useNewAuth();
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
-  const [processed, setProcessed] = useState(false);
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -37,106 +44,109 @@ const SubscriptionCallback = () => {
     hasRun.current = true;
 
     const handleCallback = async () => {
-      setProcessed(true);
       try {
-        const txRef = searchParams.get("tx_ref");
-        const paymentStatus = searchParams.get("status");
-        const transactionId = searchParams.get("transaction_id");
+        const txRef =
+          searchParams.get("tx_ref") || localStorage.getItem("pending_tx_ref") || "";
+        const paymentStatus =
+          searchParams.get("status") || localStorage.getItem("pending_payment_status") || "";
+        const transactionId =
+          searchParams.get("transaction_id") ||
+          localStorage.getItem("pending_transaction_id") ||
+          "";
 
         console.log("Payment callback received:", { txRef, paymentStatus, transactionId });
 
-        if (paymentStatus === "successful" || paymentStatus === "success") {
-          const planName = getPlanType(getPlanFromStorage());
-          const subscriptionEndDate = new Date(
-            Date.now() + 30 * 24 * 60 * 60 * 1000
-          ).toISOString();
-
-          const token = localStorage.getItem("authToken");
-          if (token) {
-            try {
-              // Step 1: Create payment record
-              await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/payment/create`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    id: `PAY-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                    plantype: planName,
-                    planPrice: SUBSCRIPTION_PRICING[planName.toLowerCase()]?.monthly || 0,
-                    status: "successful",
-                    gateway: "flutterwave",
-                    transactionId: txRef || "",
-                    providerTransactionId: transactionId || "",
-                    paidAt: new Date().toISOString(),
-                  }),
-                }
-              );
-
-              // Step 2: Update user subscription
-              const res = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/user/edit`,
-                {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    isSubscribed: true,
-                    subscriptionType: "paid",
-                    planType: planName,
-                    subscriptionEndDate,
-                    isTrialActive: false,
-                    payment_amount: SUBSCRIPTION_PRICING[planName.toLowerCase()]?.monthly || 0,
-                    payment_date: new Date().toISOString(),
-                    txRef: txRef || "",
-                    transactionId: transactionId || "",
-                  }),
-                }
-              );
-              const data = await res.json();
-              if (data.success) {
-                console.log("✅ MongoDB subscription updated successfully");
-                refreshUserData && await refreshUserData();
-              } else {
-                console.error("❌ Failed to update subscription:", data.error);
-              }
-            } catch (err) {
-              console.error("❌ Failed to update subscription:", err);
-            }
-          } else {
-            console.error("❌ No auth token found");
-          }
-
-          localStorage.removeItem("pending_plan");
-          setStatus("success");
-          setMessage("Payment successful! Your subscription has been activated.");
-
-          setTimeout(() => navigate("/dashboard"), 3000);
-
-        } else if (paymentStatus === "cancelled" || paymentStatus === "failed") {
+        if (!isPaidStatus(paymentStatus) && !transactionId && !txRef) {
           setStatus("failed");
           setMessage("Payment was cancelled or failed. Please try again.");
-        } else {
-          setStatus("failed");
-          setMessage("Payment status unknown. Please contact support.");
+          return;
         }
+
+        if (!isPaidStatus(paymentStatus) && paymentStatus) {
+          // Still try if we have ids — Flutterwave sometimes uses completed
+          if (!transactionId && !txRef) {
+            setStatus("failed");
+            setMessage(`Payment status was "${paymentStatus}". Please try again.`);
+            return;
+          }
+        }
+
+        if (!transactionId && !txRef) {
+          setStatus("failed");
+          setMessage("Missing transaction details from Flutterwave.");
+          return;
+        }
+
+        const planType =
+          getPlanType(getPlanFromStorage()) || planFromTxRef(txRef) || "GROWTH";
+
+        const token = localStorage.getItem("authToken");
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        setMessage("Saving your payment…");
+
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        const res = await fetch(`${backendUrl}/api/payment/flutterwave/verify`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            transactionId,
+            txRef,
+            planType,
+            // Flutterwave may send completed or successful — both mean paid
+            status: isPaidStatus(paymentStatus) ? paymentStatus : "completed",
+          }),
+        });
+        const raw = await res.text();
+        let data = {};
+        try {
+          data = raw ? JSON.parse(raw) : {};
+        } catch {
+          setStatus("failed");
+          setMessage(
+            `Backend at ${backendUrl} did not accept the payment route (HTTP ${res.status}). Restart the Fashiontally_Backend server and try Check again.`
+          );
+          return;
+        }
+        console.log("Callback verify response:", res.status, data);
+
+        localStorage.removeItem("pending_plan");
+        localStorage.removeItem("payment_gateway");
+        localStorage.removeItem("pending_tx_ref");
+        localStorage.removeItem("pending_transaction_id");
+        localStorage.removeItem("pending_payment_status");
+
+        if (!res.ok || !data.success || data.pending) {
+          setStatus("failed");
+          setMessage(
+            data.error ||
+              data.message ||
+              "Could not save your payment yet. Tap Check again, or contact support with your receipt."
+          );
+          return;
+        }
+
+        if (refreshUserData) await refreshUserData();
+        setStatus("success");
+        setMessage(
+          data.alreadyProcessed
+            ? "Payment already saved. Your subscription is ready."
+            : "Payment successful! Your subscription has been activated."
+        );
+        setTimeout(() => navigate("/dashboard"), 2500);
       } catch (error) {
         console.error("Error handling payment callback:", error);
         setStatus("failed");
-        setMessage("An error occurred while processing your payment.");
+        setMessage(error.message || "An error occurred while processing your payment.");
       }
     };
 
     handleCallback();
-  }, [authLoading, processed, searchParams, navigate]);
+  }, [authLoading, searchParams, navigate, refreshUserData]);
 
   const handleRetry = () => {
-    navigate("/subscription");
+    window.location.reload();
   };
 
   const handleGoToDashboard = () => {
@@ -154,7 +164,7 @@ const SubscriptionCallback = () => {
               </div>
               <h1 className="callback-title">Processing Payment...</h1>
               <p className="callback-message">
-                Please wait while we confirm your payment.
+                {message || "Please wait while we save your payment."}
               </p>
             </>
           )}
@@ -179,11 +189,11 @@ const SubscriptionCallback = () => {
               <div className="callback-icon failed">
                 <XCircle />
               </div>
-              <h1 className="callback-title">Payment Failed</h1>
+              <h1 className="callback-title">Payment not confirmed yet</h1>
               <p className="callback-message">{message}</p>
               <div className="callback-actions">
                 <Button onClick={handleRetry} variant="primary">
-                  Try Again
+                  Check again
                 </Button>
                 <Button onClick={handleGoToDashboard} variant="secondary">
                   Go to Dashboard
