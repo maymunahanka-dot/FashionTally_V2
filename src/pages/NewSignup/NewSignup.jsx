@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
@@ -12,13 +12,14 @@ const NewSignup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedPlan = searchParams.get("plan");
-  const { signUpWithEmail, signInWithGoogle } = useNewAuth();
+  const { signUpWithEmail } = useNewAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1 - Personal Info
     name: "",
     email: "",
     phone: "",
+    emailVerificationToken: "", // set once the email OTP is verified
 
     // Step 2 - Password
     password: "",

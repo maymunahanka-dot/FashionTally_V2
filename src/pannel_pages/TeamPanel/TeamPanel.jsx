@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   UserPlus,
@@ -32,7 +32,6 @@ const TeamPanel = ({ onClose }) => {
     createAdmin,
     updateAdmin,
     deleteAdmin,
-    toggleAdminStatus,
     refreshAdmins,
     canAddMoreAdmins,
     adminLimit,
@@ -255,9 +254,9 @@ const TeamPanel = ({ onClose }) => {
                 </span>
               </div>
               <p className="team_password_note">
-                The admin has been added to your team without logging you out.
-                You remain logged in as the main account owner. Please save
-                these credentials and share them with the new admin. This
+                We've emailed {passwordDisplay.email} an invite link to set
+                their own password. You can also share this temporary password
+                with them. You remain logged in as the main account owner. This
                 message will disappear in 15 seconds.
               </p>
             </div>

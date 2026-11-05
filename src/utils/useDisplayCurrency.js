@@ -34,7 +34,7 @@ async function loadBrandCurrency(email) {
   return currencyRequest.promise;
 }
 
-export function toNaira(entered, currency, usdToNgn) {
+function toNaira(entered, currency, usdToNgn) {
   const value = parseFloat(entered);
   const amount = Number.isFinite(value) ? value : 0;
   if (currency !== "USD") return amount;
@@ -44,7 +44,7 @@ export function toNaira(entered, currency, usdToNgn) {
   return Math.round(amount * usdToNgn * 100) / 100;
 }
 
-export function fromNaira(stored, currency, usdToNgn) {
+function fromNaira(stored, currency, usdToNgn) {
   const naira = Number(stored);
   if (!Number.isFinite(naira)) return "";
   if (currency === "USD") {
@@ -54,16 +54,6 @@ export function fromNaira(stored, currency, usdToNgn) {
   return String(naira);
 }
 
-export function formatEntryAmount(amount, currency) {
-  const num = Number(amount) || 0;
-  if (currency === "USD") {
-    return `$${num.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-  return `₦${num.toLocaleString()}`;
-}
 
 export function useDisplayCurrency() {
   const { user } = useContext(NewAuthContext);

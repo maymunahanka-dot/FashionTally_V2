@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { ArrowLeft, User, Mail, Phone, FileText, Info } from "lucide-react";
+import { User, Mail, FileText, Info } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input/Input";
 import "./AddClientPanel.css";

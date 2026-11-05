@@ -4,7 +4,6 @@ import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../backend/firebase.config";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import Button from "../../components/button/Button";
 import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./OrderDetailsPanel.css";
 
@@ -63,16 +62,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
     }
   };
 
-  const handleContact = () => {
-    if (order?.client?.phone) {
-      window.open(`tel:${order.client.phone}`, "_self");
-    }
-  };
 
-  const handleUpdateTimeline = () => {
-    // Handle timeline update functionality
-    console.log("Updating timeline for order:", order);
-  };
 
   const handleDeleteOrder = async () => {
     if (!order?.id || !user?.email) return;
@@ -422,26 +412,6 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
           </div>
         </div>
 
-        {/* Actions */}
-        {/* <div className="odp_actions">
-          <Button
-            variant="secondary"
-            size="large"
-            onClick={handleContact}
-            className="odp_contact-btn"
-            icon={<Phone size={20} />}
-          >
-            Contact
-          </Button>
-          <Button
-            variant="primary"
-            size="large"
-            onClick={handleUpdateTimeline}
-            className="odp_update-btn"
-          >
-            Send Update
-          </Button>
-        </div> */}
       </div>
     </div>
   );

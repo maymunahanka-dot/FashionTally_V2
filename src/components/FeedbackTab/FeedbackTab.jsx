@@ -16,15 +16,7 @@ import SlideInMenu from "../SlideInMenu/SlideInMenu";
 import AddFeedbackPanel from "../../pannel_pages/AddFeedbackPanel/AddFeedbackPanel";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
-import {
-  getFeedback,
-  addFeedback,
-  replyToFeedback,
-  updateFeedbackReply,
-  deleteFeedback,
-  updateFeedback,
-  calculateFeedbackStats,
-} from "../../backend/services/crmService";
+import { getFeedback, replyToFeedback, updateFeedbackReply, deleteFeedback, calculateFeedbackStats } from "../../backend/services/crmService";
 import "./FeedbackTab.css";
 
 const FeedbackTab = () => {

@@ -1,9 +1,4 @@
 import { db } from "../backend/firebase.config.js";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-} from "firebase/firestore";
 
 export async function checkSubscriptionStatus(email, uuid, token) {
   const logPrefix = "[SUB_CHECK]";
@@ -108,7 +103,7 @@ export async function checkSubscriptionStatus(email, uuid, token) {
   }
 }
 
-export async function findUserDoc(token) {
+async function findUserDoc(token) {
   if (!token) return null;
 
   try {
@@ -146,90 +141,5 @@ function determinePlanType(amount) {
   return getPlanTypeFromAmount(amount);
 }
 
-export async function addTestSubscription(email, uuid, options = {}) {
-  const logPrefix = "[SUB_TEST_ADD]";
 
-  const resolved = await resolveUserDocRef(email, uuid);
-  if (!resolved) {
-    console.error(`${logPrefix} ❌ User not found`, { email, uuid });
-    return false;
-  }
 
-  const { ref, keyType } = resolved;
-
-  const planType = options?.planType || "Growth";
-  const subscriptionType = options?.subscriptionType || "paid";
-  const daysValid = options?.daysValid ?? 30;
-
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + daysValid);
-
-  console.log(`${logPrefix} ✅ Adding test subscription`, {
-    keyType,
-    planType,
-    subscriptionType,
-    endDate,
-  });
-
-  await updateDoc(ref, {
-    isSubscribed: true,
-    subscriptionType,
-    planType,
-    subscriptionEndDate: endDate.toISOString(),
-    isTrialActive: subscriptionType === "trial",
-    payment_amount: subscriptionType === "paid" ? 10000 : null,
-    payment_date: subscriptionType === "paid" ? new Date().toISOString() : null,
-    updatedAt: new Date().toISOString(),
-  });
-
-  return true;
-}
-
-export async function removeTestSubscription(email, uuid) {
-  const logPrefix = "[SUB_TEST_REMOVE]";
-
-  const resolved = await resolveUserDocRef(email, uuid);
-  if (!resolved) {
-    console.error(`${logPrefix} ❌ User not found`, { email, uuid });
-    return false;
-  }
-
-  const { ref, keyType } = resolved;
-
-  console.log(`${logPrefix} 🧹 Removing subscription`, { keyType });
-
-  await updateDoc(ref, {
-    isSubscribed: false,
-    subscriptionType: "free",
-    planType: "Free",
-    subscriptionEndDate: null,
-    isTrialActive: false,
-    payment_amount: null,
-    payment_date: null,
-    updatedAt: new Date().toISOString(),
-  });
-
-  return true;
-}
-
-async function resolveUserDocRef(email, uuid) {
-  if (!db) throw new Error("DB not initialized");
-
-  if (email) {
-    const emailRef = doc(db, "fashiontally_users", email);
-    const emailSnap = await getDoc(emailRef);
-    if (emailSnap.exists()) {
-      return { ref: emailRef, keyType: "email" };
-    }
-  }
-
-  if (uuid) {
-    const uuidRef = doc(db, "fashiontally_users", uuid);
-    const uuidSnap = await getDoc(uuidRef);
-    if (uuidSnap.exists()) {
-      return { ref: uuidRef, keyType: "uuid" };
-    }
-  }
-
-  return null;
-}

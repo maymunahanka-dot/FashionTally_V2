@@ -1,4 +1,3 @@
-import React from "react";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const SalesChart = ({ data = [] }) => {

@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  Building,
-  MessageSquare,
-} from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User, Building, MessageSquare } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input";

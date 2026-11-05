@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef } from "react";
-import { X, Plus, Calendar } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
@@ -38,8 +38,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   const [clients, setClients] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState("");
-  const [recordAsIncome, setRecordAsIncome] = useState(false); // Default to false (commented out feature)
-  const [updateFinanceTransaction, setUpdateFinanceTransaction] = useState(true); // For edit mode
+  const [, setRecordAsIncome] = useState(false); // Default to false (commented out feature)
+  const [, setUpdateFinanceTransaction] = useState(true); // For edit mode
 
   const { user } = useContext(NewAuthContext);
   const pricesTouched = useRef(false);
@@ -855,66 +855,6 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
             />
           </div>
         </div>
-
-        {/* Record as Income Checkbox - Only show when creating new invoice */}
-        {/* COMMENTED OUT: Finance integration feature disabled by default */}
-        {/* {!isEditMode && (
-          <div className="create_invoice_section">
-            <div className="create_invoice_checkbox_container">
-              <input
-                type="checkbox"
-                id="recordAsIncome"
-                checked={recordAsIncome}
-                onChange={(e) => setRecordAsIncome(e.target.checked)}
-                disabled={isSubmitting}
-                className="create_invoice_checkbox"
-              />
-              <label htmlFor="recordAsIncome" className="create_invoice_checkbox_label">
-                <span className="create_invoice_checkbox_text">
-                  Record as income in finances
-                </span>
-                <span className="create_invoice_checkbox_description">
-                  Automatically create a finance transaction for this invoice
-                  {calculateTotal() > 0 && (
-                    <span className="create_invoice_income_amount">
-                      {" "}({formatCurrency(calculateTotal())})
-                    </span>
-                  )}
-                </span>
-              </label>
-            </div>
-          </div>
-        )} */}
-
-        {/* Update Finance Transaction Checkbox - Only show when editing */}
-        {/* COMMENTED OUT: Finance integration feature disabled by default */}
-        {/* {isEditMode && (
-          <div className="create_invoice_section">
-            <div className="create_invoice_checkbox_container">
-              <input
-                type="checkbox"
-                id="updateFinanceTransaction"
-                checked={updateFinanceTransaction}
-                onChange={(e) => setUpdateFinanceTransaction(e.target.checked)}
-                disabled={isSubmitting}
-                className="create_invoice_checkbox"
-              />
-              <label htmlFor="updateFinanceTransaction" className="create_invoice_checkbox_label">
-                <span className="create_invoice_checkbox_text">
-                  Update related finance transaction
-                </span>
-                <span className="create_invoice_checkbox_description">
-                  Automatically update the income transaction in finances
-                  {calculateTotal() > 0 && (
-                    <span className="create_invoice_income_amount">
-                      {" "}({formatCurrency(calculateTotal())})
-                    </span>
-                  )}
-                </span>
-              </label>
-            </div>
-          </div>
-        )} */}
 
         <CurrencyHint currency={currency} usdToNgn={usdToNgn} amount={calculateTotal()} />
 

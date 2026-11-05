@@ -791,7 +791,7 @@ const Contact = () => {
             <button className="contact_btn-cta-outline">Schedule Demo</button>
           </div>
           <p className="contact_cta-note">
-            No credit card required • 7 days free trial • Cancel anytime
+            No credit card required • Free trial included • Cancel anytime
           </p>
         </div>
       </section>

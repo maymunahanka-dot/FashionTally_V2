@@ -1,8 +1,4 @@
-import {
-  PLAN_FEATURES,
-  SUBSCRIPTION_USER_LIMITS,
-  FEATURE_NAMES,
-} from "../constants/subscription.js";
+import { PLAN_FEATURES, FEATURE_NAMES } from "../constants/subscription.js";
 
 /**
  * Checks if a plan has access to a specific feature
@@ -64,39 +60,4 @@ export function hasFeatureAccess(plan, feature) {
   return false;
 }
 
-/**
- * Checks if a team can add more users based on their plan
- */
-export function canAddMoreUsers(plan, currentAdminCount) {
-  if (!plan) return false;
 
-  console.log("[canAddMoreUsers] Plan:", plan);
-  console.log("[canAddMoreUsers] Current admin count:", currentAdminCount);
-
-  const normalizedPlan = plan.toUpperCase();
-  const limit = SUBSCRIPTION_USER_LIMITS[normalizedPlan];
-
-  console.log("[canAddMoreUsers] Admin limit:", limit);
-
-  if (limit === undefined) return false;
-
-  const canAdd = currentAdminCount < limit;
-
-  console.log("[canAddMoreUsers] Can add admin:", canAdd);
-
-  return canAdd;
-}
-
-/**
- * Gets the user limit for a plan
- */
-export function getUserLimit(plan) {
-  if (!plan) return 0;
-  const normalizedPlan = plan.toUpperCase();
-  console.log("[getUserLimit] Plan:", normalizedPlan);
-  console.log(
-    "[getUserLimit] Limit:",
-    SUBSCRIPTION_USER_LIMITS[normalizedPlan]
-  );
-  return SUBSCRIPTION_USER_LIMITS[normalizedPlan] || 0;
-}

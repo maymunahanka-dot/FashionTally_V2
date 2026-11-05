@@ -4,7 +4,7 @@ import { auth } from "../backend/firebase.config";
  * Get the login type/provider for the current user
  * @returns {Object} Object containing login type information
  */
-export const getLoginType = () => {
+const getLoginType = () => {
   const currentUser = auth.currentUser;
 
   if (!currentUser) {
@@ -90,14 +90,6 @@ export const getLoginTypeFromUserData = (user) => {
   };
 };
 
-/**
- * Check if user can perform password-related operations
- * @returns {boolean} True if user can change password
- */
-export const canChangePassword = () => {
-  const loginInfo = getLoginType();
-  return loginInfo.canChangePassword;
-};
 
 /**
  * Get a human-readable login method description
@@ -119,22 +111,3 @@ export const getLoginMethodDescription = (user = null) => {
   }
 };
 
-/**
- * Get login method icon/emoji
- * @param {Object} user - User object from context (optional)
- * @returns {string} Icon representing login method
- */
-export const getLoginMethodIcon = (user = null) => {
-  const loginInfo = user ? getLoginTypeFromUserData(user) : getLoginType();
-
-  switch (loginInfo.type) {
-    case "google":
-      return "🔍"; // Google icon
-    case "email":
-      return "📧"; // Email icon
-    case "phone":
-      return "📱"; // Phone icon
-    default:
-      return "🔐"; // Generic auth icon
-  }
-};

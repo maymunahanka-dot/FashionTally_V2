@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { TbUsersGroup, TbUserStar } from "react-icons/tb";
+import { TbUsersGroup } from "react-icons/tb";
 import { FaArrowTrendUp, FaHeart, FaAward } from "react-icons/fa6";
-import { IoSettingsOutline } from "react-icons/io5";
 import { HiMenuAlt3 } from "react-icons/hi";
 import { IoClose } from "react-icons/io5";
 import "./About.css";
@@ -347,7 +346,7 @@ const About = () => {
             <button className="about_btn-cta-outline">Schedule Demo</button>
           </div>
           <p className="about_cta-note">
-            No credit card required • 7 days free trial • Cancel anytime
+            No credit card required • Free trial included • Cancel anytime
           </p>
         </div>
       </section>

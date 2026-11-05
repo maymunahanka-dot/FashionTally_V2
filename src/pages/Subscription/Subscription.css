@@ -139,6 +139,31 @@
 .pro-badge        { background: #dbeafe; color: #1e40af; }
 .enterprise-badge { background: #f3e8ff; color: #7c3aed; }
 
+.billing-cycle-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 10px;
+  border-radius: 9999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+}
+.billing-cycle-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.billing-cycle-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.billing-cycle-save { margin-left: 4px; font-size: 0.75rem; font-weight: 600; color: var(--primary-color); }
 .price { display: flex; align-items: baseline; gap: 3px; margin-bottom: 4px; }
 .amount { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
 .period { color: var(--text-secondary); font-size: 0.8125rem; }

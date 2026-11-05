@@ -6,7 +6,7 @@ import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getPlanPricing } from "../../lib/payment";
 import "./SubscriptionPanel.css";
-import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
+import { SUBSCRIPTION_PRICING, TRIAL_DAYS } from "../../config/subscriptionPricing.js";
 
 const SubscriptionPanel = ({ onClose }) => {
   const subscription = useSubscription();
@@ -205,8 +205,8 @@ const SubscriptionPanel = ({ onClose }) => {
     const endDate = new Date(subscription.subscriptionEndDate);
     const today = new Date();
 
-    // Calculate total subscription period (assume 30 days for monthly, 7 days for trial)
-    const totalDays = subscription.isTrialActive ? 7 : 30;
+    // Calculate total subscription period (30 days for monthly, TRIAL_DAYS for trial)
+    const totalDays = subscription.isTrialActive ? TRIAL_DAYS : 30;
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - totalDays);
 
@@ -388,8 +388,7 @@ const SubscriptionPanel = ({ onClose }) => {
             <div className="trial_content">
               <h3>🎉 Start Your Free Trial</h3>
               <p>
-                Get full access to all features for 7 days, no credit card
-                required!
+                Get full access to all features, no credit card required!
               </p>
             </div>
           </div>
@@ -463,7 +462,7 @@ const SubscriptionPanel = ({ onClose }) => {
         <div className="subscription_info">
           <h4>Subscription Details</h4>
           <ul>
-            <li>• All plans include a 7-day free trial</li>
+            <li>• All plans start with a free trial</li>
             <li>• Cancel anytime, no questions asked</li>
             <li>• Secure payment processing</li>
             <li>• 24/7 customer support</li>

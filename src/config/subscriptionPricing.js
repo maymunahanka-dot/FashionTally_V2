@@ -5,6 +5,9 @@
  * Update these values to change prices across the entire app.
  */
 
+/** Length of the free trial — must match the backend's config/trial.js. */
+export const TRIAL_DAYS = 2;
+
 export const SUBSCRIPTION_PRICING = {
   starter: {
     monthly: 5000,
@@ -32,11 +35,3 @@ export function determinePlanType(amount) {
   return "Free";
 }
 
-/**
- * Get pricing for a specific plan
- * @param {string} planId - Plan identifier (starter, growth, professional)
- * @returns {object} Pricing object with monthly and yearly prices
- */
-export function getPlanPricing(planId) {
-  return SUBSCRIPTION_PRICING[planId.toLowerCase()] || SUBSCRIPTION_PRICING.starter;
-}

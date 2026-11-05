@@ -12,8 +12,8 @@ const Step2Password = ({
   onBack,
 }) => {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword] = useState(false);
+  const [showConfirmPassword] = useState(false);
 
   const getPasswordStrength = (password) => {
     if (!password) return { strength: 0, text: "" };

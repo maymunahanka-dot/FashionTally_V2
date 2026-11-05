@@ -28,3 +28,23 @@ messaging.onBackgroundMessage((payload) => {
     data:  payload.data || {},
   });
 });
+
+// Clicking a notification opens the page it's about (data.url, set by the backend),
+// reusing an open FashionTally tab when there is one.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  const path = data.url || data.FCM_MSG?.data?.url || "/dashboard";
+  const target = new URL(path, self.location.origin).href;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const open = windows.find((w) => w.url.startsWith(self.location.origin));
+      if (open) {
+        open.navigate(target);
+        return open.focus();
+      }
+      return self.clients.openWindow(target);
+    })
+  );
+});

@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { Search, Filter, Plus, Phone, Mail, ChevronRight, ArrowUpDown } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import SlideInMenu from "../../../../components/SlideInMenu";
 import ClientDetailsPanel from "../../../../pannel_pages/ClientDetailsPanel";
 import AddClientPanel from "../../../../pannel_pages/AddClientPanel";

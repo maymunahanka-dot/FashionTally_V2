@@ -13,7 +13,6 @@ import AddDesignPanel from "../../../../pannel_pages/AddDesignPanel/AddDesignPan
 import DesignDetailsPanel from "../../../../pannel_pages/DesignDetailsPanel/DesignDetailsPanel";
 import designPlaceholder from "../../../../assets/Image/logo.png";
 import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
-import PageLoading from "../../../../components/Loading/PageLoading";
 import Loading from "../../../../components/Loading/Loading";
 import "./Designs.css";
 
@@ -32,7 +31,6 @@ const Designs = () => {
   const [editingDesign, setEditingDesign] = useState(null);
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
     "All Designs",

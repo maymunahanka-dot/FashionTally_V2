@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Shield, LogOut, AlertCircle, User } from "lucide-react";
 import Button from "../button/Button";
-import { checkSubscriptionStatus } from "../../lib/subscription-check";
 import { useNewAuth } from "../../contexts/NewAuthContext";
-import { hasFeatureAccess } from "../../lib/subscription-utils";
 import { SubscriptionGate } from "../SubscriptionGate/SubscriptionGate";
 import "./AdminPermissionGate.css";
 

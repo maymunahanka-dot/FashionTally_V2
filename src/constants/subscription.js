@@ -15,7 +15,7 @@ export const ADMIN_LIMITS = {
   "ALL ACCESS": 20,
 };
 
-export const FEATURES = {
+const FEATURES = {
   // Core Features (Available in Starter)
   CLIENT_MANAGEMENT: "Clients Managements",
   DASHBOARD_ANALYTICS: "dashboard_analytics",

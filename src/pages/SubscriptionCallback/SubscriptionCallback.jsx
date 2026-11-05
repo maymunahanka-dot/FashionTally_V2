@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle, XCircle, Loader } from "lucide-react";
+import { CheckCircle, XCircle, Loader, Clock } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import Button from "../../components/button/Button";
@@ -25,10 +25,16 @@ function planFromTxRef(txRef) {
   return getPlanType(maybe);
 }
 
-function isPaidStatus(status) {
-  const value = String(status || "").toLowerCase();
-  return value === "successful" || value === "success" || value === "completed";
+function isFailedStatus(status) {
+  return /cancel|fail/i.test(String(status || ""));
 }
+
+const PENDING_KEYS = ["pending_plan", "pending_cycle", "payment_gateway", "pending_tx_ref", "pending_transaction_id", "pending_payment_status"];
+const clearPendingPayment = () => PENDING_KEYS.forEach((key) => localStorage.removeItem(key));
+
+// While Flutterwave confirms a payment (e.g. bank transfer), check every 5s for up to 2 minutes
+const POLL_INTERVAL_MS = 5000;
+const POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
 const SubscriptionCallback = () => {
   const navigate = useNavigate();
@@ -56,24 +62,13 @@ const SubscriptionCallback = () => {
 
         console.log("Payment callback received:", { txRef, paymentStatus, transactionId });
 
-        if (!isPaidStatus(paymentStatus) && !transactionId && !txRef) {
-          setStatus("failed");
-          setMessage("Payment was cancelled or failed. Please try again.");
-          return;
-        }
-
-        if (!isPaidStatus(paymentStatus) && paymentStatus) {
-          // Still try if we have ids — Flutterwave sometimes uses completed
-          if (!transactionId && !txRef) {
-            setStatus("failed");
-            setMessage(`Payment status was "${paymentStatus}". Please try again.`);
-            return;
-          }
-        }
-
         if (!transactionId && !txRef) {
           setStatus("failed");
-          setMessage("Missing transaction details from Flutterwave.");
+          setMessage(
+            isFailedStatus(paymentStatus)
+              ? "Payment was cancelled or failed. Please try again."
+              : "Missing transaction details from Flutterwave."
+          );
           return;
         }
 
@@ -94,8 +89,9 @@ const SubscriptionCallback = () => {
             transactionId,
             txRef,
             planType,
-            // Flutterwave may send completed or successful — both mean paid
-            status: isPaidStatus(paymentStatus) ? paymentStatus : "completed",
+            billingCycle: localStorage.getItem("pending_cycle") === "yearly" ? "yearly" : "monthly",
+            // The real status from Flutterwave — the backend confirms the payment itself
+            status: paymentStatus,
           }),
         });
         const raw = await res.text();
@@ -111,13 +107,20 @@ const SubscriptionCallback = () => {
         }
         console.log("Callback verify response:", res.status, data);
 
-        localStorage.removeItem("pending_plan");
-        localStorage.removeItem("payment_gateway");
-        localStorage.removeItem("pending_tx_ref");
-        localStorage.removeItem("pending_transaction_id");
-        localStorage.removeItem("pending_payment_status");
+        const showSuccess = async (alreadyProcessed) => {
+          clearPendingPayment();
+          if (refreshUserData) await refreshUserData();
+          setStatus("success");
+          setMessage(
+            alreadyProcessed
+              ? "Payment already saved. Your subscription is ready."
+              : "Payment successful! Your subscription has been activated."
+          );
+          setTimeout(() => navigate("/dashboard"), 2500);
+        };
 
-        if (!res.ok || !data.success || data.pending) {
+        if (!res.ok || !data.success) {
+          clearPendingPayment();
           setStatus("failed");
           setMessage(
             data.error ||
@@ -127,14 +130,30 @@ const SubscriptionCallback = () => {
           return;
         }
 
-        if (refreshUserData) await refreshUserData();
-        setStatus("success");
+        if (!data.pending) {
+          await showSuccess(data.alreadyProcessed);
+          return;
+        }
+
+        // Flutterwave hasn't confirmed it yet — wait for the webhook to activate the plan.
+        // The pending details stay saved so "Check again" can pick up where this left off.
+        setMessage(data.message || "Confirming your payment with Flutterwave…");
+        const query = new URLSearchParams(transactionId ? { transactionId } : { txRef });
+        const deadline = Date.now() + POLL_TIMEOUT_MS;
+        while (Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+          const check = await fetch(`${backendUrl}/api/payment/flutterwave/status?${query}`)
+            .then((r) => r.json())
+            .catch(() => ({}));
+          if (check.activated) {
+            await showSuccess(false);
+            return;
+          }
+        }
+        setStatus("pending");
         setMessage(
-          data.alreadyProcessed
-            ? "Payment already saved. Your subscription is ready."
-            : "Payment successful! Your subscription has been activated."
+          "Your payment is still being confirmed — bank transfers can take a few minutes. Your plan will activate automatically and we'll email your receipt. You can check again or go to your dashboard."
         );
-        setTimeout(() => navigate("/dashboard"), 2500);
       } catch (error) {
         console.error("Error handling payment callback:", error);
         setStatus("failed");
@@ -184,12 +203,30 @@ const SubscriptionCallback = () => {
             </>
           )}
 
+          {status === "pending" && (
+            <>
+              <div className="callback-icon loading">
+                <Clock />
+              </div>
+              <h1 className="callback-title">Payment still processing</h1>
+              <p className="callback-message">{message}</p>
+              <div className="callback-actions">
+                <Button onClick={handleRetry} variant="primary">
+                  Check again
+                </Button>
+                <Button onClick={handleGoToDashboard} variant="secondary">
+                  Go to Dashboard
+                </Button>
+              </div>
+            </>
+          )}
+
           {status === "failed" && (
             <>
               <div className="callback-icon failed">
                 <XCircle />
               </div>
-              <h1 className="callback-title">Payment not confirmed yet</h1>
+              <h1 className="callback-title">Payment not confirmed</h1>
               <p className="callback-message">{message}</p>
               <div className="callback-actions">
                 <Button onClick={handleRetry} variant="primary">

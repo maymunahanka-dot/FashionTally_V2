@@ -22,16 +22,4 @@ export const getEffectiveUserEmail = (user) => {
   return user?.email;
 };
 
-/**
- * Check if the current user is a team member (invited admin)
- */
-export const isTeamMember = (user) => {
-  return user?.isAdmin && user?.invitedBy;
-};
 
-/**
- * Check if the current user is the main admin (admin without invitedBy)
- */
-export const isMainAdmin = (user) => {
-  return user?.isAdmin && !user?.invitedBy;
-};

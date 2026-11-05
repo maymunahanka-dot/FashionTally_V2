@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router-dom";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Sidebar from "../../components/Sidebar";
-import { TrialBanner } from "../../components/TrialBanner";
 import { AdminPermissionGate } from "../../components/AdminPermissionGate/AdminPermissionGate";
 import DashboardOverview from "./pages/dashboardOverview/DashboardOverview";
 import ClientsManagement from "./pages/clientManagment/ClientsManagement";
@@ -20,7 +19,7 @@ import "./Dashboard.css";
 
 export const Dashboard = () => {
   const { user } = useNewAuth();
-  const { isDark, actualTheme } = useTheme();
+  const { actualTheme } = useTheme();
 
   // Listen for foreground FCM messages and show native notifications
   useNotificationSetup();
@@ -50,7 +49,6 @@ export const Dashboard = () => {
     <div className="dashboard-container">
       <Sidebar />
       <main className="dashboard-main" data-theme={actualTheme}>
-        <TrialBanner />
         <Routes>
           <Route
             index

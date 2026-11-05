@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ArrowLeft, Sun, Moon } from "lucide-react";
 import Button from "../../components/button/Button";
 import { useTheme } from "../../contexts/ThemeContext";

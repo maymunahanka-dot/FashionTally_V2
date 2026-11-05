@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { initiatePayment } from "../../lib/cash-on-rails";
 import { initiateFlutterwavePayment } from "../../lib/flutterwave";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
@@ -128,13 +127,17 @@ export default function SubscriptionPage() {
     pricingPlans.find(
       (plan) => plan.name.toLowerCase() === planParam.toLowerCase()
     ) || pricingPlans[1];
+  const [billingCycle, setBillingCycle] = useState(
+    searchParams.get("cycle") === "yearly" ? "yearly" : "monthly"
+  );
+  const isYearly = billingCycle === "yearly";
+  const price = isYearly ? selectedPlan.yearlyPrice : selectedPlan.monthlyPrice;
 
   const { user } = useNewAuth();
   const { actualTheme } = useTheme();
   const [step] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [gateway] = useState("flutterwave");
   const [paymentForm, setPaymentForm] = useState({
     firstName: "",
     lastName: "",
@@ -186,30 +189,20 @@ export default function SubscriptionPage() {
         name:      paymentForm.firstName,
         phone:     paymentForm.phoneNumber,
         plantype:  selectedPlan.name,
-        planPrice: selectedPlan.monthlyPrice,
+        planPrice: price,
+        billingCycle,
         userId:    user?.uid,
       };
 
-      if (gateway === "flutterwave") {
-        // Flutterwave: opens inline popup, handles redirect itself
-        localStorage.setItem("pending_plan",    selectedPlan.name);
-        localStorage.setItem("payment_gateway", "flutterwave");
-        const result = await initiateFlutterwavePayment(paymentData);
-        if (!result.success && result.message) {
-          // Only show error if it wasn't just the user closing the modal
-          if (result.message !== "Payment window closed") {
-            alert(result.message);
-          }
-        }
-      } else {
-        // Cash on Rails: backend proxy → redirect
-        const result = await initiatePayment(paymentData);
-        if (result.success) {
-          localStorage.setItem("pending_plan",    selectedPlan.name);
-          localStorage.setItem("payment_gateway", "cashonrails");
-          window.location.href = result.paymentLink;
-        } else {
-          throw new Error(result.message || "Failed to initiate payment");
+      // Flutterwave: opens inline popup, handles redirect itself
+      localStorage.setItem("pending_plan",    selectedPlan.name);
+      localStorage.setItem("pending_cycle",   billingCycle);
+      localStorage.setItem("payment_gateway", "flutterwave");
+      const result = await initiateFlutterwavePayment(paymentData);
+      if (!result.success && result.message) {
+        // Only show error if it wasn't just the user closing the modal
+        if (result.message !== "Payment window closed") {
+          alert(result.message);
         }
       }
     } catch (error) {
@@ -292,11 +285,27 @@ export default function SubscriptionPage() {
                   </div>
                 </div>
                 <div className="plan-pricing">
+                  <div className="billing-cycle-toggle" role="group" aria-label="Billing period">
+                    <button
+                      type="button"
+                      className={`billing-cycle-btn ${!isYearly ? "active" : ""}`}
+                      aria-pressed={!isYearly}
+                      onClick={() => setBillingCycle("monthly")}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      className={`billing-cycle-btn ${isYearly ? "active" : ""}`}
+                      aria-pressed={isYearly}
+                      onClick={() => setBillingCycle("yearly")}
+                    >
+                      Yearly <span className="billing-cycle-save">2 months free</span>
+                    </button>
+                  </div>
                   <div className="price">
-                    <span className="amount">
-                      {formatCurrency(selectedPlan.monthlyPrice)}
-                    </span>
-                    <span className="period">/month</span>
+                    <span className="amount">{formatCurrency(price)}</span>
+                    <span className="period">/{isYearly ? "year" : "month"}</span>
                   </div>
                   <p className="plan-description">{selectedPlan.description}</p>
                 </div>

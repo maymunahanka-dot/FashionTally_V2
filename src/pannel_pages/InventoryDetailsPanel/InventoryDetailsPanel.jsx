@@ -12,14 +12,12 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import { formatDollars, getUsdToNgnRate } from "../../utils/exchangeRate";
 import "./InventoryDetailsPanel.css";
 
 const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
-  const { actualTheme } = useTheme();
   const { user } = useContext(NewAuthContext);
   const [showDollars, setShowDollars] = useState(false);
   const [usdToNgn, setUsdToNgn] = useState(null);

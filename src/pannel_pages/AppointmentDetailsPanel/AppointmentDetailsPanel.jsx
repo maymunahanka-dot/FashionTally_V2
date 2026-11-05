@@ -10,11 +10,9 @@ import {
   FileText,
   Edit3,
 } from "lucide-react";
-import { useTheme } from "../../contexts/ThemeContext";
 import "./AppointmentDetailsPanel.css";
 
 const AppointmentDetailsPanel = ({ onClose, appointment, onEdit }) => {
-  const { theme } = useTheme();
 
   if (!appointment) {
     return null;

@@ -1,7 +1,5 @@
 import { useState } from "react";
 import {
-  Eye,
-  EyeOff,
   Edit,
   Trash2,
   User,
@@ -10,38 +8,20 @@ import {
   Clock,
   Phone,
   Key,
-  Copy,
 } from "lucide-react";
 import Button from "../button/Button";
 import { useTheme } from "../../contexts/ThemeContext";
 import "./AdminList.css";
 
-const AdminList = ({ admins, loading = false, onView, onEdit, onDelete }) => {
+const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
   const { theme } = useTheme();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [passwordVisibility, setPasswordVisibility] = useState({});
 
   const handleDeleteClick = (admin) => {
     setAdminToDelete(admin);
     setDeleteDialogOpen(true);
-  };
-
-  const togglePasswordVisibility = (adminId) => {
-    setPasswordVisibility((prev) => ({
-      ...prev,
-      [adminId]: !prev[adminId],
-    }));
-  };
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
-    } catch (err) {
-      console.error("Failed to copy text: ", err);
-    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -178,56 +158,12 @@ const AdminList = ({ admins, loading = false, onView, onEdit, onDelete }) => {
                 </span>
               </div>
 
-              {/* Password Section */}
-              <div className="admin-password-section">
-                <div className="admin-detail">
-                  <Key className="admin-detail-icon" />
-                  <span className="admin-detail-text">Password:</span>
-                </div>
-                <div className="admin-password-field">
-                  <input
-                    type={
-                      passwordVisibility[admin.id || admin.email]
-                        ? "text"
-                        : "password"
-                    }
-                    value={
-                      admin.password ||
-                      `${admin.name.split(" ")[0].toLowerCase()}123456`
-                    }
-                    readOnly
-                    className="admin-password-input"
-                  />
-                  <button
-                    className="admin-password-toggle"
-                    onClick={() =>
-                      togglePasswordVisibility(admin.id || admin.email)
-                    }
-                    title={
-                      passwordVisibility[admin.id || admin.email]
-                        ? "Hide Password"
-                        : "Show Password"
-                    }
-                  >
-                    {passwordVisibility[admin.id || admin.email] ? (
-                      <EyeOff size={16} />
-                    ) : (
-                      <Eye size={16} />
-                    )}
-                  </button>
-                  <button
-                    className="admin-password-copy"
-                    onClick={() =>
-                      copyToClipboard(
-                        admin.password ||
-                          `${admin.name.split(" ")[0].toLowerCase()}123456`
-                      )
-                    }
-                    title="Copy Password"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
+              {/* Passwords aren't stored or shown: members set their own via the invite email */}
+              <div className="admin-detail">
+                <Key className="admin-detail-icon" />
+                <span className="admin-detail-text">
+                  Password: set by the member (forgot it? use "Forgot password" on the login page)
+                </span>
               </div>
 
               <div className="admin-detail">

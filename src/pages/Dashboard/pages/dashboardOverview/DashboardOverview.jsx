@@ -16,12 +16,10 @@ import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
 import AddClientPanel from "../../../../pannel_pages/AddClientPanel";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import "./DashboardOverview.css";
-import { TbLogout } from "react-icons/tb";
-import Loading from "../../../../components/Loading/Loading";
 
 const DashboardOverview = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useNewAuth();
+  const { user } = useNewAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount]             = useState(0);
 
@@ -49,7 +47,7 @@ const DashboardOverview = () => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [salesChartData, setSalesChartData] = useState([]);
-  const [chartLoading, setChartLoading] = useState(true);
+  const [, setChartLoading] = useState(true);
 
   // Use the new auth system
   const currentUser = user;
@@ -144,21 +142,7 @@ const DashboardOverview = () => {
     loadSalesChartData();
   }, [user?.email]);
 
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-  };
 
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm("Are you sure you want to logout?");
-    if (confirmLogout) {
-      try {
-        await signOut();
-        navigate("/login");
-      } catch (error) {
-        console.error("Logout error:", error);
-      }
-    }
-  };
 
   const toggleAddInventory = () => {
     setShowAddInventory(!showAddInventory);
@@ -261,27 +245,6 @@ const DashboardOverview = () => {
     return `${Math.floor(diffInSeconds / 3600)}hrs ago`;
   };
 
-  const refreshDashboard = async () => {
-    if (!user?.email) return;
-
-    try {
-      // Get effective email (main admin's email for team members)
-      const effectiveEmail = getEffectiveUserEmail(user);
-
-      // Reload all data
-      const [appointments, stats, chartData] = await Promise.all([
-        getTodaysAppointments(effectiveEmail),
-        getDashboardStats(effectiveEmail),
-        getSalesChartData(effectiveEmail),
-      ]);
-
-      setTodaysAppointments(appointments);
-      setDashboardStats(stats);
-      setSalesChartData(chartData);
-    } catch (error) {
-      console.error("Error refreshing dashboard:", error);
-    }
-  };
 
   return (
     <div className="dashboard-overview">
@@ -757,26 +720,5 @@ const QuickActionButton = ({ icon: Icon, label, onClick }) => (
   </button>
 );
 
-const StatCard = ({
-  title,
-  value,
-  subValue,
-  trend,
-  trendPositive,
-  trendColor,
-  icon,
-}) => {
-  let trendClass = "trend-neutral";
-  if (trendPositive === true) trendClass = "trend-positive";
-  if (trendPositive === false) trendClass = "trend-negative";
-  if (trendColor === "orange") trendClass = "trend-orange";
-  if (trendColor === "neutral") trendClass = "trend-neutral";
-
-  return (
-    <div className="stat-card">
-      <div className="topone">{icon}</div>
-    </div>
-  );
-};
 
 export default DashboardOverview;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Plus, Ruler, Info, Download, Pencil, Trash2 } from "lucide-react";
+import { Plus, Info, Download, Pencil, Trash2 } from "lucide-react";
 import NewAuthContext from "../../../contexts/NewAuthContext";
 import AddMeasurementModal from "../components/AddMeasurementModal";
 import html2canvas from "html2canvas";

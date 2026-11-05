@@ -62,21 +62,6 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
     }
   };
 
-  const markAllRead = async () => {
-    try {
-      await fetch(`${BACKEND_URL}/api/admin/notifications/user/read-all`, {
-        method:  "PUT",
-        headers: { "Content-Type": "application/json", ...getAuthHeader() },
-      });
-      setNotifications((prev) => {
-        const updated = prev.map((n) => ({ ...n, isRead: true }));
-        onReadChange?.(0);
-        return updated;
-      });
-    } catch (e) {
-      console.error("[Notifications] mark all read error:", e);
-    }
-  };
 
   const filtered = notifications;
 

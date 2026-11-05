@@ -23,6 +23,22 @@ function isTokenExpired(token) {
   return expiry <= Date.now();
 }
 
+/** The Bearer token a fetch call is sending, if any. */
+function bearerTokenOf(input, init) {
+  const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
+  const value = headers.get("Authorization") || "";
+  return value.startsWith("Bearer ") ? value.slice(7) : null;
+}
+
+/** Checkout link for the plan (and monthly/yearly choice) picked before signing up, if any. */
+function checkoutUrlFromSignup() {
+  const params = new URLSearchParams(window.location.search);
+  const plan = params.get("plan");
+  if (!plan) return null;
+  const cycle = params.get("cycle") === "yearly" ? "yearly" : "monthly";
+  return `/subscription?plan=${plan}&cycle=${cycle}`;
+}
+
 function isProtectedPath(path) {
   return (
     path.startsWith("/dashboard") ||
@@ -50,6 +66,54 @@ export const NewAuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
   };
+
+  // Session ran out (expiry time reached, or the backend rejected the token)
+  const expireSession = () => {
+    if (!localStorage.getItem("authToken")) return;
+    clearSession();
+    toast.error("Your session has expired. Please log in again.", { id: "session-expired" });
+    if (isProtectedPath(window.location.pathname)) {
+      window.location.replace("/login");
+    }
+  };
+
+  // ── Any API call whose session token is rejected (401) logs the user out ─
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (input, init) => {
+      const response = await originalFetch(input, init);
+      if (response.status === 401) {
+        const sessionToken = localStorage.getItem("authToken");
+        if (sessionToken && bearerTokenOf(input, init) === sessionToken) expireSession();
+      }
+      return response;
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  // ── Log out the moment the token expires, even if the tab just sits open ─
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const token = localStorage.getItem("authToken");
+    const expiry = token ? getTokenExpiryMs(token) : null;
+    if (!expiry) return;
+
+    const timer = setTimeout(expireSession, Math.max(0, expiry - Date.now()));
+    // Background tabs delay timers, so also check when the tab is looked at again
+    const checkNow = () => {
+      const current = localStorage.getItem("authToken");
+      if (current && isTokenExpired(current)) expireSession();
+    };
+    window.addEventListener("focus", checkNow);
+    document.addEventListener("visibilitychange", checkNow);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", checkNow);
+      document.removeEventListener("visibilitychange", checkNow);
+    };
+  }, [isAuthenticated, user]);
 
   // ── Restore session and check token expiry once on page load ─
   useEffect(() => {
@@ -83,7 +147,7 @@ export const NewAuthProvider = ({ children }) => {
   // ── Sign up with email/password ──────────────────────────────
   const signUpWithEmail = async (formData) => {
     try {
-      const { name, email, phone, password, businessName, category, country, logoFile } = formData;
+      const { name, email, phone, password, businessName, category, country, logoFile, emailVerificationToken } = formData;
 
       if (!name || !email?.trim() || !phone?.trim() || !country || !password) {
         throw new Error("Please fill in all required fields");
@@ -101,6 +165,7 @@ export const NewAuthProvider = ({ children }) => {
       body.append("businessName", (businessName || "").trim());
       body.append("category", (category || "").trim());
       if (logoFile) body.append("logo", logoFile);
+      if (emailVerificationToken) body.append("emailVerificationToken", emailVerificationToken);
 
       const signupRes  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, { method: "POST", body });
       const signupData = await signupRes.json();
@@ -116,10 +181,9 @@ export const NewAuthProvider = ({ children }) => {
       if (!loginData.success) throw new Error(loginData.error || "Auto-login failed");
 
       persistSession(loginData.token, loginData.user);
-      toast.success(`Welcome ${name}! Account created. You have a 7-day free trial.`);
+      toast.success(`Welcome ${name}! Account created. Your free trial has started.`);
 
-      const plan = new URLSearchParams(window.location.search).get("plan");
-      setTimeout(() => { window.location.href = plan ? `/subscription?plan=${plan}` : "/dashboard"; }, 1000);
+      setTimeout(() => { window.location.href = checkoutUrlFromSignup() || "/dashboard"; }, 1000);
 
       return { success: true };
     } catch (error) {
@@ -153,30 +217,6 @@ export const NewAuthProvider = ({ children }) => {
   };
 
   // ── Google sign-in (internal) — called by useGoogleLogin callback ──
-  const _handleGoogleCredential = async (credential) => {
-    console.log("[googleAuth] Sending credential to backend");
-
-    const res  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ credential }),
-    });
-    const data = await res.json();
-
-    if (!data.success) throw new Error(data.error || "Google sign-in failed");
-
-    persistSession(data.token, data.user);
-
-    const name = data.user?.name || "";
-    toast.success(`Welcome ${name}!${data.isNewUser ? " You have a 7-day free trial." : ""}`);
-
-    const plan = new URLSearchParams(window.location.search).get("plan");
-    setTimeout(() => {
-      window.location.href = (plan && data.isNewUser) ? `/subscription?plan=${plan}` : "/dashboard";
-    }, 1000);
-
-    return { success: true };
-  };
 
   // ── Sign in with Google — hook must be called at component level ─
   // This is a factory: components call useGoogleSignIn() to get the trigger fn
@@ -224,11 +264,11 @@ export const NewAuthProvider = ({ children }) => {
         persistSession(data.token, data.user);
 
         const name = data.user?.name || "";
-        toast.success(`Welcome ${name}!${data.isNewUser ? " You have a 7-day free trial." : ""}`);
+        toast.success(`Welcome ${name}!${data.isNewUser ? " Your free trial has started." : ""}`);
 
-        const plan = new URLSearchParams(window.location.search).get("plan");
+        const checkoutUrl = checkoutUrlFromSignup();
         setTimeout(() => {
-          window.location.href = (plan && data.isNewUser) ? `/subscription?plan=${plan}` : "/dashboard";
+          window.location.href = (checkoutUrl && data.isNewUser) ? checkoutUrl : "/dashboard";
         }, 1000);
 
         // Register this browser for push notifications (fire-and-forget)

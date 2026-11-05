@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Edit, Trash2, Plus } from "lucide-react";
+import { X, Edit, Trash2 } from "lucide-react";
 import "./ManageCategoriesPanel.css";
 
 const ManageCategoriesPanel = ({ onClose }) => {

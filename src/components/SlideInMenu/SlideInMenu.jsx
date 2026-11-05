@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import "./SlideInMenu.css";
 
 const SlideInMenu = ({
@@ -6,7 +6,6 @@ const SlideInMenu = ({
   onClose,
   children,
   position = "rightt",
-  width = "400px",
 }) => {
   // Close on escape key
   useEffect(() => {

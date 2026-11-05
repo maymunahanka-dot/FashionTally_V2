@@ -35,7 +35,7 @@ The following files automatically use the centralized pricing:
 
 ### Core Logic Files
 - `ft/src/lib/payment.js` - Payment processing
-- `ft/src/lib/cash-on-rails.js` - Payment gateway integration
+- `ft/src/lib/flutterwave.js` - Payment gateway integration
 - `ft/src/lib/subscription-check.js` - Subscription validation
 - `ft/src/hooks/use-subscription.jsx` - Subscription hook
 

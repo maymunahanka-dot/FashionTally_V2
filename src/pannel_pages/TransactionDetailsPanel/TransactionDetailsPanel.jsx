@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { X, Download, Share2, Calendar, Edit3, Trash2 } from "lucide-react";
 import Button from "../../components/button/Button";
 import { useTheme } from "../../contexts/ThemeContext";

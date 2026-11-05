@@ -764,7 +764,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
               </button>
             </div>
             <div className="new_oda_measurements_list">
-              {measurements.map((measurement, index) => (
+              {measurements.map((measurement) => (
                 <div key={measurement.id} className="new_oda_measurement_item">
                   <div className="new_oda_measurement_inputs">
                     <Input

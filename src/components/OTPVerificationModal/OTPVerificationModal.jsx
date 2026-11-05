@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import OTPInput from "../OTPInput/OTPInput";
 import Button from "../button/Button";
 import "./OTPVerificationModal.css";
 
+const RESEND_SECONDS = 30;
+
 const OTPVerificationModal = ({
   isOpen,
   onClose,
   onVerify,
+  onResend,
   title = "Verify OTP",
   message = "Please enter the OTP sent to your email/phone",
   otpLength = 6,
@@ -15,6 +18,33 @@ const OTPVerificationModal = ({
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
+  const [resendIn, setResendIn] = useState(RESEND_SECONDS);
+  const [isResending, setIsResending] = useState(false);
+
+  // Restart the countdown each time the modal opens
+  useEffect(() => {
+    if (isOpen) setResendIn(RESEND_SECONDS);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || resendIn <= 0) return;
+    const timer = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isOpen, resendIn]);
+
+  const handleResend = async () => {
+    setIsResending(true);
+    setError("");
+    try {
+      await onResend();
+      setOtp("");
+      setResendIn(RESEND_SECONDS);
+    } catch (err) {
+      setError(err.message || "Could not resend the code. Please try again.");
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleOTPChange = (e) => {
     const value = e.target.value || "";
@@ -76,6 +106,23 @@ const OTPVerificationModal = ({
 
         {/* Error Message */}
         {error && <p className="otp-error-message">{error}</p>}
+
+        {onResend && (
+          <p className="otp-resend">
+            {resendIn > 0 ? (
+              `Didn't get the code? Resend in ${resendIn}s`
+            ) : (
+              <button
+                type="button"
+                className="otp-resend-btn"
+                onClick={handleResend}
+                disabled={isResending || isVerifying}
+              >
+                {isResending ? "Sending..." : "Resend code"}
+              </button>
+            )}
+          </p>
+        )}
 
         {/* Action Buttons */}
         <div className="otp-modal-actions">

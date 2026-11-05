@@ -13,8 +13,6 @@ import { FaArrowTrendUp } from "react-icons/fa6";
 import { TbUserStar } from "react-icons/tb";
 import { IoSettingsOutline } from "react-icons/io5";
 import { RiApps2AiLine } from "react-icons/ri";
-import { HiMenuAlt3 } from "react-icons/hi";
-import { IoClose } from "react-icons/io5";
 import { MdSupportAgent } from "react-icons/md";
 
 import "./Sidebar.css";

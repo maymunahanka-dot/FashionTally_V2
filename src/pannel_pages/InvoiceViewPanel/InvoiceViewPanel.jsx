@@ -1,4 +1,4 @@
-import { X, Download, Share2 } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { useState, useEffect, useContext } from "react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
@@ -11,7 +11,7 @@ import "./InvoiceViewPanel.css";
 const InvoiceViewPanel = ({ onClose, invoice }) => {
   const { user } = useContext(NewAuthContext);
   const [brandData, setBrandData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [exportingPDF, setExportingPDF] = useState(false); // Add PDF export loading state
 
   // Load brand data when component mounts
@@ -730,10 +730,6 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
     }
   };
 
-  const handleShare = () => {
-    // Handle share logic here
-    console.log("Sharing invoice:", invoiceData.id);
-  };
 
   return (
     <div className="inv_l_invoice_view_panel">
@@ -912,12 +908,6 @@ const InvoiceViewPanel = ({ onClose, invoice }) => {
             </div>
           </div>
         </div>
-
-        {/* Share Button */}
-        {/* <button className="inv_l_share_btn" onClick={handleShare}>
-          <Share2 size={16} />
-          Share
-        </button> */}
 
         {/* Footer */}
         <div className="inv_l_footer">

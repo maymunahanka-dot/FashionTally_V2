@@ -12,13 +12,7 @@ import {
 } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
-import {
-  getLoyaltyMembers,
-  addLoyaltyMember,
-  updateLoyaltyMember,
-  deleteLoyaltyMember,
-  calculateLoyaltyStats,
-} from "../../backend/services/crmService";
+import { getLoyaltyMembers, addLoyaltyMember, updateLoyaltyMember, deleteLoyaltyMember } from "../../backend/services/crmService";
 import Button from "../button/Button";
 import SortByButton, { useSavedSort } from "../SortByButton/SortByButton";
 import SlideInMenu from "../SlideInMenu/SlideInMenu";

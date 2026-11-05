@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef } from "react";
-import { X, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
+import { X, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input";
 import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";

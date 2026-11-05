@@ -11,7 +11,6 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
-import { useTheme } from "../../../../contexts/ThemeContext";
 import { useNewAuth } from "../../../../contexts/NewAuthContext";
 import { useSubscription } from "../../../../hooks/use-subscription";
 import Button from "../../../../components/button/Button";
@@ -27,10 +26,9 @@ import HelpPanel from "../../../../pannel_pages/HelpPanel";
 import "./Settings.css";
 
 const Settings = () => {
-  const { isDark, actualTheme } = useTheme();
   const { signOut, user } = useNewAuth();
   const subscription = useSubscription();
-  const [activeSection, setActiveSection] = useState(null);
+  const [, setActiveSection] = useState(null);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [showBrandPanel, setShowBrandPanel] = useState(false);
   const [showNotificationPanel, setShowNotificationPanel] = useState(false);
@@ -388,7 +386,6 @@ const Settings = () => {
           <h2 className="sett_business_name">
             {settingsData.businessInfo.name}
           </h2>
-          {/* <p className="sett_business_type">{settingsData.businessInfo.type}</p> */}
 
           <div className="sett_business_contact">
             <div className="sett_contact_row">

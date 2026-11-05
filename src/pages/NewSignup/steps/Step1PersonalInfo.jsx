@@ -18,7 +18,6 @@ const Step1PersonalInfo = ({
   const navigate = useNavigate();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
-  const [generatedOTP, setGeneratedOTP] = useState("");
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const { signInWithGoogle } = useNewAuth();
   const validateStep1 = () => {
@@ -62,33 +61,31 @@ const Step1PersonalInfo = ({
     }
   };
 
+  const postAuth = async (path, payload) => {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Something went wrong. Please try again.");
+    return data;
+  };
+
+  // The backend emails the code and checks it; the code never comes back to the browser.
+  const sendOTP = () => postAuth("send-email-otp", { email: formData.email, flow: "server" });
+
   const handleNext = async () => {
     if (validateStep1()) {
-      // Show OTP modal immediately
       setShowOTPModal(true);
       setIsSendingOTP(true);
 
       try {
-        // Send OTP via backend — backend generates OTP and sends via email
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/auth/send-email-otp`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: formData.email }),
-          }
-        );
-        const data = await res.json();
-
-        if (data.success) {
-          setGeneratedOTP(data.otp); // store OTP returned from backend
-          toast.success("OTP sent to your email!");
-        } else {
-          throw new Error(data.message || "Failed to send OTP");
-        }
+        await sendOTP();
+        toast.success("OTP sent to your email!");
       } catch (error) {
         console.error("❌ Error sending OTP:", error);
-        toast.error("Failed to send OTP. Please try again.");
+        toast.error(error.message || "Failed to send OTP. Please try again.");
         setShowOTPModal(false);
       } finally {
         setIsSendingOTP(false);
@@ -96,27 +93,21 @@ const Step1PersonalInfo = ({
     }
   };
 
-  const handleOTPVerify = async (otp) => {
-    // Verify the entered OTP matches the generated one
-    console.log("Verifying OTP:", otp, "Generated:", generatedOTP);
+  const handleResendOTP = async () => {
+    await sendOTP();
+    toast.success("A new code has been sent to your email.");
+  };
 
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (otp === generatedOTP) {
-          setShowOTPModal(false);
-          toast.success("Email verified successfully!");
-          onNext(); // Go to next step after successful verification
-          resolve();
-        } else {
-          reject(new Error("Invalid OTP. Please check and try again."));
-        }
-      }, 500);
-    });
+  const handleOTPVerify = async (otp) => {
+    const data = await postAuth("verify-email-otp", { email: formData.email, otp });
+    onInputChange("emailVerificationToken", data.verificationToken);
+    setShowOTPModal(false);
+    toast.success("Email verified successfully!");
+    onNext();
   };
 
   const handleCloseOTPModal = () => {
     setShowOTPModal(false);
-    setGeneratedOTP("");
   };
 
   // Check if all required fields are filled
@@ -281,6 +272,7 @@ const Step1PersonalInfo = ({
         isOpen={showOTPModal}
         onClose={handleCloseOTPModal}
         onVerify={handleOTPVerify}
+        onResend={handleResendOTP}
         title="Verify Your Account"
         message={
           isSendingOTP

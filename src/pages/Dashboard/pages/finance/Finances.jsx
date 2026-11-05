@@ -1,8 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import {
-  Search, Filter, Plus, Download,
-  ArrowUpRight, ArrowDownRight, TrendingUp, Wallet,
-} from "lucide-react";
+import { Search, Filter, Plus, ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react";
 import NewAuthContext from "../../../../contexts/NewAuthContext";
 import Button from "../../../../components/button/Button";
 import SortByButton, { useSavedSort } from "../../../../components/SortByButton/SortByButton";

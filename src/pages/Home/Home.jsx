@@ -365,7 +365,7 @@ const Home = () => {
                   className="btn-outline btn-lg"
                   onClick={() => navigate("/signup")}
                 >
-                  7 Days Free Trail
+                  Start Free Trial
                 </button>
               </div>
               <div className="hero-download">
@@ -621,7 +621,7 @@ const Home = () => {
                           "Contact sales functionality would be implemented here"
                         );
                       } else {
-                        navigate(`/signup?plan=${plan.name.toLowerCase()}`);
+                        navigate(`/signup?plan=${plan.name.toLowerCase()}&cycle=${billingCycle}`);
                       }
                     }}
                   >
@@ -774,7 +774,7 @@ const Home = () => {
             </button>
           </div>
           <p className="landing_cta-note">
-            No credit card required • 7 days free trial • Cancel anytime
+            No credit card required • Free trial included • Cancel anytime
           </p>
         </div>
       </section>

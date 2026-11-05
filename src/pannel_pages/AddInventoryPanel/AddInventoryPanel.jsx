@@ -29,8 +29,8 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
   const [imageUrl, setImageUrl] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
-  const [recordAsExpense, setRecordAsExpense] = useState(false); // Default to false (commented out feature)
-  const [updateFinanceTransaction, setUpdateFinanceTransaction] = useState(true); // For edit mode
+  const [, setRecordAsExpense] = useState(false); // Default to false (commented out feature)
+  const [, setUpdateFinanceTransaction] = useState(true); // For edit mode
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -591,66 +591,6 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
             )}
           </div>
         </div>
-
-        {/* Record as Expense Checkbox - Only show when creating new item */}
-        {/* COMMENTED OUT: Finance integration feature disabled by default */}
-        {/* {!isEditMode && (
-          <div className="add_inv_form_group">
-            <div className="add_inv_checkbox_container">
-              <input
-                type="checkbox"
-                id="recordAsExpense"
-                checked={recordAsExpense}
-                onChange={(e) => setRecordAsExpense(e.target.checked)}
-                disabled={isSubmitting}
-                className="add_inv_checkbox"
-              />
-              <label htmlFor="recordAsExpense" className="add_inv_checkbox_label">
-                <span className="add_inv_checkbox_text">
-                  Record as expense in finances
-                </span>
-                <span className="add_inv_checkbox_description">
-                  Automatically create a finance transaction for this inventory purchase
-                  {quantity && pricePerUnit && (
-                    <span className="add_inv_expense_amount">
-                      {" "}(₦{(parseFloat(quantity) * parseFloat(pricePerUnit)).toLocaleString()})
-                    </span>
-                  )}
-                </span>
-              </label>
-            </div>
-          </div>
-        )} */}
-
-        {/* Update Finance Transaction Checkbox - Only show when editing */}
-        {/* COMMENTED OUT: Finance integration feature disabled by default */}
-        {/* {isEditMode && (
-          <div className="add_inv_form_group">
-            <div className="add_inv_checkbox_container">
-              <input
-                type="checkbox"
-                id="updateFinanceTransaction"
-                checked={updateFinanceTransaction}
-                onChange={(e) => setUpdateFinanceTransaction(e.target.checked)}
-                disabled={isSubmitting}
-                className="add_inv_checkbox"
-              />
-              <label htmlFor="updateFinanceTransaction" className="add_inv_checkbox_label">
-                <span className="add_inv_checkbox_text">
-                  Update related finance transaction
-                </span>
-                <span className="add_inv_checkbox_description">
-                  Automatically update the expense transaction in finances
-                  {quantity && pricePerUnit && (
-                    <span className="add_inv_expense_amount">
-                      {" "}(₦{(parseFloat(quantity) * parseFloat(pricePerUnit)).toLocaleString()})
-                    </span>
-                  )}
-                </span>
-              </label>
-            </div>
-          </div>
-        )} */}
 
         {/* Error Display */}
         {errors.submit && (

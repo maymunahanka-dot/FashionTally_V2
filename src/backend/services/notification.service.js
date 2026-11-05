@@ -10,7 +10,7 @@
  * Call requestAndRegisterToken() right after a successful login.
  */
 
-import { messaging, getToken, onMessage } from "../firebase.config";
+import { messaging, getToken } from "../firebase.config";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const VAPID_KEY   = import.meta.env.VITE_FIREBASE_VAPID_KEY;
@@ -139,14 +139,6 @@ export const removeDeviceToken = async () => {
 
 // ── Listen for foreground messages (when the tab is open and active) ──────────
 // Pass a callback: listenForForegroundMessages((payload) => showToast(...))
-export const listenForForegroundMessages = (callback) => {
-  if (!messaging) return;
-
-  return onMessage(messaging, (payload) => {
-    console.log("[FCM] Foreground message received:", payload);
-    if (callback) callback(payload);
-  });
-};
 
 // ── Helpers: detect browser and OS name for deviceName ───────────────────────
 const getBrowserName = () => {

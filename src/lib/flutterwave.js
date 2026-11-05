@@ -3,7 +3,7 @@
  *
  * Flutterwave payment integration using their inline JS SDK.
  * The public key is safe to use in the browser.
- * Redirects to the callback page on success, same as Cash on Rails.
+ * Redirects to the callback page on success.
  */
 
 /**
@@ -29,6 +29,7 @@ function loadFlutterwaveScript() {
  * @param {string} paymentData.phone
  * @param {string} paymentData.plantype
  * @param {number} paymentData.planPrice
+ * @param {"monthly"|"yearly"} [paymentData.billingCycle="monthly"]
  * @param {string} paymentData.userId
  *
  * @returns {Promise<{ success: boolean, message?: string }>}
@@ -36,6 +37,7 @@ function loadFlutterwaveScript() {
 export async function initiateFlutterwavePayment(paymentData) {
   try {
     const { email, name, phone, plantype, planPrice, userId } = paymentData;
+    const billingCycle = paymentData.billingCycle === "yearly" ? "yearly" : "monthly";
 
     const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
     if (!publicKey) throw new Error("Flutterwave public key not configured");
@@ -65,10 +67,11 @@ export async function initiateFlutterwavePayment(paymentData) {
           userId: userId || "",
           email: email || "",
           plantype: plan,
+          billingCycle,
         },
         customizations: {
           title:       "FashionTally Subscription",
-          description: `${plan} Plan — Monthly`,
+          description: `${plan} Plan — ${billingCycle === "yearly" ? "Yearly" : "Monthly"}`,
           logo:        "https://www.fashiontally.com/favicon.ico",
         },
         callback: (response) => {
@@ -79,6 +82,7 @@ export async function initiateFlutterwavePayment(paymentData) {
             response.status === "success";
 
           localStorage.setItem("pending_plan", plantype);
+          localStorage.setItem("pending_cycle", billingCycle);
           localStorage.setItem("payment_gateway", "flutterwave");
           localStorage.setItem("pending_tx_ref", txRef);
           localStorage.setItem(

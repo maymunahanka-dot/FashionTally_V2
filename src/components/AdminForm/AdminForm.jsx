@@ -40,19 +40,6 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
     },
   });
 
-  // Map permissions to subscription features (kept for reference but not used)
-  // const permissionFeatureMap = {
-  //   dashboard: "DASHBOARD_ANALYTICS",
-  //   clients: "CLIENT_MANAGEMENT",
-  //   designs: "DESIGN",
-  //   appointments: "APPOINTMENTS",
-  //   inventory: "INVENTORY",
-  //   invoices: "INVOICING",
-  //   finances: "FINANCIAL_REPORTS",
-  //   crm: "CRM",
-  //   settings: "settings", // Usually available to all
-  // };
-
   const permissionLabels = {
     dashboard: { label: "Dashboard", icon: Shield },
     clients: { label: "Clients", icon: Users },
@@ -65,11 +52,6 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
     ordermanagement: { label: "Order Management", icon: ShoppingCart },
     settings: { label: "Settings", icon: Settings },
   };
-
-  // Allow all permissions to be selectable regardless of plan
-  // const hasFeatureAccess = (feature) => {
-  //   return true; // Always return true to make all permissions selectable
-  // };
 
   // Update form data when admin prop changes
   useEffect(() => {
