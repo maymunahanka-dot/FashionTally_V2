@@ -85,7 +85,9 @@ const SubscriptionPanel = ({ onClose }) => {
 
   // Update plan status based on current subscription
   const updatedPlans = subscriptionPlans.map((plan) => {
+    // Only an active plan (or trial) counts as "current"; an expired one can be bought again.
     const isCurrentPlan =
+      subscription.isSubscribed &&
       subscription.planType?.toUpperCase() === plan.id.toUpperCase();
     const pricing = getPlanPricing(plan.id, "monthly");
 
@@ -189,7 +191,13 @@ const SubscriptionPanel = ({ onClose }) => {
     setCancelReason("");
   };
 
+  // The backend's summary is the source of truth (the mobile app shows the same one).
+  const summary = subscription.summary;
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
   const getTrialDaysRemaining = () => {
+    if (summary) return summary.daysLeft;
     if (!subscription.subscriptionEndDate) return 0;
     const endDate = new Date(subscription.subscriptionEndDate);
     const today = new Date();
@@ -199,6 +207,14 @@ const SubscriptionPanel = ({ onClose }) => {
   };
 
   const getSubscriptionProgress = () => {
+    if (summary) {
+      return {
+        // Bar shows the share of days LEFT (shrinks over time), same as the mobile app.
+        percentage: summary.totalDays ? (summary.daysLeft / summary.totalDays) * 100 : 0,
+        daysRemaining: summary.daysLeft,
+        totalDays: summary.totalDays,
+      };
+    }
     if (!subscription.subscriptionEndDate)
       return { percentage: 0, daysRemaining: 0, totalDays: 30 };
 
@@ -223,7 +239,7 @@ const SubscriptionPanel = ({ onClose }) => {
       Math.ceil(remainingTime / (1000 * 60 * 60 * 24))
     );
 
-    return { percentage, daysRemaining, totalDays };
+    return { percentage: 100 - percentage, daysRemaining, totalDays };
   };
 
   // Handle initial loading state
@@ -331,28 +347,29 @@ const SubscriptionPanel = ({ onClose }) => {
             <div className="status_details">
               <div className="plan_info">
                 <span className="current_plan_name">
-                  {subscription.planType} Plan
+                  {summary?.plan ?? subscription.planType} Plan
+                  {summary?.billingCycle && (
+                    <span className="sub_cycle_note">
+                      {" "}· {summary.billingCycle === "yearly" ? "Yearly" : "Monthly"}
+                    </span>
+                  )}
                 </span>
                 {subscription.isTrialActive && (
                   <span className="trial_badge">
                     <Clock size={14} />
-                    Trial - {getTrialDaysRemaining()} days left
+                    Trial · {getTrialDaysRemaining()} days left
                   </span>
                 )}
               </div>
 
-              {subscription.subscriptionEndDate && (
+              {(summary?.endDate || subscription.subscriptionEndDate) && (
                 <>
                   <div className="subscription_progress">
                     <div className="progress_info">
-                      <span className="progress_label">
-                        {subscription.isTrialActive
-                          ? "Trial Progress"
-                          : "Subscription Progress"}
-                      </span>
+                      <span className="progress_label">Days remaining</span>
                       <span className="progress_days">
                         {getSubscriptionProgress().daysRemaining} of{" "}
-                        {getSubscriptionProgress().totalDays} days remaining
+                        {getSubscriptionProgress().totalDays} days
                       </span>
                     </div>
                     <div className="progress_bar">
@@ -366,15 +383,9 @@ const SubscriptionPanel = ({ onClose }) => {
                   </div>
 
                   <p className="expiry_date">
-                    {subscription.isTrialActive
-                      ? "Trial expires"
-                      : subscription.subscriptionType === "paid"
-                      ? "Expires"
-                      : "Valid until"}
-                    :{" "}
-                    {new Date(
-                      subscription.subscriptionEndDate
-                    ).toLocaleDateString()}
+                    {subscription.isTrialActive ? "Trial ends on" : "Ends on"}{" "}
+                    {formatDate(summary?.endDate ?? subscription.subscriptionEndDate)}
+                    {!subscription.isTrialActive && " · doesn't renew automatically"}
                   </p>
                 </>
               )}
@@ -382,13 +393,21 @@ const SubscriptionPanel = ({ onClose }) => {
           </div>
         )}
 
-        {/* Free Trial Banner for non-subscribers */}
+        {/* No active plan: say why, in the same words as the mobile app */}
         {!subscription.isSubscribed && (
           <div className="free_trial_banner">
             <div className="trial_content">
-              <h3>🎉 Start Your Free Trial</h3>
+              <h3>
+                {summary?.status === "trial_ended"
+                  ? "Your free trial has ended"
+                  : summary?.status === "expired"
+                  ? `Your ${summary.plan} plan has expired`
+                  : "You don't have an active plan"}
+              </h3>
               <p>
-                Get full access to all features, no credit card required!
+                {summary?.endDate && summary.status !== "cancelled"
+                  ? `It ended on ${formatDate(summary.endDate)}. Choose a plan below to keep using FashionTally.`
+                  : "Choose a plan below to keep using FashionTally."}
               </p>
             </div>
           </div>
@@ -462,11 +481,11 @@ const SubscriptionPanel = ({ onClose }) => {
         <div className="subscription_info">
           <h4>Subscription Details</h4>
           <ul>
-            <li>• All plans start with a free trial</li>
-            <li>• Cancel anytime, no questions asked</li>
-            <li>• Secure payment processing</li>
-            <li>• 24/7 customer support</li>
-            <li>• Monthly billing</li>
+            <li>• Pay monthly, or yearly and get 2 months free</li>
+            <li>• Plans don't renew automatically; we remind you before yours ends</li>
+            <li>• Cancel anytime</li>
+            <li>• Secure payment processing with Flutterwave</li>
+            <li>• Support by email, phone and in-app tickets</li>
           </ul>
         </div>
         </>

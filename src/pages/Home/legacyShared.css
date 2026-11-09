@@ -1,0 +1,44 @@
+/*
+ * These rules came from the old home page stylesheet, which was loaded on every
+ * page. A few dashboard components (admin list/form, client management, order
+ * panel, feedback panel) ended up relying on them, so they are kept exactly as
+ * they were to avoid changing those screens.
+ */
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #5eead4, #14b8a6);
+  border: 2px solid white;
+  margin-left: -0.5rem;
+}
+
+.star {
+  color: #fbbf24;
+  font-size: 1rem;
+}
+
+.star.filled {
+  color: #fbbf24;
+}
+
+.footer {
+  background: #1e293b;
+  color: white;
+  padding: 3rem 1rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+}
+
+.contact-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d9488;
+  font-size: 1rem;
+}
