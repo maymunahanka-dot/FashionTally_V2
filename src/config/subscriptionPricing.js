@@ -6,7 +6,7 @@
  */
 
 /** Length of the free trial — must match the backend's config/trial.js. */
-export const TRIAL_DAYS = 3;
+export const TRIAL_DAYS = 2;
 
 export const SUBSCRIPTION_PRICING = {
   starter: {
