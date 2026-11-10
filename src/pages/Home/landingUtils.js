@@ -26,7 +26,7 @@ export function useRevealOnScroll(rootRef) {
           }
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -60px 0px" },
+      { threshold: 0, rootMargin: "0px 0px -60px 0px" } // any part in view: tall blocks (forms) on short screens still appear,
     );
     items.forEach((el) => io.observe(el));
     return () => io.disconnect();

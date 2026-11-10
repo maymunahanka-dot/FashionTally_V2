@@ -3,16 +3,17 @@
  * the floating menu bar, the footer, the closing call-to-action and the
  * scroll-reveal helpers. Styles live in Landing.css (all scoped under .lx).
  */
-import { Fragment, useEffect, useState } from "react";
+import { createElement, Fragment, useEffect, useState } from "react";
 import { APP_STORE_URL, PLAY_URL } from "./landingUtils.js";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Mail, MapPin, Menu, Phone, Sparkles, X } from "lucide-react";
+import { ArrowUpRight, Instagram, Linkedin, Mail, MapPin, Menu, Phone, Twitter, X } from "lucide-react";
 import logo from "../../assets/Image/logog.png";
 import "./legacyShared.css";
 import "./Landing.css";
 
 /** Links in the top menu. Section links point at the home page from other pages. */
 const NAV = [
+  { label: "Features", section: "workflows" },
   { label: "Pricing", section: "pricing" },
   { label: "Reviews", section: "stories" },
   { label: "About", href: "/about" },
@@ -27,6 +28,13 @@ const SECTIONS = [
   { label: "Pricing", section: "pricing" },
   { label: "Reviews", section: "stories" },
   { label: "FAQ", section: "faq" },
+];
+
+/** FashionTally's social accounts (same links as the Contact page). */
+const SOCIALS = [
+  { label: "Instagram", href: "https://www.instagram.com/fashiontallyapp?igsh=Yzc2bjE3N3FwMXpj&utm_source=qr", icon: Instagram },
+  { label: "X (Twitter)", href: "https://x.com/fashion_tally?s=11", icon: Twitter },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/fashion-tally/", icon: Linkedin },
 ];
 
 const linkFor = (item, onHome) => item.href ?? (onHome ? `#${item.section}` : `/#${item.section}`);
@@ -145,8 +153,8 @@ export function LandingNav({ onHome = false }) {
             Log in
           </button>
           <button type="button" className="lx-btn lx-btn-light lx-btn-sm" onClick={() => navigate("/signup")}>
-            <span className="lx-btn-roll" data-text="Start free">
-              Start free
+            <span className="lx-btn-roll" data-text="Get started">
+              Get started
             </span>
           </button>
           <button
@@ -202,7 +210,6 @@ export function LandingCta({
           Book a demo <ArrowUpRight size={16} />
         </button>
       </div>
-      <Sparkles className="lx-cta-spark" size={22} aria-hidden="true" />
     </section>
   );
 }
@@ -219,6 +226,13 @@ export function LandingFooter({ onHome = false }) {
             </a>
             <p>The complete business management platform for fashion designers and brands.</p>
             <StoreButtons />
+            <div className="lx-socials">
+              {SOCIALS.map((s) => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} title={s.label}>
+                  {createElement(s.icon, { size: 18 })}
+                </a>
+              ))}
+            </div>
           </div>
           <div>
             <h4>Product</h4>

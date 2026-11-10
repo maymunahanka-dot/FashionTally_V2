@@ -3285,3 +3285,276 @@
     width: 25%;
   }
 }
+
+/* ── Hero: dark with a touch of brand green, green headline ── */
+.lx-hero {
+  background:
+    radial-gradient(55% 40% at 50% 0%, rgba(22, 152, 141, 0.38), transparent 70%),
+    radial-gradient(35% 30% at 8% 55%, rgba(47, 211, 195, 0.12), transparent 70%),
+    radial-gradient(35% 30% at 92% 60%, rgba(22, 152, 141, 0.14), transparent 70%),
+    #050707;
+}
+
+.lx-hero-glow {
+  background: radial-gradient(50% 50% at 50% 50%, rgba(22, 152, 141, 0.35), transparent 70%);
+}
+
+.lx-hero .lx-eyebrow {
+  color: rgba(243, 243, 241, 0.7);
+  text-shadow: none;
+}
+
+.lx-hero-title .lx-rise {
+  color: #2bc4b4;
+}
+
+/* the longer headline needs a smaller size to stay on two lines on desktop */
+.lx-hero-title-long {
+  font-size: clamp(38px, 6vw, 84px);
+  line-height: 1.02;
+}
+
+.lx-hero-sub {
+  color: rgba(243, 243, 241, 0.78);
+  font-weight: 400;
+  text-shadow: none;
+}
+
+.lx-hero .lx-btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.lx-hero .lx-store {
+  background: #111514;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* 10 workflow cards: on 3- and 2-column layouts the last card fills its row */
+@media (min-width: 821px) {
+  .lx-flows .lx-flow:last-child:nth-child(3n + 1) {
+    grid-column: 1 / -1;
+    min-height: 200px;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 820px) {
+  .lx-flows .lx-flow:last-child:nth-child(2n + 1) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── Reviews: smaller profile photo, more compact card ── */
+.lx-story {
+  grid-template-columns: 220px 1fr;
+  gap: clamp(20px, 3vw, 44px);
+  margin-top: 40px;
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+.lx-story-photo {
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+}
+
+.lx-story blockquote {
+  font-size: clamp(18px, 1.9vw, 24px);
+  line-height: 1.35;
+}
+
+.lx-story-who {
+  margin-top: 22px;
+}
+
+.lx-dots {
+  margin-top: 20px;
+}
+
+@media (max-width: 820px) {
+  .lx-story {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .lx-story-photo {
+    width: 96px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+  }
+}
+
+.lx-proof > div {
+  padding: 20px 22px;
+}
+
+.lx-proof strong {
+  font-size: clamp(32px, 3.6vw, 48px);
+}
+
+.lx-proof p {
+  margin-top: 6px;
+}
+
+/* ── Footer social links ── */
+.lx-socials {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.lx-socials a {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: rgba(243, 243, 241, 0.85);
+  background: var(--ink-3);
+  border: 1px solid var(--line-dark);
+  transition: background 0.3s, color 0.3s, transform 0.35s var(--ease), border-color 0.3s;
+}
+
+.lx-socials a:hover {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-3px);
+}
+
+/* ── Schedule-a-demo form: small group headings ── */
+.lx-form-group {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+
+.lx-form-group:first-child {
+  margin-top: 0;
+}
+
+.lx-form input[type="date"] {
+  color-scheme: dark;
+}
+
+.lx-demo-list span {
+  line-height: 1.5;
+}
+
+/* Schedule-a-demo page has no hero: leave room for the floating menu bar */
+.lx-demo-page {
+  padding-top: clamp(120px, 14vw, 170px);
+}
+
+.lx-demo-intro {
+  margin-top: 16px;
+  max-width: 520px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ── Platform section: text on the left, designer photos on the right ── */
+.lx-platform-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(200px, 32vw, 380px);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+}
+
+.lx-platform-photos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 34px 22px;
+  min-width: 0;
+  padding: 10px 6px 20px;
+}
+
+.lx-pp {
+  --rot: 0deg;
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  padding: 6px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.6);
+  transform: rotate(var(--rot));
+  animation: lx-photo-drift 7s ease-in-out infinite;
+}
+
+.lx-pp-1 { --rot: -4deg; animation-delay: 0s; }
+.lx-pp-2 { --rot: 4deg; margin-top: 36px; animation-delay: 1.2s; }
+.lx-pp-3 { --rot: 3deg; margin-top: -36px; animation-delay: 2.4s; }
+.lx-pp-4 { --rot: -3deg; animation-delay: 3.6s; }
+
+.lx-pp img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 17px;
+}
+
+.lx-pp figcaption {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b4f49;
+  background: #fff;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%) rotate(calc(-1 * var(--rot)));
+}
+
+.lx-pp figcaption svg {
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .lx-platform-top {
+    grid-template-columns: 1fr;
+  }
+
+  .lx-platform-photos {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .lx-pp {
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .lx-pp img {
+    border-radius: 10px;
+  }
+
+  .lx-pp-2,
+  .lx-pp-3 {
+    margin-top: 0;
+  }
+
+  .lx-pp figcaption {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .lx-pp figcaption {
+    display: none;
+  }
+
+  .lx-platform-photos {
+    gap: 18px 14px;
+  }
+}

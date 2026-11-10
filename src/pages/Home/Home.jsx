@@ -1,4 +1,4 @@
-import { createElement, Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,6 +14,8 @@ import {
   Headphones,
   LayoutDashboard,
   Palette,
+  HeartHandshake,
+  ShieldCheck,
   Settings,
   ShoppingCart,
   UserPlus,
@@ -32,6 +34,7 @@ import {
   Wallet,
 } from "lucide-react";
 import {
+  IntroTitle,
   LandingCta,
   LandingFooter,
   LandingNav,
@@ -42,7 +45,7 @@ import {
 import { prefersReducedMotion, useRevealOnScroll } from "./landingUtils.js";
 import logo from "../../assets/Image/logog.png";
 import pattern from "../../assets/Image/bg.png";
-import photoStudio from "../../assets/Image/hero/designer-studio.jpg";
+import photoStudio from "../../assets/Image/hero/designer-sewing.jpg";
 import photoMeasuring from "../../assets/Image/hero/designer-measuring.jpg";
 import photoPrintDress from "../../assets/Image/hero/model-print-dress.jpg";
 import photoJacket from "../../assets/Image/hero/tailored-jacket.jpg";
@@ -131,6 +134,10 @@ const FLOWS = [
   { icon: Package, title: "Inventory alerts", text: "Know when fabric and materials are running low." },
   { icon: CalendarDays, title: "Appointments", text: "Fittings and pickups, synced to your calendar." },
   { icon: Bell, title: "Daily brief", text: "Your day's orders and payments, every morning." },
+  { icon: Palette, title: "Custom designs", text: "Manage bespoke designs and tailor-made orders seamlessly." },
+  { icon: Wallet, title: "Finance", text: "Monitor revenue, expenses, and business performance." },
+  { icon: HeartHandshake, title: "CRM", text: "Strengthen customer relationships and engagement." },
+  { icon: ShieldCheck, title: "Roles & permissions", text: "Control team access with role-based permissions." },
 ];
 
 const PLANS = [
@@ -215,49 +222,46 @@ const TESTIMONIALS = [
   },
 ];
 
+/** FAQ (the original Contact page questions). "All" shows every question; the rest are the categories. */
+const FAQ_ITEMS = [
+  {
+    category: "Getting Started",
+    q: "How quickly can I get started?",
+    a: "You can start using FashionTally immediately after signing up. Our onboarding process takes less than 10 minutes, and we provide guided tutorials to help you set up your first clients and orders. Plus, our team offers free onboarding calls to ensure you're set up for success.",
+  },
+  {
+    category: "Support",
+    q: "Do you offer training and support?",
+    a: "Absolutely! We provide comprehensive onboarding, video tutorials, documentation, live chat support, and ongoing customer success management. Our team includes former fashion designers who understand your unique challenges and can provide industry-specific guidance.",
+  },
+  {
+    category: "Data Migration",
+    q: "Can I import my existing client data?",
+    a: "Yes! We support importing client data from Excel/CSV files, and our team can help migrate data from other systems like spreadsheets, other CRMs, or manual records. We also offer free data migration assistance for all new customers.",
+  },
+  {
+    category: "Security",
+    q: "Is my data secure?",
+    a: "Security is our top priority. We use enterprise-grade encryption, secure cloud hosting with AWS, regular automated backups, and comply with international data protection standards. Your data is protected with the same security measures used by major financial institutions.",
+  },
+  {
+    category: "Billing",
+    q: "What payment methods do you accept?",
+    a: "We accept all major credit cards, debit cards, bank transfers, and mobile money payments including Paystack, Flutterwave, and other Nigerian payment providers. All transactions are secured with 256-bit SSL encryption.",
+  },
+  {
+    category: "Billing",
+    q: "Can I cancel my subscription anytime?",
+    a: "Yes, you can cancel your subscription at any time with no cancellation fees. Your data remains accessible for 30 days after cancellation, giving you time to export your information if needed.",
+  },
+];
+
 const FAQ = {
-  General: [
-    {
-      q: "What is FashionTally?",
-      a: "FashionTally is an all-in-one tool for fashion designers and brands. It brings clients, measurements, orders, invoices, inventory, appointments and finances into one place, on the web and on your phone.",
-    },
-    {
-      q: "Who is it for?",
-      a: "Independent designers, tailors, fashion houses and growing brands — anyone who is tired of juggling notebooks, chats and spreadsheets.",
-    },
-    {
-      q: "Is there a mobile app?",
-      a: "Yes. FashionTally is available on Android and iOS, and your data stays in sync with the web dashboard.",
-    },
-    {
-      q: "Do I need any technical knowledge?",
-      a: "No. If you can use WhatsApp, you can use FashionTally. Most designers are set up in a few minutes.",
-    },
-  ],
-  "Pricing & trial": [
-    {
-      q: "Can I try it before paying?",
-      a: "Yes. Every new account starts with a free trial so you can explore the tools with your own clients and orders.",
-    },
-    {
-      q: "How do I pay?",
-      a: "Plans are paid securely in Naira through Flutterwave, monthly or yearly.",
-    },
-    {
-      q: "Can I change my plan later?",
-      a: "Yes. You can move to a bigger plan as your team grows.",
-    },
-  ],
-  "Data & team": [
-    {
-      q: "Is my client data safe?",
-      a: "Your data is private to your business, protected by your login, and only shared with team members you invite.",
-    },
-    {
-      q: "Can my team use it too?",
-      a: "Yes. Invite team members and choose what each person can see and do with roles and permissions.",
-    },
-  ],
+  All: FAQ_ITEMS,
+  ...FAQ_ITEMS.reduce((groups, item) => {
+    (groups[item.category] ||= []).push(item);
+    return groups;
+  }, {}),
 };
 
 /* ───────────────────────── animation helpers ───────────────────────── */
@@ -573,7 +577,7 @@ const Home = () => {
   const mockRef = useRef(null);
   const [cycle, setCycle] = useState("monthly");
   const [story, setStory] = useState(0);
-  const [faqTab, setFaqTab] = useState("General");
+  const [faqTab, setFaqTab] = useState("All");
   const [openFaq, setOpenFaq] = useState(0);
 
   useRevealOnScroll(rootRef);
@@ -631,27 +635,12 @@ const Home = () => {
       <section className="lx-hero" id="top">
         <div className="lx-hero-glow" aria-hidden="true" />
         <p className="lx-eyebrow lx-fade" style={{ animationDelay: "0.1s" }}>
-          BUILT FOR FASHION ENTREPRENEURS
+          FASHION BUSINESS MANAGEMENT
         </p>
-        <h1 className="lx-hero-title" aria-label="Less paperwork. More fashion in motion.">
-          {[
-            ["Less", "paperwork."],
-            ["More", "fashion", "in", "motion."],
-          ].map((line, li) => (
-            <span className="lx-hero-line" key={li}>
-              {line.map((w, i) => (
-                <Fragment key={w}>
-                  {i > 0 && " "}
-                  <span className="lx-split-mask" aria-hidden="true">
-                    <span className="lx-rise" style={{ animationDelay: `${0.2 + (li * 2 + i) * 0.08}s` }}>
-                      {w}
-                    </span>
-                  </span>
-                </Fragment>
-              ))}
-            </span>
-          ))}
-        </h1>
+        <IntroTitle
+          className="lx-hero-title lx-hero-title-long"
+          lines={["Smart Business Management", "for Fashion Entrepreneurs."]}
+        />
         <p className="lx-hero-sub lx-fade" style={{ animationDelay: "0.75s" }}>
           Clients, measurements, orders, invoices and finances in one calm workspace for your fashion business.
         </p>
@@ -667,19 +656,6 @@ const Home = () => {
         </div>
         <div className="lx-fade" style={{ animationDelay: "1.05s" }}>
           <StoreButtons />
-        </div>
-
-        {/* Floating designer photos */}
-        <div className="lx-hero-photos" aria-hidden="true">
-          {HERO_PHOTOS.map((photo, i) => (
-            <figure key={photo.src} className={`lx-photo lx-photo-${i + 1}`}>
-              <img src={photo.src} alt="" loading={i < 2 ? "eager" : "lazy"} />
-              <figcaption>
-                {createElement(photo.icon, { size: 14 })}
-                {photo.label}
-              </figcaption>
-            </figure>
-          ))}
         </div>
 
         {/* Dashboard mock-up */}
@@ -700,15 +676,32 @@ const Home = () => {
       {/* ── 01 Platform ── */}
       <section className="lx-section lx-light" id="platform">
         <div className="lx-wrap">
-          <SectionTag>01 / THE PLATFORM</SectionTag>
-          <ScrollHighlight
-            className="lx-statement"
-            text="Great fashion feels effortless. FashionTally brings your clients, orders and money into one calm, connected flow."
-          />
-          <p className="lx-lead" data-reveal>
-            Less flipping through notebooks. Fewer forgotten balances. A connected way to handle the work behind every
-            outfit, with you in control.
-          </p>
+          <div className="lx-platform-top">
+            <div>
+              <SectionTag>01 / THE PLATFORM</SectionTag>
+              <ScrollHighlight
+                className="lx-statement"
+                text="Great fashion feels effortless. FashionTally brings your clients, orders and money into one calm, connected flow."
+              />
+              <p className="lx-lead" data-reveal>
+                Less flipping through notebooks. Fewer forgotten balances. A connected way to handle the work behind
+                every outfit, with you in control.
+              </p>
+            </div>
+
+            {/* Designer photos */}
+            <div className="lx-platform-photos" aria-hidden="true" data-reveal>
+              {HERO_PHOTOS.map((photo, i) => (
+                <figure key={photo.src} className={`lx-pp lx-pp-${i + 1}`}>
+                  <img src={photo.src} alt="" loading="lazy" />
+                  <figcaption>
+                    {createElement(photo.icon, { size: 14 })}
+                    {photo.label}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
           <div className="lx-stats">
             <div data-reveal>
               <p>TOOLS IN ONE WORKSPACE</p>
@@ -836,7 +829,7 @@ const Home = () => {
               const Icon = flow.icon;
               return (
                 <article key={flow.title} className="lx-flow" data-reveal style={{ transitionDelay: `${(i % 3) * 0.08}s` }}>
-                  <p className="lx-flow-tag">FLOW / 0{i + 1}</p>
+                  <p className="lx-flow-tag">FLOW / {String(i + 1).padStart(2, "0")}</p>
                   <div className="lx-flow-icon">
                     <Icon size={22} strokeWidth={1.6} />
                   </div>
@@ -937,9 +930,6 @@ const Home = () => {
               );
             })}
           </div>
-          <p className="lx-fine" data-reveal>
-            Every new account starts with a free trial. Prices in Naira, paid securely with Flutterwave.
-          </p>
         </div>
       </section>
 
