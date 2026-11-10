@@ -1,1049 +1,535 @@
-import { createElement, Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-  Bell,
-  CalendarDays,
-  Check,
-  ClipboardList,
-  Clock,
-  Contact,
-  FileText,
-  Headphones,
-  LayoutDashboard,
-  Palette,
-  Settings,
-  ShoppingCart,
-  UserPlus,
-  Menu,
-  MessageCircle,
-  NotebookPen,
-  Package,
-  Plus,
-  Receipt,
-  Ruler,
-  Scissors,
-  Search,
-  ShoppingBag,
-  TrendingUp,
-  Users,
-  Wallet,
-} from "lucide-react";
-import {
-  LandingCta,
-  LandingFooter,
-  LandingNav,
-  SectionTag,
-  SplitWords,
-  StoreButtons,
-} from "./landingKit.jsx";
-import { prefersReducedMotion, useRevealOnScroll } from "./landingUtils.js";
-import logo from "../../assets/Image/logog.png";
-import pattern from "../../assets/Image/bg.png";
-import photoStudio from "../../assets/Image/hero/designer-studio.jpg";
-import photoMeasuring from "../../assets/Image/hero/designer-measuring.jpg";
-import photoPrintDress from "../../assets/Image/hero/model-print-dress.jpg";
-import photoJacket from "../../assets/Image/hero/tailored-jacket.jpg";
+import { TbUsersGroup, TbUserStar } from "react-icons/tb";
+import { SlCalender } from "react-icons/sl";
+import { FaArrowTrendUp } from "react-icons/fa6";
+import { SiHackthebox } from "react-icons/si";
+import { MdOutlineColorLens, MdEmail } from "react-icons/md";
+import { IoSettingsOutline } from "react-icons/io5";
+import { HiMenuAlt3 } from "react-icons/hi";
+import { IoClose } from "react-icons/io5";
+import { FiPhone } from "react-icons/fi";
+import "./Home.css";
+import second from "./../../assets/Image/logog.png";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
+import { FiHome } from "react-icons/fi";
+
+// Import testimonial images
 import ummaImage from "../../assets/Image/umma_baffa.jpeg";
 import fatiimahImage from "../../assets/Image/fatiimah-clothing.jpeg";
 import muniraImage from "../../assets/Image/munira-nuhu.jpg";
 import khadijahImage from "../../assets/Image/Khadijah-Labaran.png";
 
-/* ───────────────────────── content ───────────────────────── */
+// Custom hook for scroll animations
+const useScrollAnimation = () => {
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
 
-/** Photo cards floating around the hero headline (free Unsplash photos, see assets/Image/hero/CREDITS.md). */
-const HERO_PHOTOS = [
-  { src: photoMeasuring, icon: Ruler, label: "14 measurements saved" },
-  { src: photoStudio, icon: CalendarDays, label: "Fitting today · 10:30" },
-  { src: photoJacket, icon: Scissors, label: "Order #2841 in progress" },
-  { src: photoPrintDress, icon: Check, label: "Delivered · Paid ₦85,000" },
-];
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("animate-in");
+        }
+      });
+    }, observerOptions);
 
-const PROBLEMS = [
-  {
-    icon: NotebookPen,
-    title: "Measurements in notebooks",
-    text: "Keep every client's sizes, styles and notes in one profile you can open anywhere.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Orders lost in chats",
-    text: "Turn scattered WhatsApp requests into tracked orders with clear due dates.",
-  },
-  {
-    icon: Wallet,
-    title: "Payments you forget to chase",
-    text: "Send clean invoices and see at a glance who has paid and who still owes.",
-  },
-  {
-    icon: Clock,
-    title: "Fittings that slip by",
-    text: "Get reminders before fittings and deliveries, not after the client calls.",
-  },
-];
+    const elements = document.querySelectorAll(".scroll-animate");
+    elements.forEach((el) => observer.observe(el));
 
-const TOOLS = [
+    return () => observer.disconnect();
+  }, []);
+};
+
+const features = [
   {
-    tag: "01 / CLIENTS & MEASUREMENTS",
-    title: "Every client, perfectly measured",
-    text: "Profiles with measurements, style notes, photos and full order history — ready before the client walks in.",
-    widgetLabel: "CLIENT PROFILE",
-    widgetTitle: "Aisha B. · 14 measurements",
-    widgetNote: "Last updated at her fitting",
-    icon: Ruler,
+    Icon: TbUsersGroup,
+    title: "Client Management",
+    description: "Organize client profiles, measurements, and order history",
   },
   {
-    tag: "02 / ORDERS",
-    title: "Orders that move themselves forward",
-    text: "Track every custom and bespoke order from fabric to delivery, with due dates you can't miss.",
-    widgetLabel: "ORDER #2841",
-    widgetTitle: "Agbada set · In production",
-    widgetNote: "Due in 3 days",
-    icon: Scissors,
+    Icon: SiHackthebox,
+    title: "Inventory",
+    description:
+      "Track fabrics, materials, and stock availability in real time",
   },
   {
-    tag: "03 / INVOICES & PAYMENTS",
-    title: "Get paid without the awkward chase",
-    text: "Create branded invoices in seconds and see deposits, balances and overdue payments in one place.",
-    widgetLabel: "INVOICE INV-0192",
-    widgetTitle: "₦85,000 · Deposit received",
-    widgetNote: "Balance due on delivery",
-    icon: Receipt,
+    Icon: MdOutlineColorLens,
+    title: "Custom Designs",
+    description: "Manage bespoke designs and tailor-made orders seamlessly",
   },
   {
-    tag: "04 / BUSINESS INSIGHTS",
-    title: "Know exactly how your brand is doing",
-    text: "Revenue, expenses and best-selling styles turned into a clear picture of what needs your attention.",
-    widgetLabel: "THIS MONTH",
-    widgetTitle: "Revenue up 18%",
-    widgetNote: "Your top style: Bridal",
-    icon: TrendingUp,
+    Icon: FaArrowTrendUp,
+    title: "Finance",
+    description: "Monitor revenue, expenses, and business performance",
+  },
+  {
+    Icon: TbUserStar,
+    title: "CRM",
+    description: "Strengthen customer relationships and engagement",
+  },
+  {
+    Icon: SlCalender,
+    title: "Calendar Sync",
+    description: "Sync fittings, deliveries, and appointments automatically",
+  },
+  {
+    Icon: IoSettingsOutline,
+    title: "Roles & Permissions",
+    description: "Control team access with role-based permissions",
   },
 ];
 
-const FLOWS = [
-  { icon: Ruler, title: "Client measurements", text: "Capture sizes once. Reuse them on every order." },
-  { icon: ShoppingBag, title: "Custom orders", text: "From request to delivery, every step in view." },
-  { icon: Receipt, title: "Invoices", text: "Professional invoices your clients take seriously." },
-  { icon: Package, title: "Inventory alerts", text: "Know when fabric and materials are running low." },
-  { icon: CalendarDays, title: "Appointments", text: "Fittings and pickups, synced to your calendar." },
-  { icon: Bell, title: "Daily brief", text: "Your day's orders and payments, every morning." },
-];
-
-const PLANS = [
+const pricingPlans = [
   {
-    key: "starter",
-    name: "Starter",
-    blurb: "For solo designers getting organised.",
+    name: "STARTER",
+    monthlyPrice: SUBSCRIPTION_PRICING.starter.monthly,
+    yearlyPrice: SUBSCRIPTION_PRICING.starter.yearly,
+    description: "Best for solo designers",
+    badge: "Starter",
     features: [
-      "1 user",
-      "Clients & measurements",
-      "Custom & bespoke orders",
-      "Invoicing & payments",
-      "Inventory & finance reports",
-      "Appointment scheduling",
+      "1 User",
+      "Client Management",
+      "Inventory Tool",
+      "Financial Reports",
+      "Custom Orders",
+      "CRM Tools",
+      "Appointment Scheduling",
+      "Detailed Measurements",
+      "Invoicing",
+      "Order Tracking",
+      "Support",
+      "Bespoke Orders",
+      "No Notifications",
     ],
+    cta: "Get Started",
+    popular: false,
   },
   {
-    key: "growth",
-    name: "Growth",
-    popular: true,
-    blurb: "For growing brands with a small team.",
+    name: "GROWTH",
+    monthlyPrice: SUBSCRIPTION_PRICING.growth.monthly,
+    yearlyPrice: SUBSCRIPTION_PRICING.growth.yearly,
+    description: "Ideal for growing fashion brands",
+    badge: "Popular",
     features: [
-      "Up to 3 users",
-      "Everything in Starter",
+      "Up to 3 Users",
+      "Client Management",
+      "Inventory Tool",
+      "Financial Reports",
+      "Custom Orders",
+      "CRM Tools",
+      "Appointment Scheduling",
+      "Detailed Measurements",
+      "Invoicing",
+      "Order Tracking",
+      "Support",
+      "Bespoke Orders",
       "Notifications",
-      "Calendar sync",
+      "Calendar Sync",
       "Enhanced CRM",
     ],
+    cta: "Get Started",
+    popular: true,
   },
   {
-    key: "professional",
-    name: "Professional",
-    blurb: "For studios with structured teams.",
+    name: "PROFESSIONAL",
+    monthlyPrice: SUBSCRIPTION_PRICING.professional.monthly,
+    yearlyPrice: SUBSCRIPTION_PRICING.professional.yearly,
+    description: "Best for studios with structured teams and higher volume",
+    badge: "Pro",
     features: [
-      "Up to 10 users",
-      "Everything in Growth",
-      "Full workflow access",
-      "Priority notifications",
-      "Priority support",
+      "Up to 10 Users",
+      "Client Management",
+      "Inventory Tool",
+      "Financial Reports",
+      "Custom Orders",
+      "CRM Tools",
+      "Appointment Scheduling",
+      "Detailed Measurements",
+      "Invoicing",
+      "Order Tracking",
+      "Support",
+      "Bespoke Orders",
+      "Notifications",
+      "Calendar Sync",
+      "Enhanced CRM",
+      "Full Workflow Access",
+      "Priority Notifications",
+      "Priority Support",
     ],
+    cta: "Get Started",
+    popular: false,
   },
   {
-    key: "custom",
-    name: "Custom",
-    blurb: "For large brands with special needs.",
-    features: ["Unlimited users", "White label", "API integrations", "Enterprise workflow"],
+    name: "CUSTOM",
+    description: "For large brands with custom operational needs",
+    badge: "Enterprise",
+    features: [
+      "Unlimited Users",
+      "White Label",
+      "API Integrations",
+      "Enterprise Workflow",
+    ],
+    cta: "Contact Sales",
+    popular: false,
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    name: "Fatiimah",
-    business: "Fatiimah Clothing",
-    headline: "Managing my records is so much easier.",
-    quote:
-      "Being one of the few designers chosen to test Fashion Tally before launch has been such a smooth experience. It has made managing my fashion records so much easier and more organised.",
-    image: fatiimahImage,
-  },
+const testimonials = [
   {
     name: "Umma Baffa",
     business: "Closet Cloud Nigeria",
-    headline: "A smoother way to run a fashion business.",
-    quote:
-      "Fashion Tally has opened my eyes to how much smoother fashion business operations can be. It helps me stay organised, track my workflow and manage things I used to do manually.",
+    content:
+      "Using the Fashion Tally app has really opened my eyes to how much smoother fashion business operations can be. It helps stay more organized, track key elements of workflow, and manage things I used to do manually. It's still early, but I already see the potential.",
+    rating: 5,
     image: ummaImage,
+    verified: true,
+  },
+  {
+    name: "Fatiimah",
+    business: "Fatiimah Clothing",
+    content:
+      "Being one of the few designers chosen to privately test Fashion Tally before launch has been such a smooth and exciting experience. It has made managing my fashion records so much easier and more organized. Fashion Tally is truly the future of fashion tech built to make life easier for designers.",
+    rating: 5,
+    image: fatiimahImage,
+    verified: true,
+    featured: true,
   },
   {
     name: "Munira Nuhu",
     business: "MNM's Clothing",
-    headline: "Everything in one place.",
-    quote:
-      "Fashion Tally has made it so much easier for me to stay organised, manage my client orders, and keep detailed records of all my business activities in one place.",
+    content:
+      "Fashion Tally has made it so much easier for me to stay organized, manage my client orders, and keep detailed records of all my business activities in one place.",
+    rating: 5,
     image: muniraImage,
+    verified: true,
   },
   {
     name: "Khadijah Labaran",
     business: "Fashion Designer",
-    headline: "Impressive and promising.",
-    quote:
+    content:
       "I really appreciate the opportunity to test it, and from what I've seen so far, it is impressive and promising. I'm excited to see how it grows.",
+    rating: 5,
     image: khadijahImage,
+    verified: true,
   },
 ];
 
-const FAQ = {
-  General: [
-    {
-      q: "What is FashionTally?",
-      a: "FashionTally is an all-in-one tool for fashion designers and brands. It brings clients, measurements, orders, invoices, inventory, appointments and finances into one place, on the web and on your phone.",
-    },
-    {
-      q: "Who is it for?",
-      a: "Independent designers, tailors, fashion houses and growing brands — anyone who is tired of juggling notebooks, chats and spreadsheets.",
-    },
-    {
-      q: "Is there a mobile app?",
-      a: "Yes. FashionTally is available on Android and iOS, and your data stays in sync with the web dashboard.",
-    },
-    {
-      q: "Do I need any technical knowledge?",
-      a: "No. If you can use WhatsApp, you can use FashionTally. Most designers are set up in a few minutes.",
-    },
-  ],
-  "Pricing & trial": [
-    {
-      q: "Can I try it before paying?",
-      a: "Yes. Every new account starts with a free trial so you can explore the tools with your own clients and orders.",
-    },
-    {
-      q: "How do I pay?",
-      a: "Plans are paid securely in Naira through Flutterwave, monthly or yearly.",
-    },
-    {
-      q: "Can I change my plan later?",
-      a: "Yes. You can move to a bigger plan as your team grows.",
-    },
-  ],
-  "Data & team": [
-    {
-      q: "Is my client data safe?",
-      a: "Your data is private to your business, protected by your login, and only shared with team members you invite.",
-    },
-    {
-      q: "Can my team use it too?",
-      a: "Yes. Invite team members and choose what each person can see and do with roles and permissions.",
-    },
-  ],
-};
-
-/* ───────────────────────── animation helpers ───────────────────────── */
-
-/** Runs `onFrame(progress)` while the element passes through the viewport (0 → 1). */
-function useScrollProgress(ref, onFrame) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const progress = Math.min(1, Math.max(0, (vh - rect.top) / (vh + rect.height * 0.35)));
-      onFrame(progress);
-    };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      cancelAnimationFrame(frame);
-    };
-  }, [ref, onFrame]);
-}
-
-/** Paragraph that lights up word by word as you scroll past it. */
-function ScrollHighlight({ text, className = "" }) {
-  const ref = useRef(null);
-  const words = useMemo(() => text.split(" "), [text]);
-  const [lit, setLit] = useState(prefersReducedMotion() ? words.length : 0);
-  const onFrame = useMemo(
-    () => (p) => {
-      if (prefersReducedMotion()) return;
-      const eased = Math.min(1, Math.max(0, (p - 0.15) / 0.55));
-      setLit(Math.round(eased * words.length));
-    },
-    [words.length],
-  );
-  useScrollProgress(ref, onFrame);
-  return (
-    <p ref={ref} className={`lx-highlight ${className}`}>
-      {words.map((word, i) => (
-        <span key={`${word}-${i}`} className={i < lit ? "is-lit" : ""}>
-          {word}{" "}
-        </span>
-      ))}
-    </p>
-  );
-}
-
-/** Number that counts up the first time it is seen. */
-function CountUp({ to, prefix = "", suffix = "", duration = 1400, format }) {
-  const ref = useRef(null);
-  const [value, setValue] = useState(prefersReducedMotion() ? to : 0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || prefersReducedMotion()) return undefined;
-    let raf = 0;
-    const io = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      io.disconnect();
-      const start = performance.now();
-      const tick = (now) => {
-        const t = Math.min(1, (now - start) / duration);
-        setValue(Math.round(to * (1 - Math.pow(1 - t, 3))));
-        if (t < 1) raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    });
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      cancelAnimationFrame(raf);
-    };
-  }, [to, duration]);
-  return (
-    <span ref={ref}>
-      {prefix}
-      {format ? format(value) : value.toLocaleString()}
-      {suffix}
-    </span>
-  );
-}
-
-/** Text that types itself out, pauses, then moves to the next line. */
-function Typewriter({ lines }) {
-  const [index, setIndex] = useState(0);
-  const [shown, setShown] = useState(() => (prefersReducedMotion() ? lines[0] : ""));
-  useEffect(() => {
-    if (prefersReducedMotion()) return undefined;
-    const full = lines[index];
-    let i = 0;
-    let timer;
-    const type = () => {
-      i += 1;
-      setShown(full.slice(0, i));
-      if (i < full.length) timer = setTimeout(type, 45);
-      else timer = setTimeout(() => setIndex((n) => (n + 1) % lines.length), 2200);
-    };
-    timer = setTimeout(type, 400);
-    return () => clearTimeout(timer);
-  }, [index, lines]);
-  return (
-    <span className="lx-type">
-      {shown}
-      <span className="lx-caret" aria-hidden="true" />
-    </span>
-  );
-}
-
-/* ───────────────────────── product mock-ups ───────────────────────── */
-/* These copy the real web dashboard and mobile app layouts, filled with sample data. */
-
-const WEB_NAV = [
-  [LayoutDashboard, "Dashboard Overview"],
-  [Users, "Clients Management"],
-  [Package, "Inventory"],
-  [Palette, "Designs"],
-  [ShoppingCart, "Order Management"],
-  [FileText, "Invoice"],
-  [CalendarDays, "Appointments"],
-  [TrendingUp, "Finances"],
-  [Contact, "CRM"],
-  [Settings, "More Settings"],
-];
-
-/** ₦1,240,000 → "1.24M", like the app's compact money display. */
-const millions = (n) => `${(n / 1e6).toFixed(n >= 1e7 ? 1 : 2).replace(/\.?0+$/, "")}M`;
-
-const SAMPLE_STATS = [
-  { icon: Wallet, value: <CountUp to={1240000} prefix="₦" format={millions} />, label: "Total Revenue", note: "+18.0% from last month", tone: "up" },
-  { icon: Users, value: <CountUp to={48} />, unit: "clients", label: "Active Clients", note: "6 new this month", tone: "up" },
-  { icon: ClipboardList, value: <CountUp to={12} />, unit: "orders", label: "Pending Orders", note: "3 due this week", tone: "warn" },
-  { icon: Package, value: <CountUp to={2900000} prefix="₦" format={millions} />, label: "Inventory Value", note: "24 items in stock", tone: "up" },
-];
-
-function WebDashboardMock() {
-  return (
-    <div className="lx-dash">
-      <aside className="lx-dash-side">
-        <div className="lx-dash-brand">
-          <img src={logo} alt="" />
-          <span>FashionTally</span>
-        </div>
-        <div className="lx-dash-profile">
-          <span className="lx-dash-avatar">FA</span>
-          <div>
-            <b>Fatima Atelier</b>
-            <small>Designer</small>
-            <small>hello@fatima.ng</small>
-          </div>
-        </div>
-        <nav className="lx-dash-nav">
-          {WEB_NAV.map(([icon, label], i) => (
-            <span key={label} className={i === 0 ? "is-active" : ""} style={i === 0 ? { backgroundImage: `url(${pattern})` } : undefined}>
-              {createElement(icon)} {label}
-            </span>
-          ))}
-        </nav>
-        <span className="lx-dash-support">
-          <Headphones /> Expert Support
-        </span>
-      </aside>
-
-      <div className="lx-dash-main">
-        <div className="lx-dash-banner" style={{ backgroundImage: `url(${pattern})` }}>
-          <div>
-            <div className="lx-dash-hello">
-              <span className="lx-dash-avatar lx-dash-avatar-lg">F</span>
-              <h4>Welcome back, Fatima!</h4>
-            </div>
-            <p>Here's an overview of your fashion business</p>
-          </div>
-          <span className="lx-dash-bell">
-            <Bell />
-            <i>3</i>
-          </span>
-        </div>
-
-        <h5 className="lx-dash-title">Quick Actions</h5>
-        <div className="lx-dash-actions">
-          {[
-            [ClipboardList, "New Order"],
-            [UserPlus, "New Client"],
-            [Plus, "Add Inventory"],
-            [Contact, "CRM"],
-          ].map(([icon, label]) => (
-            <div key={label} className="lx-dash-action">
-              <span>
-                {createElement(icon)}
-              </span>
-              {label}
-            </div>
-          ))}
-        </div>
-
-        <div className="lx-dash-row">
-          <h5 className="lx-dash-title">Today's Schedule</h5>
-          <small>See more</small>
-        </div>
-        <div className="lx-dash-schedule">
-          <div>
-            <b>10:30 AM</b>
-            <span>
-              <Users /> Aisha Bello
-            </span>
-            <small>Bridal gown — final fitting</small>
-          </div>
-          <em>Confirmed</em>
-        </div>
-
-        <div className="lx-dash-stats">
-          {SAMPLE_STATS.map(({ icon, value, unit, label, note, tone }) => (
-            <div key={label} className="lx-dash-stat">
-              <div className="lx-dash-stat-top">
-                <span>
-                  {createElement(icon)}
-                </span>
-                <strong>{value}</strong>
-                {unit && <small>{unit}</small>}
-              </div>
-              <p>{label}</p>
-              <em className={`is-${tone}`}>{note}</em>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PhoneMock() {
-  return (
-    <div className="lx-phone" aria-hidden="true">
-      <div className="lx-phone-screen">
-        <div className="lx-phone-head" style={{ backgroundImage: `url(${pattern})` }}>
-          <div className="lx-phone-status">
-            <b>9:41</b>
-            <span />
-          </div>
-          <div className="lx-phone-bar">
-            <Menu />
-            <b>Dashboard</b>
-            <Bell />
-          </div>
-          <div className="lx-phone-hello">
-            <span className="lx-dash-avatar">F</span>
-            <p>
-              Welcome back,
-              <br />
-              Fatima
-            </p>
-          </div>
-        </div>
-        <div className="lx-phone-sheet">
-          <h6>Quick Actions</h6>
-          <div className="lx-phone-actions">
-            {[
-              [ClipboardList, "New Order"],
-              [UserPlus, "New Client"],
-              [Plus, "Add Inventory"],
-            ].map(([icon, label]) => (
-              <div key={label}>
-                <span>
-                  {createElement(icon)}
-                </span>
-                {label}
-              </div>
-            ))}
-          </div>
-          <h6>Today's Schedule</h6>
-          <div className="lx-phone-sched">
-            <b>10:30</b>
-            <div>
-              <strong>Aisha Bello</strong>
-              <small>Final fitting</small>
-            </div>
-          </div>
-          <div className="lx-phone-date">
-            <b>Friday, Nov 6</b>
-            <small>Updated now</small>
-          </div>
-          <div className="lx-phone-stats">
-            {SAMPLE_STATS.map(({ icon, value, unit, label, note, tone }) => (
-              <div key={label}>
-                <div className="lx-phone-stat-top">
-                  {createElement(icon)}
-                  <strong>{value}</strong>
-                  {unit && <small>{unit}</small>}
-                </div>
-                <p>{label}</p>
-                <em className={`is-${tone}`}>{note}</em>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ───────────────────────── page ───────────────────────── */
-
 const Home = () => {
   const navigate = useNavigate();
-  const rootRef = useRef(null);
-  const mockRef = useRef(null);
-  const [cycle, setCycle] = useState("monthly");
-  const [story, setStory] = useState(0);
-  const [faqTab, setFaqTab] = useState("General");
-  const [openFaq, setOpenFaq] = useState(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [billingCycle, setBillingCycle] = useState("monthly");
 
-  useRevealOnScroll(rootRef);
-
-  // Arriving from another page via /#pricing etc.: jump to that section once it exists.
-  useEffect(() => {
-    const id = window.location.hash.slice(1);
-    if (!id) return undefined;
-    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView(), 60);
-    return () => clearTimeout(t);
-  }, []);
-
-  // Hero dashboard tilts flat as you scroll into it.
-  const onMockFrame = useMemo(
-    () => (p) => {
-      const el = mockRef.current;
-      if (!el || prefersReducedMotion()) return;
-      const t = Math.min(1, p / 0.6);
-      el.style.setProperty("--tilt", `${(1 - t) * 22}deg`);
-      el.style.setProperty("--lift", `${(1 - t) * 60}px`);
-      el.style.setProperty("--zoom", `${0.9 + t * 0.1}`);
-    },
-    [],
-  );
-  useScrollProgress(mockRef, onMockFrame);
-
-  // Stories rotate on their own until the visitor uses the arrows.
-  const [autoplay, setAutoplay] = useState(true);
-  useEffect(() => {
-    if (!autoplay || prefersReducedMotion()) return undefined;
-    const id = setInterval(() => setStory((s) => (s + 1) % TESTIMONIALS.length), 6500);
-    return () => clearInterval(id);
-  }, [autoplay]);
-  const goStory = (dir) => {
-    setAutoplay(false);
-    setStory((s) => (s + dir + TESTIMONIALS.length) % TESTIMONIALS.length);
-  };
-
-  const yearlySaving = Math.round(
-    (1 - SUBSCRIPTION_PRICING.growth.yearly / (SUBSCRIPTION_PRICING.growth.monthly * 12)) * 100,
-  );
-
-  const choosePlan = (plan) => {
-    if (plan.key === "custom") navigate("/contact");
-    else navigate(`/signup?plan=${plan.key}&cycle=${cycle}`);
-  };
-
-  const current = TESTIMONIALS[story];
+  useScrollAnimation();
 
   return (
-    <div className="lx" ref={rootRef}>
-      <LandingNav onHome />
-
-      {/* ── Hero ── */}
-      <section className="lx-hero" id="top">
-        <div className="lx-hero-glow" aria-hidden="true" />
-        <p className="lx-eyebrow lx-fade" style={{ animationDelay: "0.1s" }}>
-          BUILT FOR FASHION ENTREPRENEURS
-        </p>
-        <h1 className="lx-hero-title" aria-label="Less paperwork. More fashion in motion.">
-          {[
-            ["Less", "paperwork."],
-            ["More", "fashion", "in", "motion."],
-          ].map((line, li) => (
-            <span className="lx-hero-line" key={li}>
-              {line.map((w, i) => (
-                <Fragment key={w}>
-                  {i > 0 && " "}
-                  <span className="lx-split-mask" aria-hidden="true">
-                    <span className="lx-rise" style={{ animationDelay: `${0.2 + (li * 2 + i) * 0.08}s` }}>
-                      {w}
-                    </span>
-                  </span>
-                </Fragment>
-              ))}
-            </span>
-          ))}
-        </h1>
-        <p className="lx-hero-sub lx-fade" style={{ animationDelay: "0.75s" }}>
-          Clients, measurements, orders, invoices and finances in one calm workspace for your fashion business.
-        </p>
-        <div className="lx-hero-ctas lx-fade" style={{ animationDelay: "0.9s" }}>
-          <button type="button" className="lx-btn lx-btn-dark" onClick={() => navigate("/signup")}>
-            <span className="lx-btn-roll" data-text="Start your free trial">
-              Start your free trial
-            </span>
-          </button>
-          <button type="button" className="lx-btn lx-btn-ghost" onClick={() => navigate("/schedule-demo")}>
-            Book a demo <ArrowUpRight size={16} />
-          </button>
-        </div>
-        <div className="lx-fade" style={{ animationDelay: "1.05s" }}>
-          <StoreButtons />
-        </div>
-
-        {/* Floating designer photos */}
-        <div className="lx-hero-photos" aria-hidden="true">
-          {HERO_PHOTOS.map((photo, i) => (
-            <figure key={photo.src} className={`lx-photo lx-photo-${i + 1}`}>
-              <img src={photo.src} alt="" loading={i < 2 ? "eager" : "lazy"} />
-              <figcaption>
-                {createElement(photo.icon, { size: 14 })}
-                {photo.label}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-
-        {/* Dashboard mock-up */}
-        <div className="lx-mock-stage">
-          <div className="lx-mock" ref={mockRef}>
-            <div className="lx-mock-bar">
-              <span />
-              <span />
-              <span />
-              <p>app.fashiontally.com</p>
+    <div className="landing-page">
+      <nav className="nav-bar">
+        <div className="nav-container">
+          <div className="nav-content">
+            <div className="nav-logo">
+              <img src={second} alt="logo" className="logo-image" />
+              <span className="logo-textt">FashionTally</span>
             </div>
-            <WebDashboardMock />
-          </div>
-          <PhoneMock />
-        </div>
-      </section>
-
-      {/* ── 01 Platform ── */}
-      <section className="lx-section lx-light" id="platform">
-        <div className="lx-wrap">
-          <SectionTag>01 / THE PLATFORM</SectionTag>
-          <ScrollHighlight
-            className="lx-statement"
-            text="Great fashion feels effortless. FashionTally brings your clients, orders and money into one calm, connected flow."
-          />
-          <p className="lx-lead" data-reveal>
-            Less flipping through notebooks. Fewer forgotten balances. A connected way to handle the work behind every
-            outfit, with you in control.
-          </p>
-          <div className="lx-stats">
-            <div data-reveal>
-              <p>TOOLS IN ONE WORKSPACE</p>
-              <strong>
-                <CountUp to={7} suffix="" />
-              </strong>
-            </div>
-            <div data-reveal style={{ transitionDelay: "0.1s" }}>
-              <p>WEB, ANDROID & iOS</p>
-              <strong>
-                <CountUp to={3} />
-              </strong>
-            </div>
-            <div data-reveal style={{ transitionDelay: "0.2s" }}>
-              <p>YOUR DATA, YOUR BUSINESS</p>
-              <strong>
-                <CountUp to={100} suffix="%" />
-              </strong>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 02 Problems ── */}
-      <section className="lx-section lx-light lx-tight-top">
-        <div className="lx-wrap">
-          <SectionTag>02 / A BETTER WAY TO WORK</SectionTag>
-          <SplitWords text="You have better things to do than chase loose ends." className="lx-h2" />
-          <div className="lx-problems">
-            {PROBLEMS.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <article key={item.title} className="lx-problem" data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
-                  <span className="lx-num">0{i + 1}</span>
-                  <Icon size={22} strokeWidth={1.6} />
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 03 In sync ── */}
-      <section className="lx-section lx-dark">
-        <div className="lx-wrap lx-center">
-          <SectionTag>03 / EVERYTHING IN SYNC</SectionTag>
-          <SplitWords text="One quiet engine. Your entire fashion business." className="lx-h2" />
-          <div className="lx-orbit" data-reveal>
-            <div className="lx-orbit-ring lx-orbit-ring-1">
-              {[Users, Ruler, ShoppingBag, Receipt].map((Icon, i) => (
-                <span key={i} className="lx-orbit-node" style={{ "--i": i, "--n": 4 }}>
-                  <Icon size={18} />
-                </span>
-              ))}
-            </div>
-            <div className="lx-orbit-ring lx-orbit-ring-2">
-              {[Package, CalendarDays, Wallet, TrendingUp, Bell, Scissors].map((Icon, i) => (
-                <span key={i} className="lx-orbit-node" style={{ "--i": i, "--n": 6 }}>
-                  <Icon size={18} />
-                </span>
-              ))}
-            </div>
-            <div className="lx-orbit-core">
-              <img src={logo} alt="" />
-            </div>
-          </div>
-          <div className="lx-ask" data-reveal>
-            <Search size={18} />
-            <Typewriter
-              lines={[
-                "Which orders are due this week?",
-                "Who still owes me a balance?",
-                "When is Aisha's next fitting?",
-                "What fabric is running low?",
-              ]}
-            />
-            <span className="lx-ask-btn">
-              <ArrowRight size={16} />
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 04 Tools (stacking cards) ── */}
-      <section className="lx-section lx-dark lx-tight-top" id="tools">
-        <div className="lx-wrap">
-          <SectionTag>04 / MEET YOUR NEW TOOLS</SectionTag>
-          <SplitWords text="A little order. At every step of the outfit." className="lx-h2" />
-          <div className="lx-stack">
-            {TOOLS.map((tool, i) => {
-              const Icon = tool.icon;
-              return (
-                <article key={tool.tag} className="lx-stack-card" style={{ "--i": i }}>
-                  <div className="lx-stack-copy">
-                    <p className="lx-tag lx-tag-muted">{tool.tag}</p>
-                    <h3>{tool.title}</h3>
-                    <p>{tool.text}</p>
-                  </div>
-                  <div className="lx-widget">
-                    <div className="lx-widget-icon">
-                      <Icon size={22} />
-                    </div>
-                    <small>{tool.widgetLabel}</small>
-                    <strong>{tool.widgetTitle}</strong>
-                    <span>
-                      <Check size={14} /> {tool.widgetNote}
-                    </span>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 05 Workflows ── */}
-      <section className="lx-section lx-light" id="workflows">
-        <div className="lx-wrap">
-          <SectionTag>05 / SMALL STARTS. BIG POSSIBILITIES.</SectionTag>
-          <SplitWords text="Start with the work you do every day." className="lx-h2" />
-          <div className="lx-flows">
-            {FLOWS.map((flow, i) => {
-              const Icon = flow.icon;
-              return (
-                <article key={flow.title} className="lx-flow" data-reveal style={{ transitionDelay: `${(i % 3) * 0.08}s` }}>
-                  <p className="lx-flow-tag">FLOW / 0{i + 1}</p>
-                  <div className="lx-flow-icon">
-                    <Icon size={22} strokeWidth={1.6} />
-                  </div>
-                  <h3>{flow.title}</h3>
-                  <p>{flow.text}</p>
-                  <span className="lx-flow-arrow">
-                    <ArrowUpRight size={18} />
-                  </span>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 06 Pricing ── */}
-      <section className="lx-section lx-light lx-tight-top" id="pricing">
-        <div className="lx-wrap">
-          <SectionTag>06 / ROOM TO GROW</SectionTag>
-          <div className="lx-pricing-head">
-            <SplitWords text="A plan for your next collection." className="lx-h2" />
-            <div className="lx-toggle" role="tablist" aria-label="Billing cycle" data-reveal>
-              <span className={`lx-toggle-pill ${cycle === "yearly" ? "is-right" : ""}`} aria-hidden="true" />
-              <button
-                type="button"
-                role="tab"
-                aria-selected={cycle === "monthly"}
-                className={cycle === "monthly" ? "is-active" : ""}
-                onClick={() => setCycle("monthly")}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={cycle === "yearly"}
-                className={cycle === "yearly" ? "is-active" : ""}
-                onClick={() => setCycle("yearly")}
-              >
-                Yearly <em>Save {yearlySaving}%</em>
-              </button>
-            </div>
-          </div>
-          <div className="lx-plans">
-            {PLANS.map((plan, i) => {
-              const price = SUBSCRIPTION_PRICING[plan.key]?.[cycle];
-              return (
-                <article
-                  key={plan.key}
-                  className={`lx-plan ${plan.popular ? "is-popular" : ""}`}
-                  data-reveal
-                  style={{ transitionDelay: `${i * 0.08}s` }}
-                >
-                  <div className="lx-plan-top">
-                    <h3>{plan.name}</h3>
-                    {plan.popular && <span className="lx-badge">Most popular</span>}
-                  </div>
-                  <div className="lx-price">
-                    {price ? (
-                      <>
-                        <strong key={`${plan.key}-${cycle}`} className="lx-price-num">
-                          ₦{price.toLocaleString()}
-                        </strong>
-                        <span>/ {cycle === "monthly" ? "month" : "year"}</span>
-                      </>
-                    ) : (
-                      <strong className="lx-price-num">Let's talk</strong>
-                    )}
-                  </div>
-                  <p className="lx-plan-note">
-                    {price
-                      ? cycle === "monthly"
-                        ? "Billed monthly. Cancel anytime."
-                        : "Billed once a year."
-                      : "Pricing built around your brand."}
-                  </p>
-                  <p className="lx-plan-blurb">{plan.blurb}</p>
-                  <ul>
-                    {plan.features.map((f) => (
-                      <li key={f}>
-                        <Check size={15} /> {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    type="button"
-                    className={`lx-btn ${plan.popular ? "lx-btn-accent" : "lx-btn-dark"} lx-btn-block`}
-                    onClick={() => choosePlan(plan)}
-                  >
-                    <span
-                      className="lx-btn-roll"
-                      data-text={plan.key === "custom" ? "Contact us" : `Choose ${plan.name}`}
-                    >
-                      {plan.key === "custom" ? "Contact us" : `Choose ${plan.name}`}
-                    </span>
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-          <p className="lx-fine" data-reveal>
-            Every new account starts with a free trial. Prices in Naira, paid securely with Flutterwave.
-          </p>
-        </div>
-      </section>
-
-      {/* ── 07 Stories ── */}
-      <section className="lx-section lx-dark" id="stories">
-        <div className="lx-wrap">
-          <div className="lx-stories-head">
-            <div>
-              <SectionTag>07 / REVIEWS</SectionTag>
-              <SplitWords text="Less stress. More room to create." className="lx-h2" />
-            </div>
-            <div className="lx-arrows">
-              <button type="button" aria-label="Previous story" onClick={() => goStory(-1)}>
-                <ArrowLeft size={18} />
-              </button>
-              <button type="button" aria-label="Next story" onClick={() => goStory(1)}>
-                <ArrowRight size={18} />
-              </button>
-            </div>
-          </div>
-          <div className="lx-story" data-reveal>
-            <div className="lx-story-photo" key={`p-${story}`}>
-              <img src={current.image} alt={current.name} loading="lazy" />
-            </div>
-            <div className="lx-story-copy" key={`c-${story}`}>
-              <p className="lx-tag lx-tag-muted">{current.headline.toUpperCase()}</p>
-              <blockquote>“{current.quote}”</blockquote>
-              <div className="lx-story-who">
-                <strong>{current.name}</strong>
-                <span>{current.business}</span>
-              </div>
-              <div className="lx-dots">
-                {TESTIMONIALS.map((t, i) => (
-                  <button
-                    type="button"
-                    key={t.name}
-                    aria-label={`Show story ${i + 1}`}
-                    className={i === story ? "is-active" : ""}
-                    onClick={() => {
-                      setAutoplay(false);
-                      setStory(i);
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="lx-proof">
-            <div data-reveal>
-              <strong>
-                <CountUp to={100} suffix="+" />
-              </strong>
-              <p>Designers using FashionTally</p>
-            </div>
-            <div data-reveal style={{ transitionDelay: "0.1s" }}>
-              <strong>
-                <CountUp to={2000} suffix="+" />
-              </strong>
-              <p>Orders tracked</p>
-            </div>
-            <div data-reveal style={{ transitionDelay: "0.2s" }}>
-              <strong>
-                <CountUp to={95} suffix="%" />
-              </strong>
-              <p>Customer satisfaction</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 08 FAQ ── */}
-      <section className="lx-section lx-light" id="faq">
-        <div className="lx-wrap lx-faq">
-          <div>
-            <SectionTag>08 / A LITTLE MORE CLARITY</SectionTag>
-            <SplitWords text="Answers to the questions we hear most." className="lx-h2" />
-            <div className="lx-faq-tabs" data-reveal>
-              {Object.keys(FAQ).map((tab) => (
+            <div className="nav-links-desktop">
+              <a href="#featurees" className="nav-link">
+                Features
+              </a>
+              <a href="#pricing" className="nav-link">
+                Pricing
+              </a>
+              <a href="#testimonials" className="nav-link">
+                Reviews
+              </a>
+              <a href="/about" className="nav-link">
+                About
+              </a>
+              <a href="/contact" className="nav-link">
+                Contact
+              </a>
+              <div className="nav-buttons">
                 <button
-                  type="button"
-                  key={tab}
-                  className={tab === faqTab ? "is-active" : ""}
-                  onClick={() => {
-                    setFaqTab(tab);
-                    setOpenFaq(0);
-                  }}
+                  className="btn-outline"
+                  onClick={() => navigate("/login")}
                 >
-                  {tab}
+                  Login
                 </button>
-              ))}
+                <button
+                  className="btn-primaryy"
+                  onClick={() => navigate("/signup")}
+                >
+                  Get Started
+                </button>
+              </div>
+            </div>
+            <div className="nav-mobile-toggle">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="menu-btn"
+              >
+                {isMenuOpen ? <IoClose size={24} /> : <HiMenuAlt3 size={24} />}
+              </button>
             </div>
           </div>
-          <div className="lx-faq-list" data-reveal>
-            {FAQ[faqTab].map(({ q, a }, i) => {
-              const open = openFaq === i;
-              return (
-                <div key={q} className={`lx-faq-item ${open ? "is-open" : ""}`}>
-                  <button type="button" aria-expanded={open} onClick={() => setOpenFaq(open ? -1 : i)}>
-                    <span>{q}</span>
-                    <Plus size={18} />
-                  </button>
-                  <div className="lx-faq-answer">
-                    <p>{a}</p>
+        </div>
+        {isMenuOpen && (
+          <div
+            className="nav-mobile-menu"
+            style={{
+              animation: isMenuOpen
+                ? "slideDown 0.3s ease-out"
+                : "slideUp 0.3s ease-out",
+            }}
+          >
+            <a
+              href="#featurees"
+              className="nav-mobile-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Features
+            </a>
+            <a
+              href="#pricing"
+              className="nav-mobile-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Pricing
+            </a>
+            <a
+              href="#testimonials"
+              className="nav-mobile-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Reviews
+            </a>
+            <a
+              href="/about"
+              className="nav-mobile-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
+            </a>
+            <a
+              href="/contact"
+              className="nav-mobile-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
+            </a>
+            <div className="nav-mobile-buttons">
+              <button
+                className="btn-outline"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </button>
+              <button
+                className="btn-primaryy"
+                onClick={() => navigate("/signup")}
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      <section className="hero-sectionnn">
+        <div className="hero-container">
+          <div className="hero-grid">
+            <div className="hero-content">
+              <div className="hero-badge">
+                <span className="badge-icon">✨</span>
+                <span>Fashion Business Management</span>
+              </div>
+              <h1 className="hero-title">
+                <span className="hero-title-gradient">
+                  Smart Business Management for Fashion Entrepreneurs.
+                </span>
+              </h1>
+              <p className="hero-subtitle">
+                All-in-one tool for managing clients, inventory, designs,
+                finances, and appointments. Built for African fashion
+                entrepreneurs.
+              </p>
+              <div className="hero-buttons">
+                <button
+                  className="btn-primaryy btn-lg"
+                  onClick={() => navigate("/login")}
+                >
+                  Login<span className="btn-arrow">→</span>
+                </button>
+                <button
+                  className="btn-outline btn-lg"
+                  onClick={() => navigate("/signup")}
+                >
+                  Start Free Trial
+                </button>
+              </div>
+              <div className="hero-download">
+                <div className="download-info">
+                  <div className="download-info-icon">📱</div>
+                  <p className="download-info-text">
+                    Download and use the mobile app - Available on Android & iOS!
+                  </p>
+                </div>
+                <div className="hero-store-buttons">
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.fashion.fashiontally"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="playstore-button"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="24"
+                    height="24"
+                    className="playstore-icon"
+                  >
+                    <defs>
+                      <linearGradient id="blueGradient" x1="0%" y1="100%" x2="50%" y2="0%">
+                        <stop offset="0%" stopColor="#00A0FF" />
+                        <stop offset="100%" stopColor="#00D4FF" />
+                      </linearGradient>
+                      <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#00D4AA" />
+                        <stop offset="100%" stopColor="#00C853" />
+                      </linearGradient>
+                      <linearGradient id="yellowGradient" x1="100%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#FFD500" />
+                        <stop offset="100%" stopColor="#FFAB00" />
+                      </linearGradient>
+                      <linearGradient id="redGradient" x1="100%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stopColor="#FF3A44" />
+                        <stop offset="100%" stopColor="#FF5252" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      fill="url(#blueGradient)"
+                      d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5Z"
+                    />
+                    <path
+                      fill="url(#greenGradient)"
+                      d="M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12Z"
+                    />
+                    <path
+                      fill="url(#yellowGradient)"
+                      d="M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81Z"
+                    />
+                    <path
+                      fill="url(#redGradient)"
+                      d="M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"
+                    />
+                  </svg>
+                  <div className="playstore-text">
+                    <span className="playstore-label">GET IT ON</span>
+                    <span className="playstore-name">Google Play</span>
                   </div>
+                  <div className="playstore-shine"></div>
+                </a>
+                <a
+                  href="https://apps.apple.com/gb/app/fashion-tally/id6769135696"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="playstore-button"
+                >
+                  <svg viewBox="0 0 24 24" width="24" height="24" className="playstore-icon">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="currentColor"/>
+                  </svg>
+                  <div className="playstore-text">
+                    <span className="playstore-label">Download on the</span>
+                    <span className="playstore-name">App Store</span>
+                  </div>
+                  <div className="playstore-shine"></div>
+                </a>
+                </div>
+              </div>
+              <div className="hero-social-proof">
+                <div className="social-proof-item">
+                  <div className="avatar-group">
+                    <div className="avatar"></div>
+                    <div className="avatar"></div>
+                    <div className="avatar"></div>
+                    <div className="avatar"></div>
+                  </div>
+                  <span className="social-proof-text">500+ designers</span>
+                </div>
+                <div className="social-proof-item">
+                  <div className="rating-stars">
+                    <span className="star">★</span>
+                    <span className="star">★</span>
+                    <span className="star">★</span>
+                    <span className="star">★</span>
+                    <span className="star">★</span>
+                  </div>
+                  <span className="social-proof-text">4.9/5 rating</span>
+                </div>
+              </div>
+            </div>
+            <div className="hero-visual">
+              <div className="dashboardd-card">
+                <div className="dashboardd-contentt">
+                  <div className="dashboardd-header">
+                    <h3 className="dashboardd-title">dashboard Overview</h3>
+                    <span className="live-badge">Live</span>
+                  </div>
+                  <div className="dashboardd-stats">
+                    <div className="stat-carddd">
+                      <div className="stat-valuee">100</div>
+                      <div className="stat-labell">Active Orders</div>
+                    </div>
+                    <div className="stat-carddd">
+                      <div className="stat-valuee">₦1M</div>
+                      <div className="stat-labell">Monthly Revenue</div>
+                    </div>
+                  </div>
+                  <div className="progress-sectionnn">
+                    <div className="progress-header">
+                      <span>Client Satisfaction</span>
+                      <span className="progress-value">98%</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div className="progress-fill"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="decoration-circle decoration-1"></div>
+                <div className="decoration-circle decoration-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="featurees" className="featurees-sectionnn">
+        <div className="sectionnn-container">
+          <div className="sectionnn-header scroll-animate">
+            <div className="sectionnn-badge">features</div>
+            <h2 className="sectionnn-title">
+              Everything You Need to{" "}
+              <span className="text-gradient">Succeed</span>
+            </h2>
+            <p className="sectionnn-subtitle">
+              Powerful tools designed specifically for fashion designers and
+              brands to streamline operations and accelerate growth.
+            </p>
+          </div>
+          <div className="featurees-grid">
+            {features.map((featuree, index) => {
+              const Icon = featuree.Icon;
+              return (
+                <div
+                  key={index}
+                  className="featuree-card scroll-animate"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="featuree-icon">
+                    <Icon size={24} />
+                  </div>
+                  <h3 className="featuree-title">{featuree.title}</h3>
+                  <p className="featuree-description">{featuree.description}</p>
                 </div>
               );
             })}
@@ -1051,8 +537,338 @@ const Home = () => {
         </div>
       </section>
 
-      <LandingCta />
-      <LandingFooter onHome />
+      <section id="pricing" className="pricing-sectionnn-new">
+        <div className="sectionnn-container">
+          <div className="sectionnn-header scroll-animate">
+            <div className="sectionnn-badge">Pricing Plans</div>
+            <h2 className="sectionnn-title">
+              Choose Your <span className="text-gradient">Perfect Plan</span>
+            </h2>
+            <p className="sectionnn-subtitle">
+              Flexible pricing options designed to scale with your fashion
+              business.
+            </p>
+          </div>
+          <div className="pricing-grid-new">
+            {pricingPlans.map((plan, index) => (
+              <div
+                key={index}
+                className="pricing-card-wrapper scroll-animate"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="billing-toggle">
+                  <button
+                    className={`billing-btn ${
+                      billingCycle === "monthly" ? "active" : ""
+                    }`}
+                    onClick={() => setBillingCycle("monthly")}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    className={`billing-btn ${
+                      billingCycle === "yearly" ? "active" : ""
+                    }`}
+                    onClick={() => setBillingCycle("yearly")}
+                  >
+                    Yearly <span className="save-badge">Save 20%</span>
+                  </button>
+                </div>
+                <div
+                  className={`pricinggg-card-new ${
+                    plan.popular ? "popular" : ""
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="most-popular-badge">Most Popular</div>
+                  )}
+                  <div className="plan-header-new">
+                    <div className="plan-title-row">
+                      <h3 className="plan-name-new">{plan.name}</h3>
+                      <span className="plan-badge-new">{plan.badge}</span>
+                    </div>
+                    {plan.monthlyPrice ? (
+                      <div className="plan-price">
+                        <span className="price-amount">
+                          ₦
+                          {billingCycle === "monthly"
+                            ? plan.monthlyPrice.toLocaleString()
+                            : plan.yearlyPrice.toLocaleString()}
+                        </span>
+                        <span className="price-period">
+                          /{billingCycle === "monthly" ? "month" : "year"}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="custom-price">Custom</span>
+                    )}
+                  </div>
+                  <div className="plan-featurees-new">
+                    {plan.features.map((featuree, featureeIndex) => (
+                      <div key={featureeIndex} className="featuree-item-new">
+                        <span className="featuree-check-new">✓</span>
+                        <span className="featuree-text-new">{featuree}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    className={`plan-cta-btn ${
+                      plan.popular ? "primary" : "secondary"
+                    }`}
+                    onClick={() => {
+                      if (plan.cta === "Contact Sales") {
+                        alert(
+                          "Contact sales functionality would be implemented here"
+                        );
+                      } else {
+                        navigate(`/signup?plan=${plan.name.toLowerCase()}&cycle=${billingCycle}`);
+                      }
+                    }}
+                  >
+                    {plan.cta}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="testimonials" className="landing_testimonials-section">
+        <div className="landing_section-container">
+          <div className="landing_section-header scroll-animate">
+            <div className="landing_section-badge">Real Stories</div>
+            <h2 className="landing_section-title">
+              Trusted by{" "}
+              <span className="text-gradient">Fashion Professionals</span>
+            </h2>
+            <p className="landing_section-subtitle">
+              See how Fashion Tally is transforming businesses across Nigeria's
+              fashion industry
+            </p>
+          </div>
+          <div className="landing_testimonials-grid">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className={`landing_testimonial-card scroll-animate ${
+                  testimonial.featured ? "landing_featured" : ""
+                }`}
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                {testimonial.featured && (
+                  <div className="landing_featured-badge">
+                    <span className="landing_badge-icon">✨</span>Beta Tester
+                  </div>
+                )}
+                <div className="landing_testimonial-content">
+                  <div className="landing_testimonial-header">
+                    <div className="landing_rating-stars">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <span key={i} className="landing_star filled">
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    {testimonial.verified && (
+                      <span className="landing_verified-badge">
+                        <span className="landing_check-icon">✓</span>Verified
+                      </span>
+                    )}
+                  </div>
+                  <blockquote className="landing_testimonial-quote">
+                    <span className="landing_quote-mark">"</span>
+                    <p>{testimonial.content}</p>
+                    <span className="landing_quote-mark end">"</span>
+                  </blockquote>
+                  <div className="landing_testimonial-author">
+                    <div className="landing_author-avatar">
+                      <div className="landing_avatar-fallback">
+                        {testimonial.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </div>
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="landing_avatar-image"
+                        onLoad={(e) => {
+                          e.target.style.display = "block";
+                          e.target.previousSibling.style.display = "none";
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                          e.target.previousSibling.style.display = "flex";
+                        }}
+                      />
+                      {testimonial.verified && (
+                        <div className="landing_verified-icon">✓</div>
+                      )}
+                    </div>
+                    <div className="landing_author-info">
+                      <div className="landing_author-name">
+                        {testimonial.name}
+                      </div>
+                      <div className="landing_author-business">
+                        {testimonial.business}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="landing_social-proof-stats scroll-animate">
+            <div className="landing_stats-card">
+              <div className="landing_stat-item">
+                <div className="landing_stat-number">
+                  100<span className="landing_highlight">+</span>
+                </div>
+                <p className="landing_stat-label">Designers</p>
+              </div>
+              <div className="landing_stat-item">
+                <div className="landing_stat-number">
+                  2,000<span className="landing_highlight">+</span>
+                </div>
+                <p className="landing_stat-label">Orders Tracked</p>
+              </div>
+              <div className="landing_stat-item">
+                <div className="landing_stat-number">
+                  95<span className="landing_highlight">%</span>
+                </div>
+                <p className="landing_stat-label">Satisfaction</p>
+              </div>
+              <div className="landing_stat-item">
+                <div className="landing_stat-number">
+                  24<span className="landing_highlight">hrs</span>
+                </div>
+                <p className="landing_stat-label">Support</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="landing_cta-section">
+        <div className="landing_cta-container">
+          <h2 className="landing_cta-title">
+            Ready to Transform Your Fashion Business?
+          </h2>
+          <p className="landing_cta-subtitle">
+            Join hundreds of fashion designers and brands who are already
+            growing their business with FashionTally.
+          </p>
+          <div className="landing_cta-buttons">
+            <button
+              className="landing_btn-cta-primary"
+              onClick={() => navigate("/signup")}
+            >
+              Start Your Free Trial<span className="landing_btn-arrow">→</span>
+            </button>
+            <button
+              className="landing_btn-cta-outline"
+              onClick={() => navigate("/schedule-demo")}
+            >
+              Schedule Demo
+            </button>
+          </div>
+          <p className="landing_cta-note">
+            No credit card required • Free trial included • Cancel anytime
+          </p>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <div className="footer-logo">
+                <img src={second} alt="logo" className="logo-image" />
+                <span className="logo-textt">FashionTally</span>
+              </div>
+              <p className="footer-description">
+                The complete business management platform for fashion designers
+                and brands.
+              </p>
+              <div className="social-links">
+                <div className="social-icon">f</div>
+                <div className="social-icon">t</div>
+                <div className="social-icon">in</div>
+              </div>
+            </div>
+            <div className="footer-column">
+              <h3 className="footer-heading">Product</h3>
+              <ul className="footer-links">
+                <li>
+                  <a href="#featurees">features</a>
+                </li>
+                <li>
+                  <a href="#pricing">Pricing</a>
+                </li>
+              </ul>
+            </div>
+            <div className="footer-column">
+              <h3 className="footer-heading">Company</h3>
+              <ul className="footer-links">
+                <li>
+                  <a href="#">About</a>
+                </li>
+                <li>
+                  <a href="#">Contact</a>
+                </li>
+              </ul>
+            </div>
+            <div className="footer-column">
+              <h3 className="footer-heading">Support</h3>
+              <ul className="footer-links">
+                <li>
+                  <a href="#">Contact</a>
+                </li>
+              </ul>
+            </div>
+            <div className="footer-column">
+              <h3 className="footer-heading">Contact Info</h3>
+              <div className="contact-info">
+                <div className="contact-item">
+                  <span className="contact-icon">
+                    <FiPhone size={16} />
+                  </span>
+                  <span>+234 912 312 4709</span>
+                </div>
+                <div className="contact-item">
+                  <span className="contact-icon">
+                    <FiPhone size={16} />
+                  </span>
+                  <span>+1 (332) 322-4202</span>
+                </div>
+                <div className="contact-item">
+                  <span className="contact-icon">
+                    <FiHome size={16} />
+                  </span>
+                  <span>No1 Gidado Road Kano, Kano State</span>
+                </div>
+                <div className="contact-item">
+                  <span className="contact-icon">
+                    <MdEmail size={16} />
+                  </span>
+                  <span>info@fashiontally.com</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p className="copyright">
+              © 2025 FashionTally. All rights reserved.
+            </p>
+            <div className="footer-legal">
+              <a href="/privacy-policy">Privacy Policy</a>
+              <a href="/terms-of-service">Terms of Service</a>
+              <a href="/cookie-policy">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

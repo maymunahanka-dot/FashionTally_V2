@@ -38,21 +38,6 @@ export async function checkSubscriptionStatus(email, uuid, token) {
     }
 
     const userData = userDoc;
-
-    // Newer backends send one ready-made summary (the same one the mobile app and
-    // the free-plan limits use) — trust it so every place agrees.
-    if (userData.subscription) {
-      const s = userData.subscription;
-      return {
-        isSubscribed: s.isActive,
-        planType: s.isActive ? s.plan : "Free",
-        subscriptionType: s.status === "trial" ? "trial" : s.isActive ? "paid" : "free",
-        subscriptionEndDate: s.endDate,
-        isTrialActive: s.status === "trial",
-        status: s.status,
-      };
-    }
-
     const {
       subscriptionType,
       planType,
