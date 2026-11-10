@@ -238,6 +238,15 @@ const Settings = () => {
   // Get subscription status text
   const getSubscriptionStatus = () => {
     if (subscription.loading) return "Loading...";
+    const s = subscription.summary;
+    if (s) {
+      // Same wording as the mobile app
+      if (s.status === "trial") return `${s.plan} (Trial)`;
+      if (s.status === "active") return s.plan;
+      if (s.status === "trial_ended") return "Trial ended";
+      if (s.status === "expired") return `${s.plan} (Expired)`;
+      return "Free";
+    }
     if (subscription.isTrialActive) return `${subscription.planType} (Trial)`;
     if (subscription.isSubscribed) return subscription.planType;
     return "Free";

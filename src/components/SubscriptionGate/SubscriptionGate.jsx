@@ -19,6 +19,9 @@ import { hasFeatureAccess } from "../../lib/subscription-utils";
 import "./SubscriptionGate.css";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
 
+/** Pages that stay open when the trial or plan has ended (keep in step with the mobile app). */
+const FREE_PLAN_FEATURES = ["Dashboard Analytics", "Client Management", "Invoicing"];
+
 // Import pricing plans matching tally-main
 const pricingPlans = [
   {
@@ -167,6 +170,12 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
     );
   }
 
+  // Free plan (no active trial or subscription): these pages stay open.
+  // Clients and invoices are capped at 10 each by the backend.
+  if (!subscriptionStatus?.isSubscribed && FREE_PLAN_FEATURES.includes(requiredFeature)) {
+    return <>{children}</>;
+  }
+
   if (subscriptionStatus?.isSubscribed) {
     // Check if specific feature is required and if the plan has it
     if (requiredFeature) {
@@ -206,8 +215,9 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
           <div className="gate-header">
             <h1 className="gate-title">Premium Feature</h1>
             <p className="gate-description">
-              {requiredFeature} is available for subscribed users only. Upgrade
-              your account to unlock powerful business management tools.
+              {requiredFeature} is available for subscribed users only. Without a
+              plan you can still use the Dashboard, Clients and Invoices (up to 10
+              of each). Subscribe to unlock everything.
             </p>
           </div>
 

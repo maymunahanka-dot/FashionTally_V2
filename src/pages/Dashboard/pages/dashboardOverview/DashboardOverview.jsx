@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, FileText, UserPlus, Users } from "lucide-react";
 import { useNewAuth } from "../../../../contexts/NewAuthContext";
+import { useSubscription } from "../../../../hooks/use-subscription";
 import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
 import {
   getTodaysAppointments,
@@ -19,6 +20,7 @@ import "./DashboardOverview.css";
 
 const DashboardOverview = () => {
   const navigate = useNavigate();
+  const subscription = useSubscription();
   const { user } = useNewAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount]             = useState(0);
@@ -144,11 +146,15 @@ const DashboardOverview = () => {
 
 
 
+  // Without an active plan, orders and inventory are locked: send people to the
+  // page instead, which shows the "subscribe to unlock" screen.
   const toggleAddInventory = () => {
+    if (!subscription.loading && !subscription.isSubscribed) return navigate("/dashboard/inventory");
     setShowAddInventory(!showAddInventory);
   };
 
   const toggleNewOrder = () => {
+    if (!subscription.loading && !subscription.isSubscribed) return navigate("/dashboard/orders");
     setShowNewOrder(!showNewOrder);
   };
 

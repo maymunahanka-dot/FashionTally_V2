@@ -42,12 +42,17 @@ export function useSubscription() {
           plan = determinePlanType(userData.payment_amount);
         }
 
+        // `summary` comes from the backend and is exactly what the mobile app shows too.
+        // Older backends don't send it, so fall back to the raw fields.
+        const summary = userData.subscription || null;
+
         setSubscription({
           planType: plan,
-          isSubscribed: userData.isSubscribed || false,
-          isTrialActive: userData.isTrialActive || false,
+          isSubscribed: summary ? summary.isActive : userData.isSubscribed || false,
+          isTrialActive: summary ? summary.status === "trial" : userData.isTrialActive || false,
           subscriptionEndDate: userData.subscriptionEndDate,
           subscriptionType: userData.subscriptionType,
+          summary,
           loading: false,
         });
       } catch (error) {
