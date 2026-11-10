@@ -71,7 +71,7 @@ export async function initiateFlutterwavePayment(paymentData) {
         },
         customizations: {
           title:       "FashionTally Subscription",
-          description: `${plan} Plan — ${billingCycle === "yearly" ? "Yearly" : "Monthly"}`,
+          description: `${plan} Plan, ${billingCycle === "yearly" ? "Yearly" : "Monthly"}`,
           logo:        "https://www.fashiontally.com/favicon.ico",
         },
         callback: (response) => {

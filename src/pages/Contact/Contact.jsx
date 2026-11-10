@@ -258,7 +258,7 @@ const Contact = () => {
                   rows={6}
                   value={form.message}
                   onChange={onChange}
-                  placeholder="Tell us how we can help — include any details about your fashion business."
+                  placeholder="Tell us how we can help. Include any details about your fashion business."
                   required
                 />
               </label>

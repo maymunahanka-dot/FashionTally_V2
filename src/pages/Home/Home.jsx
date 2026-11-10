@@ -92,7 +92,7 @@ const TOOLS = [
   {
     tag: "01 / CLIENTS & MEASUREMENTS",
     title: "Every client, perfectly measured",
-    text: "Profiles with measurements, style notes, photos and full order history — ready before the client walks in.",
+    text: "Profiles with measurements, style notes, photos and full order history, ready before the client walks in.",
     widgetLabel: "CLIENT PROFILE",
     widgetTitle: "Aisha B. · 14 measurements",
     widgetNote: "Last updated at her fitting",
@@ -474,7 +474,7 @@ function WebDashboardMock() {
             <span>
               <Users /> Aisha Bello
             </span>
-            <small>Bridal gown — final fitting</small>
+            <small>Bridal gown: final fitting</small>
           </div>
           <em>Confirmed</em>
         </div>
@@ -977,24 +977,24 @@ const Home = () => {
               </div>
             </div>
           </div>
-          <div className="lx-proof">
-            <div data-reveal>
-              <strong>
-                <CountUp to={100} suffix="+" />
-              </strong>
-              <p>Designers using FashionTally</p>
-            </div>
-            <div data-reveal style={{ transitionDelay: "0.1s" }}>
-              <strong>
-                <CountUp to={2000} suffix="+" />
-              </strong>
-              <p>Orders tracked</p>
-            </div>
-            <div data-reveal style={{ transitionDelay: "0.2s" }}>
-              <strong>
-                <CountUp to={95} suffix="%" />
-              </strong>
-              <p>Customer satisfaction</p>
+          {/* Floating reviews: an endless, slowly drifting row (pauses on hover) */}
+          <div className="lx-review-marquee" data-reveal>
+            <div className="lx-review-track">
+              {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                <figure className="lx-review-card" key={`${t.name}-${i}`} aria-hidden={i >= TESTIMONIALS.length}>
+                  <div className="lx-review-stars" aria-label="5 out of 5 stars">
+                    ★★★★★
+                  </div>
+                  <blockquote>“{t.quote}”</blockquote>
+                  <figcaption>
+                    <img src={t.image} alt="" loading="lazy" />
+                    <span>
+                      <b>{t.name}</b>
+                      <small>{t.business}</small>
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
             </div>
           </div>
         </div>

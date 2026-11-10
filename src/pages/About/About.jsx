@@ -1,5 +1,6 @@
 import { createElement, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import founderPhoto from "../../assets/Image/about/founder.png";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -69,7 +70,7 @@ const About = () => {
         <IntroTitle lines={["Empowering fashion", "creators worldwide."]} />
         <p className="lx-hero-sub lx-fade" style={{ animationDelay: "0.75s" }}>
           We're on a mission to transform how fashion designers and brands manage their business, connect with
-          clients, and scale their operations — built by people who understand your challenges.
+          clients, and scale their operations, built by people who understand your challenges.
         </p>
         <div className="lx-hero-ctas lx-fade" style={{ animationDelay: "0.9s" }}>
           <button type="button" className="lx-btn lx-btn-dark" onClick={() => navigate("/signup")}>
@@ -89,10 +90,17 @@ const About = () => {
           <div className="lx-story-aside">
             <SectionTag>01 / OUR STORY</SectionTag>
             <SplitWords text="Born inside a real fashion studio." className="lx-h2" />
+            <figure className="lx-founder-photo" data-reveal>
+              <img src={founderPhoto} alt="Maimuna Anka, founder of FashionTally" loading="lazy" />
+              <figcaption>
+                <b>Maimuna Anka</b>
+                <span>Founder, FashionTally</span>
+              </figcaption>
+            </figure>
           </div>
           <div className="lx-prose">
             <p data-reveal>
-              Fashion Tally was born from the real, everyday challenges inside the African fashion industry —
+              Fashion Tally was born from the real, everyday challenges inside the African fashion industry:
               challenges that founder <strong>Maimuna Anka</strong> personally experienced while running her own
               fashion brand, <strong>Malaabis-By-Maymz</strong>.
             </p>
@@ -103,12 +111,12 @@ const About = () => {
               delayed fittings, and the difficulty of staying consistent as the brand grew.
             </p>
             <p data-reveal>
-              She also realised that thousands of designers across Africa faced the same problems — not because of a
+              She also realised that thousands of designers across Africa faced the same problems, not because of a
               lack of talent, but because of a lack of the right tools. Existing software was often too complex, too
               expensive, or not built around how fashion designers actually work.
             </p>
             <p data-reveal>
-              This inspired Fashion Tally — a platform built with a deep understanding of how African fashion
+              This inspired Fashion Tally, a platform built with a deep understanding of how African fashion
               businesses operate. Every feature, from client management and measurements to invoicing, appointments,
               inventory and CRM, is shaped by real industry pain points and tested with real designers.
             </p>
@@ -117,7 +125,7 @@ const About = () => {
               entrepreneurs, so they can run their businesses with confidence and clarity.
             </p>
             <blockquote className="lx-quote" data-reveal>
-              “Fashion Tally is more than software — it is a digital partner designed to help African designers stay
+              “Fashion Tally is more than software. It is a digital partner designed to help African designers stay
               organised, save time, scale with ease, and grow into global fashion brands.”
             </blockquote>
           </div>
@@ -168,7 +176,7 @@ const About = () => {
               <p className="lx-tag">04 / THE TEAM</p>
               <h3>A founder-led startup.</h3>
               <p>
-                Fashion Tally is built and led by a committed founder with support from engineers and advisors — and
+                Fashion Tally is built and led by a committed founder with support from engineers and advisors, and
                 shaped every day by the designers who use it.
               </p>
             </div>

@@ -213,7 +213,7 @@ const InventoryDetailsPanel = ({ onClose, selectedItem }) => {
                 </div>
                 <div className="inventory_detail_supplier_list">
                   {suppliers.length === 0 && (
-                    <div className="inventory_detail_info_value">—</div>
+                    <div className="inventory_detail_info_value">N/A</div>
                   )}
                   {suppliers.map((entry, index) => (
                     <div className="inventory_detail_supplier_card" key={`${entry.name}-${index}`}>

@@ -517,7 +517,7 @@ const SubscriptionPanel = ({ onClose }) => {
                   <div className="sub_payment_info">
                     <p className="sub_payment_plan">{payment.plantype || "Subscription"} Plan</p>
                     <p className="sub_payment_date">
-                      {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                      {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
                     </p>
                     {payment.transactionId && (
                       <p className="sub_payment_ref">Ref: {payment.transactionId}</p>

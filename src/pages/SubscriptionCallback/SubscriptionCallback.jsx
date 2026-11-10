@@ -152,7 +152,7 @@ const SubscriptionCallback = () => {
         }
         setStatus("pending");
         setMessage(
-          "Your payment is still being confirmed — bank transfers can take a few minutes. Your plan will activate automatically and we'll email your receipt. You can check again or go to your dashboard."
+          "Your payment is still being confirmed. Bank transfers can take a few minutes. Your plan will activate automatically and we'll email your receipt. You can check again or go to your dashboard."
         );
       } catch (error) {
         console.error("Error handling payment callback:", error);

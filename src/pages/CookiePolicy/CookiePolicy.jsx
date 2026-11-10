@@ -1,33 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaCalendarAlt, FaCookie } from "react-icons/fa";
-import { HiMenuAlt3 } from "react-icons/hi";
-import { IoClose } from "react-icons/io5";
-import "./CookiePolicy.css";
-import second from "./../../assets/Image/logog.png";
-
-// Custom hook for scroll animations
-const useScrollAnimation = () => {
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("animate-in");
-        }
-      });
-    }, observerOptions);
-
-    const elements = document.querySelectorAll(".scroll-animate");
-    elements.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
-};
+import { Cookie } from "lucide-react";
+import LegalPage from "../Home/LegalPage.jsx";
 
 const policyData = {
   title: "Fashion Tally – Cookie Policy",
@@ -134,235 +106,35 @@ const policyData = {
   ],
 };
 
-const getCookieTypeBadge = (title) => {
-  if (title.toLowerCase().includes("essential")) {
-    return <span className="cookie_badge cookie_badge-required">Required</span>;
-  }
-  if (title.toLowerCase().includes("analytics")) {
-    return (
-      <span className="cookie_badge cookie_badge-analytics">Analytics</span>
-    );
-  }
-  if (title.toLowerCase().includes("marketing")) {
-    return (
-      <span className="cookie_badge cookie_badge-marketing">Marketing</span>
-    );
-  }
+/** Small label next to the cookie type headings. */
+const badgeFor = (title) => {
+  const t = title.toLowerCase();
+  if (t.includes("essential")) return <span className="lx-legal-badge">Required</span>;
+  if (t.includes("analytics")) return <span className="lx-legal-badge">Analytics</span>;
+  if (t.includes("marketing")) return <span className="lx-legal-badge">Marketing</span>;
   return null;
 };
 
-const CookiePolicy = () => {
-  const navigate = useNavigate();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  useScrollAnimation();
-
-  return (
-    <div className="cookie_page">
-      <nav className="cookie_nav-bar">
-        <div className="cookie_nav-container">
-          <div className="cookie_nav-content">
-            <div className="cookie_nav-logo">
-              <img src={second} alt="logo" className="cookie_logo-image" />
-              <span className="cookie_logo-textt">FashionTally</span>
-            </div>
-            <div className="cookie_nav-links-desktop">
-              <a href="/" className="cookie_nav-link">
-                Home
-              </a>
-              <a href="/#featurees" className="cookie_nav-link">
-                Features
-              </a>
-              <a href="/#pricing" className="cookie_nav-link">
-                Pricing
-              </a>
-              <a href="/about" className="cookie_nav-link">
-                About
-              </a>
-              <a href="/contact" className="cookie_nav-link">
-                Contact
-              </a>
-              <div className="cookie_nav-buttons">
-                <button
-                  className="cookie_btn-outline"
-                  onClick={() => navigate("/login")}
-                >
-                  Login
-                </button>
-                <button
-                  className="cookie_btn-primaryy"
-                  onClick={() => navigate("/signup")}
-                >
-                  Get Started
-                </button>
-              </div>
-            </div>
-            <div className="cookie_nav-mobile-toggle">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="cookie_menu-btn"
-              >
-                {isMenuOpen ? <IoClose size={24} /> : <HiMenuAlt3 size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-        {isMenuOpen && (
-          <div
-            className="cookie_nav-mobile-menu"
-            style={{
-              animation: isMenuOpen
-                ? "slideDown 0.3s ease-out"
-                : "slideUp 0.3s ease-out",
-            }}
-          >
-            <a
-              href="/"
-              className="cookie_nav-mobile-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Home
-            </a>
-            <a
-              href="/#featurees"
-              className="cookie_nav-mobile-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Features
-            </a>
-            <a
-              href="/#pricing"
-              className="cookie_nav-mobile-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Pricing
-            </a>
-            <a
-              href="/about"
-              className="cookie_nav-mobile-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About
-            </a>
-            <a
-              href="/contact"
-              className="cookie_nav-mobile-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Contact
-            </a>
-            <div className="cookie_nav-mobile-buttons">
-              <button
-                className="cookie_btn-outline"
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </button>
-              <button
-                className="cookie_btn-primaryy"
-                onClick={() => navigate("/signup")}
-              >
-                Get Started
-              </button>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      <div className="cookie_container">
-        {/* Header */}
-        <div className="cookie_header">
-          <button className="cookie_back-btn" onClick={() => navigate("/")}>
-            <FaArrowLeft size={16} />
-            Back to Home
-          </button>
-
-          <div className="cookie_title-section">
-            <div className="cookie_title-wrapper">
-              <FaCookie className="cookie_title-icon" />
-              <h1 className="cookie_title">{policyData.title}</h1>
-            </div>
-            <div className="cookie_last-updated">
-              <FaCalendarAlt size={16} />
-              <span>Last updated: {policyData.lastUpdated}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="cookie_content-card">
-          <div className="cookie_content-header">
-            <h2 className="cookie_content-title">How We Use Cookies</h2>
-            <p className="cookie_content-subtitle">
-              This policy explains what cookies are, how we use them, and how
-              you can manage your cookie preferences.
-            </p>
-          </div>
-          <div className="cookie_content-body">
-            {policyData.sections.map((section, index) => (
-              <div key={index} className="cookie_section">
-                <div className="cookie_section-title-wrapper">
-                  <h3 className="cookie_section-title">{section.title}</h3>
-                  {getCookieTypeBadge(section.title)}
-                </div>
-                <p className="cookie_section-content">{section.content}</p>
-                {section.list && section.list.length > 0 && (
-                  <ul className="cookie_section-list">
-                    {section.list.map((item, itemIndex) => (
-                      <li key={itemIndex} className="cookie_list-item">
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {index < policyData.sections.length - 1 && (
-                  <div className="cookie_section-separator" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Cookie Management Info */}
-        <div className="cookie_management-card">
-          <div className="cookie_management-content">
-            <FaCookie className="cookie_management-icon" />
-            <div>
-              <h3 className="cookie_management-title">Cookie Management</h3>
-              <p className="cookie_management-text">
-                You can manage your cookie preferences through your browser
-                settings. Most browsers allow you to view, delete, and block
-                cookies. However, please note that blocking certain cookies may
-                affect the functionality of our website.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="cookie_footer">
-          <p className="cookie_footer-text">
-            If you have any questions about our use of cookies, please feel free
-            to contact us.
-          </p>
-          <div className="cookie_footer-buttons">
-            <button
-              className="cookie_btn-outline"
-              onClick={() => navigate("/contact")}
-            >
-              Contact Us
-            </button>
-            <button
-              className="cookie_btn-primaryy"
-              onClick={() => navigate("/")}
-            >
-              Return Home
-            </button>
-          </div>
-        </div>
+const CookiePolicy = () => (
+  <LegalPage
+    eyebrow="LEGAL / COOKIES"
+    titleLines={["Cookie Policy."]}
+    lastUpdated={policyData.lastUpdated}
+    intro="This policy explains what cookies are, how we use them, and how you can manage your cookie preferences."
+    sections={policyData.sections}
+    badgeFor={badgeFor}
+  >
+    <div className="lx-legal-highlight" data-reveal>
+      <Cookie size={22} />
+      <div>
+        <b>Cookie management</b>
+        <p>
+          You can manage your cookie preferences through your browser settings. Most browsers allow you to view, delete,
+          and block cookies. Blocking certain cookies may affect how our website works.
+        </p>
       </div>
     </div>
-  );
-};
+  </LegalPage>
+);
 
 export default CookiePolicy;
