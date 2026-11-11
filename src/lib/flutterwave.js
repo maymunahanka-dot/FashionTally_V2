@@ -31,6 +31,7 @@ function loadFlutterwaveScript() {
  * @param {number} paymentData.planPrice
  * @param {"monthly"|"yearly"} [paymentData.billingCycle="monthly"]
  * @param {string} paymentData.userId
+ * @param {string} [paymentData.callbackPath="/subscription/callback"] page Flutterwave returns to
  *
  * @returns {Promise<{ success: boolean, message?: string }>}
  */
@@ -48,7 +49,7 @@ export async function initiateFlutterwavePayment(paymentData) {
     const userKey = String(userId || email || "user").replace(/-/g, "_");
     // Format: subscription-{userKey}-{PLAN}-{timestamp} so webhook/verify can map the account + plan
     const txRef = `subscription-${userKey}-${plan}-${Date.now()}`;
-    const callbackUrl = `${window.location.origin}/subscription/callback`;
+    const callbackUrl = `${window.location.origin}${paymentData.callbackPath || "/subscription/callback"}`;
 
     return new Promise((resolve) => {
       window.FlutterwaveCheckout({
@@ -100,7 +101,7 @@ export async function initiateFlutterwavePayment(paymentData) {
               tx_ref: txRef,
               transaction_id: String(response.transaction_id || ""),
             });
-            window.location.href = `${callbackUrl}?${params.toString()}`;
+            window.location.href = `${callbackUrl}${callbackUrl.includes("?") ? "&" : "?"}${params.toString()}`;
             resolve({ success: true });
           } else {
             resolve({ success: false, message: "Payment was not completed" });

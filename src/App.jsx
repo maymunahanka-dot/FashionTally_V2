@@ -16,6 +16,7 @@ import { Dashboard } from "./pages/Dashboard/Dashboard";
 import Subscription from "./pages/Subscription/Subscription";
 import { SubscriptionDemo } from "./components/SubscriptionDemo";
 import SubscriptionCallback from "./pages/SubscriptionCallback/SubscriptionCallback";
+import Pay from "./pages/Pay/Pay";
 import ScheduleDemo from "./pages/ScheduleDemo/ScheduleDemo";
 import Loading from "./components/Loading/Loading";
 
@@ -72,6 +73,8 @@ function App() {
         element={currentUser ? <Subscription /> : <Navigate to="/login" />}
       />
       <Route path="/subscription/callback" element={<SubscriptionCallback />} />
+      {/* Opened from the mobile app with a one-time link: pick a plan and pay, no login */}
+      <Route path="/pay" element={<Pay />} />
       <Route
         path="/subscription-demo"
         element={currentUser ? <SubscriptionDemo /> : <Navigate to="/login" />}
