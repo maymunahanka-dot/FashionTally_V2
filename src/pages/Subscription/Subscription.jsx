@@ -15,6 +15,7 @@ import {
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { initiateFlutterwavePayment } from "../../lib/flutterwave";
+import { initiatePaystackPayment, paystackEnabled } from "../../lib/paystack";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import "./Subscription.css";
@@ -147,6 +148,9 @@ export default function SubscriptionPage() {
     address: "",
   });
   const [errors, setErrors] = useState({});
+  const [gateway, setGateway] = useState("flutterwave");
+  // Paystack shows once its public key is set (always in local dev)
+  const showPaystack = paystackEnabled() || import.meta.env.DEV;
 
   // Simulate initial page loading
   useEffect(() => {
@@ -194,11 +198,14 @@ export default function SubscriptionPage() {
         userId:    user?.uid,
       };
 
-      // Flutterwave: opens inline popup, handles redirect itself
+      // Opens the chosen gateway's popup; it redirects to /subscription/callback itself
       localStorage.setItem("pending_plan",    selectedPlan.name);
       localStorage.setItem("pending_cycle",   billingCycle);
-      localStorage.setItem("payment_gateway", "flutterwave");
-      const result = await initiateFlutterwavePayment(paymentData);
+      localStorage.setItem("payment_gateway", gateway);
+      const result =
+        gateway === "paystack"
+          ? await initiatePaystackPayment(paymentData)
+          : await initiateFlutterwavePayment(paymentData);
       if (!result.success && result.message) {
         // Only show error if it wasn't just the user closing the modal
         if (result.message !== "Payment window closed") {
@@ -498,6 +505,33 @@ export default function SubscriptionPage() {
                       <p className="error-message">{errors.address}</p>
                     )}
                   </div>
+
+                  {showPaystack && (
+                    <div className="form-group">
+                      <span className="form-label">Pay with</span>
+                      <div className="gateway-options" role="radiogroup" aria-label="Payment provider">
+                        {[
+                          { key: "flutterwave", name: "Flutterwave", hint: "Card, bank transfer or USSD" },
+                          { key: "paystack", name: "Paystack", hint: "Card, bank, USSD or transfer" },
+                        ].map((g) => (
+                          <button
+                            type="button"
+                            key={g.key}
+                            role="radio"
+                            aria-checked={gateway === g.key}
+                            className={`gateway-option ${gateway === g.key ? "selected" : ""}`}
+                            onClick={() => setGateway(g.key)}
+                          >
+                            <span className="gateway-dot" aria-hidden="true" />
+                            <span>
+                              <strong>{g.name}</strong>
+                              <small>{g.hint}</small>
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="form-actions">
                     <Button

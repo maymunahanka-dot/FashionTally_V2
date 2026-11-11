@@ -13,6 +13,7 @@ import { Check, CircleAlert, CircleCheck, Clock3, LoaderCircle, Lock, Smartphone
 import logo from "../../assets/Image/logog.png";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing";
 import { initiateFlutterwavePayment } from "../../lib/flutterwave";
+import { initiatePaystackPayment, paystackEnabled } from "../../lib/paystack";
 import { PLANS } from "../Home/plans.js";
 import "../Home/Landing.css";
 
@@ -26,6 +27,13 @@ const PENDING_KEYS = [
   "pending_tx_ref",
   "pending_transaction_id",
   "pending_payment_status",
+];
+/** Payment providers the user can pick from. Paystack shows once its public key is set (always in local dev). */
+const GATEWAYS = [
+  { key: "flutterwave", name: "Flutterwave", hint: "Card, bank transfer or USSD" },
+  ...(paystackEnabled() || import.meta.env.DEV
+    ? [{ key: "paystack", name: "Paystack", hint: "Card, bank, USSD or transfer" }]
+    : []),
 ];
 const POLL_INTERVAL_MS = 5000;
 const POLL_TIMEOUT_MS = 2 * 60 * 1000;
@@ -49,14 +57,16 @@ export default function Pay() {
   const token = params.get("t") || "";
   const txRef = params.get("tx_ref") || "";
   const transactionId = params.get("transaction_id") || "";
+  const reference = params.get("reference") || params.get("trxref") || ""; // Paystack
   const returnStatus = params.get("status") || "";
-  const isReturn = Boolean(txRef || transactionId);
+  const isReturn = Boolean(txRef || transactionId || reference);
 
   const [stage, setStage] = useState(isReturn ? "confirming" : "loading"); // loading | choose | paying | confirming | success | pending | failed | expired
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [cycle, setCycle] = useState("monthly");
   const [chosen, setChosen] = useState("growth");
+  const [gateway, setGateway] = useState("flutterwave");
   const ran = useRef(false);
 
   const yearlySaving = useMemo(
@@ -113,11 +123,17 @@ export default function Pay() {
       try {
         const planType = String(localStorage.getItem("pending_plan") || "GROWTH").toUpperCase();
         const billingCycle = localStorage.getItem("pending_cycle") === "yearly" ? "yearly" : "monthly";
-        const res = await fetch(`${API}/api/payment/flutterwave/verify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transactionId, txRef, planType, billingCycle, status: returnStatus }),
-        });
+        const res = reference
+          ? await fetch(`${API}/api/payment/paystack/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reference, planType }),
+            })
+          : await fetch(`${API}/api/payment/flutterwave/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ transactionId, txRef, planType, billingCycle, status: returnStatus }),
+            });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) {
           setStage("failed");
@@ -129,8 +145,10 @@ export default function Pay() {
           setStage("success");
           return;
         }
-        // Bank transfers can take a moment: wait for Flutterwave's webhook to activate the plan.
-        const query = new URLSearchParams(transactionId ? { transactionId } : { txRef });
+        // Bank transfers can take a moment: wait for the gateway's webhook to activate the plan.
+        const query = new URLSearchParams(
+          reference ? { txRef: reference } : transactionId ? { transactionId } : { txRef },
+        );
         const deadline = Date.now() + POLL_TIMEOUT_MS;
         while (Date.now() < deadline) {
           await sleep(POLL_INTERVAL_MS);
@@ -151,7 +169,7 @@ export default function Pay() {
 
     if (isReturn) confirmPayment();
     else loadUser().then((u) => u && setStage("choose"));
-  }, [token, isReturn, returnStatus, transactionId, txRef]);
+  }, [token, isReturn, returnStatus, transactionId, txRef, reference]);
 
   const pay = async () => {
     const price = SUBSCRIPTION_PRICING[chosen]?.[cycle];
@@ -161,7 +179,8 @@ export default function Pay() {
     const plantype = chosen.toUpperCase();
     localStorage.setItem("pending_plan", plantype);
     localStorage.setItem("pending_cycle", cycle);
-    const result = await initiateFlutterwavePayment({
+    const start = gateway === "paystack" ? initiatePaystackPayment : initiateFlutterwavePayment;
+    const result = await start({
       email: user.email,
       name: user.name,
       phone: user.phone,
@@ -171,7 +190,7 @@ export default function Pay() {
       userId: user.uid,
       callbackPath: `/pay?t=${encodeURIComponent(token)}`,
     });
-    // On success Flutterwave takes over and brings the user back here.
+    // On success the gateway takes over and brings the user back here.
     if (!result.success) {
       setStage("choose");
       if (result.message && result.message !== "Payment window closed") setMessage(result.message);
@@ -326,6 +345,32 @@ export default function Pay() {
               </p>
             )}
 
+            {GATEWAYS.length > 1 && (
+              <div className="lx-pay-gateways">
+                <p>Pay with</p>
+                <div role="radiogroup" aria-label="Payment provider">
+                  {GATEWAYS.map((g) => (
+                    <button
+                      type="button"
+                      key={g.key}
+                      role="radio"
+                      aria-checked={gateway === g.key}
+                      className={`lx-pay-gateway ${gateway === g.key ? "is-selected" : ""}`}
+                      onClick={() => setGateway(g.key)}
+                    >
+                      <span className="lx-pay-radio" aria-hidden="true">
+                        {gateway === g.key && <Check size={14} />}
+                      </span>
+                      <span>
+                        <b>{g.name}</b>
+                        <small>{g.hint}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="lx-pay-bar">
               <div>
                 <small>{plan?.name} · {cycle === "monthly" ? "Monthly" : "Yearly"}</small>
@@ -342,8 +387,8 @@ export default function Pay() {
               </button>
             </div>
             <p className="lx-pay-note">
-              <Lock size={12} /> Paid securely with Flutterwave (card, bank transfer or USSD). Your plan doesn't renew
-              automatically.
+              <Lock size={12} /> Paid securely with {GATEWAYS.find((g) => g.key === gateway)?.name}. Your plan doesn't
+              renew automatically.
             </p>
           </>
         )}

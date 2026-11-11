@@ -29,8 +29,16 @@ function isFailedStatus(status) {
   return /cancel|fail/i.test(String(status || ""));
 }
 
-const PENDING_KEYS = ["pending_plan", "pending_cycle", "payment_gateway", "pending_tx_ref", "pending_transaction_id", "pending_payment_status"];
-const clearPendingPayment = () => PENDING_KEYS.forEach((key) => localStorage.removeItem(key));
+const PENDING_KEYS = [
+  "pending_plan",
+  "pending_cycle",
+  "payment_gateway",
+  "pending_tx_ref",
+  "pending_transaction_id",
+  "pending_payment_status",
+];
+const clearPendingPayment = () =>
+  PENDING_KEYS.forEach((key) => localStorage.removeItem(key));
 
 // While Flutterwave confirms a payment (e.g. bank transfer), check every 5s for up to 2 minutes
 const POLL_INTERVAL_MS = 5000;
@@ -51,23 +59,40 @@ const SubscriptionCallback = () => {
 
     const handleCallback = async () => {
       try {
+        // Paystack returns ?reference=… (Flutterwave returns tx_ref / transaction_id)
+        const paystackRef =
+          searchParams.get("reference") ||
+          searchParams.get("trxref") ||
+          (localStorage.getItem("payment_gateway") === "paystack"
+            ? localStorage.getItem("pending_tx_ref")
+            : "") ||
+          "";
         const txRef =
-          searchParams.get("tx_ref") || localStorage.getItem("pending_tx_ref") || "";
+          paystackRef ||
+          searchParams.get("tx_ref") ||
+          localStorage.getItem("pending_tx_ref") ||
+          "";
         const paymentStatus =
-          searchParams.get("status") || localStorage.getItem("pending_payment_status") || "";
+          searchParams.get("status") ||
+          localStorage.getItem("pending_payment_status") ||
+          "";
         const transactionId =
           searchParams.get("transaction_id") ||
           localStorage.getItem("pending_transaction_id") ||
           "";
 
-        console.log("Payment callback received:", { txRef, paymentStatus, transactionId });
+        console.log("Payment callback received:", {
+          txRef,
+          paymentStatus,
+          transactionId,
+        });
 
         if (!transactionId && !txRef) {
           setStatus("failed");
           setMessage(
             isFailedStatus(paymentStatus)
               ? "Payment was cancelled or failed. Please try again."
-              : "Missing transaction details from Flutterwave."
+              : "Missing transaction details from Flutterwave.",
           );
           return;
         }
@@ -82,18 +107,27 @@ const SubscriptionCallback = () => {
         setMessage("Saving your payment…");
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
-        const res = await fetch(`${backendUrl}/api/payment/flutterwave/verify`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            transactionId,
-            txRef,
-            planType,
-            billingCycle: localStorage.getItem("pending_cycle") === "yearly" ? "yearly" : "monthly",
-            // The real status from Flutterwave — the backend confirms the payment itself
-            status: paymentStatus,
-          }),
-        });
+        const res = paystackRef
+          ? await fetch(`${backendUrl}/api/payment/paystack/verify`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ reference: paystackRef, planType }),
+            })
+          : await fetch(`${backendUrl}/api/payment/flutterwave/verify`, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                transactionId,
+                txRef,
+                planType,
+                billingCycle:
+                  localStorage.getItem("pending_cycle") === "yearly"
+                    ? "yearly"
+                    : "monthly",
+                // The real status from Flutterwave — the backend confirms the payment itself
+                status: paymentStatus,
+              }),
+            });
         const raw = await res.text();
         let data = {};
         try {
@@ -101,7 +135,7 @@ const SubscriptionCallback = () => {
         } catch {
           setStatus("failed");
           setMessage(
-            `Backend at ${backendUrl} did not accept the payment route (HTTP ${res.status}). Restart the Fashiontally_Backend server and try Check again.`
+            `Backend at ${backendUrl} did not accept the payment route (HTTP ${res.status}). Restart the Fashiontally_Backend server and try Check again.`,
           );
           return;
         }
@@ -114,7 +148,7 @@ const SubscriptionCallback = () => {
           setMessage(
             alreadyProcessed
               ? "Payment already saved. Your subscription is ready."
-              : "Payment successful! Your subscription has been activated."
+              : "Payment successful! Your subscription has been activated.",
           );
           setTimeout(() => navigate("/dashboard"), 2500);
         };
@@ -125,7 +159,7 @@ const SubscriptionCallback = () => {
           setMessage(
             data.error ||
               data.message ||
-              "Could not save your payment yet. Tap Check again, or contact support with your receipt."
+              "Could not save your payment yet. Tap Check again, or contact support with your receipt.",
           );
           return;
         }
@@ -137,12 +171,20 @@ const SubscriptionCallback = () => {
 
         // Flutterwave hasn't confirmed it yet — wait for the webhook to activate the plan.
         // The pending details stay saved so "Check again" can pick up where this left off.
-        setMessage(data.message || "Confirming your payment with Flutterwave…");
-        const query = new URLSearchParams(transactionId ? { transactionId } : { txRef });
+        setMessage(data.message || "Confirming your payment…");
+        const query = new URLSearchParams(
+          paystackRef
+            ? { txRef: paystackRef }
+            : transactionId
+              ? { transactionId }
+              : { txRef },
+        );
         const deadline = Date.now() + POLL_TIMEOUT_MS;
         while (Date.now() < deadline) {
           await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-          const check = await fetch(`${backendUrl}/api/payment/flutterwave/status?${query}`)
+          const check = await fetch(
+            `${backendUrl}/api/payment/flutterwave/status?${query}`,
+          )
             .then((r) => r.json())
             .catch(() => ({}));
           if (check.activated) {
@@ -152,12 +194,14 @@ const SubscriptionCallback = () => {
         }
         setStatus("pending");
         setMessage(
-          "Your payment is still being confirmed. Bank transfers can take a few minutes. Your plan will activate automatically and we'll email your receipt. You can check again or go to your dashboard."
+          "Your payment is still being confirmed. Bank transfers can take a few minutes. Your plan will activate automatically and we'll email your receipt. You can check again or go to your dashboard.",
         );
       } catch (error) {
         console.error("Error handling payment callback:", error);
         setStatus("failed");
-        setMessage(error.message || "An error occurred while processing your payment.");
+        setMessage(
+          error.message || "An error occurred while processing your payment.",
+        );
       }
     };
 

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { X, Bell, Megaphone } from "lucide-react";
+import { useState, useEffect, useCallback, createElement } from "react";
+import { useNavigate } from "react-router-dom";
+import { X, Bell, Megaphone, CircleCheck, CalendarClock, CircleAlert, CircleX, ArrowRight } from "lucide-react";
 import "./DashboardNotification.css";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -22,7 +23,23 @@ const formatTime = (isoStr) => {
   return new Date(isoStr).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 };
 
+/** Icon and colour for each notification type (anything unknown shows as an announcement). */
+const TYPE_STYLE = {
+  broadcast:              { icon: Megaphone,     tone: "broadcast" },
+  payment_success:        { icon: CircleCheck,   tone: "payment" },
+  plan_ending:            { icon: CalendarClock, tone: "plan" },
+  plan_expired:           { icon: CircleAlert,   tone: "invoice" },
+  subscription_cancelled: { icon: CircleX,       tone: "invoice" },
+};
+const LINK_LABEL = {
+  payment_success: "View subscription",
+  plan_ending: "Renew plan",
+  plan_expired: "Renew plan",
+  subscription_cancelled: "Choose a plan",
+};
+
 const DashboardNotification = ({ onClose, onReadChange }) => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading]             = useState(true);
 
@@ -62,6 +79,24 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
     }
   };
 
+  const markAllRead = async () => {
+    try {
+      await fetch(`${BACKEND_URL}/api/admin/notifications/user/read-all`, {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json", ...getAuthHeader() },
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      onReadChange?.(0);
+    } catch (e) {
+      console.error("[Notifications] mark all read error:", e);
+    }
+  };
+
+  const openLink = (n) => {
+    if (!n.isRead) markRead(n.id);
+    onClose?.();
+    navigate(n.url);
+  };
 
   const filtered = notifications;
 
@@ -77,6 +112,11 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
         <h2 className="dash_notif_title">Notifications</h2>
         {unreadCount > 0 && (
           <span className="dash_notif_header_badge">{unreadCount}</span>
+        )}
+        {unreadCount > 0 && (
+          <button className="dash_notif_mark_all_btn" onClick={markAllRead}>
+            Mark all as read
+          </button>
         )}
       </div>
 
@@ -97,8 +137,8 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
             <div key={n.id} className={`dash_notif_item ${n.isRead ? "read" : "unread"}`}>
               <div className="dash_notif_content">
                 <div className="dash_notif_left">
-                  <div className="dash_notif_icon broadcast">
-                    <Megaphone size={18} />
+                  <div className={`dash_notif_icon ${(TYPE_STYLE[n.type] || TYPE_STYLE.broadcast).tone}`}>
+                    {createElement((TYPE_STYLE[n.type] || TYPE_STYLE.broadcast).icon, { size: 18 })}
                   </div>
                   <div className="dash_notif_details">
                     <h4 className="dash_notif_item_title">{n.title}</h4>
@@ -110,11 +150,18 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
                   <span className="dash_notif_time">{formatTime(n.sentAt)}</span>
                 </div>
               </div>
-              {!n.isRead && (
+              {(!n.isRead || n.url) && (
                 <div className="dash_notif_actions">
-                  <button className="dash_notif_mark_read_btn" onClick={() => markRead(n.id)}>
-                    ✓ Mark as read
-                  </button>
+                  {n.url && (
+                    <button className="dash_notif_link_btn" onClick={() => openLink(n)}>
+                      {LINK_LABEL[n.type] || "Open"} <ArrowRight size={13} />
+                    </button>
+                  )}
+                  {!n.isRead && (
+                    <button className="dash_notif_mark_read_btn" onClick={() => markRead(n.id)}>
+                      ✓ Mark as read
+                    </button>
+                  )}
                 </div>
               )}
             </div>

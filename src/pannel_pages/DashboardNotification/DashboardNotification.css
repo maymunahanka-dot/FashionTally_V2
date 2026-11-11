@@ -713,3 +713,44 @@
   animation: dash_spin 0.7s linear infinite;
 }
 @keyframes dash_spin { to { transform: rotate(360deg); } }
+
+/* Payment & plan notifications */
+.dash_notif_icon.plan { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+
+.dash_notif_mark_all_btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #16988d;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.dash_notif_mark_all_btn:hover {
+  background: rgba(22, 152, 141, 0.08);
+}
+
+.dash_notif_actions {
+  gap: 6px;
+}
+
+.dash_notif_link_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(22, 152, 141, 0.1);
+  border: none;
+  color: #16988d;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.dash_notif_link_btn:hover {
+  background: rgba(22, 152, 141, 0.18);
+}
