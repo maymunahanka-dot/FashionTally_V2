@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import Button from "../../components/button/Button";
 import { useTheme } from "../../contexts/ThemeContext";
 import { LANGUAGES, setAppLanguage } from "../../i18n";
+import { Flag } from "../../components/LanguageSwitch/LanguageSwitch.jsx";
 import "./AppearancePanel.css";
 
 import { tl } from "../../i18n";
@@ -110,7 +111,10 @@ const AppearancePanel = ({ onClose }) => {
                 aria-checked={i18n.language === lang.code}
               >
                 <div className="app_theme_icon">
-                  {i18n.language === lang.code ? <Check size={22} /> : <span>{lang.code.toUpperCase()}</span>}
+                  <span className="app_language_flag">
+                    <Flag code={lang.code} width={34} height={24} />
+                    {i18n.language === lang.code && <Check size={13} className="app_language_check" />}
+                  </span>
                 </div>
                 <span className="app_theme_label">{tl(lang.label)}</span>
               </div>

@@ -456,3 +456,18 @@
   font-weight: 700;
   font-size: 14px;
 }
+
+.app_language_flag {
+  position: relative;
+  display: inline-block;
+}
+
+.app_language_check {
+  position: absolute;
+  right: -7px;
+  bottom: -6px;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #fff;
+}

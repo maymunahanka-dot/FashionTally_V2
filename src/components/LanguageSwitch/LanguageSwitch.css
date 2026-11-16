@@ -1,44 +1,97 @@
-.lang-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  border: 1px solid var(--border-primary, #e5e7eb);
-  background: var(--bg-secondary, #f3f4f6);
-  font-size: 13px;
+.lang-flag {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.lang-select {
+  position: relative;
+  display: inline-block;
+  font-size: 14px;
   line-height: 1;
 }
 
-.lang-switch-icon {
-  margin: 0 4px 0 6px;
-  color: var(--text-secondary, #6b7280);
-}
-
-.lang-switch-btn {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, #6b7280);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 6px 11px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.lang-switch-btn:hover {
+.lang-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-primary, #e5e7eb);
+  background: var(--bg-primary, #fff);
   color: var(--text-primary, #111827);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.lang-switch-btn.is-active {
-  background: #16988d;
-  color: #fff;
+.lang-select-trigger:hover,
+.lang-select.is-open .lang-select-trigger {
+  border-color: #16988d;
 }
 
-.lang-switch-btn:focus-visible {
+.lang-select-trigger:focus-visible {
   outline: 2px solid #16988d;
   outline-offset: 2px;
+}
+
+.lang-select-chevron {
+  color: var(--text-secondary, #6b7280);
+  transition: transform 0.2s ease;
+}
+
+.lang-select.is-open .lang-select-chevron {
+  transform: rotate(180deg);
+}
+
+.lang-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 100%;
+  width: max-content;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-primary, #e5e7eb);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+}
+
+.lang-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-primary, #111827);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lang-select-option:hover,
+.lang-select-option:focus-visible {
+  background: var(--bg-secondary, #f3f4f6);
+  outline: none;
+}
+
+.lang-select-option.is-active {
+  color: #16988d;
+  font-weight: 600;
+}
+
+.lang-select-check {
+  margin-left: auto;
+  padding-left: 8px;
+  box-sizing: content-box;
 }
 
 /* Top-right corner of the login / sign-up form panel */
@@ -56,7 +109,6 @@
 
 /* Phones and tablets: the form panel stacks under the green header, so sit in the header */
 @media (max-width: 1008px) {
-  /* anchor to the whole page instead of the form panel: top-right of the green header */
   .new-login-container,
   .n_s_u_main-signup-con {
     position: relative;
@@ -68,29 +120,13 @@
   .lang-switch-corner {
     top: 14px;
     right: 14px;
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.3);
   }
-  .lang-switch-corner .lang-switch-icon,
-  .lang-switch-corner .lang-switch-btn {
+  .lang-switch-corner .lang-select-trigger {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
     color: #fff;
   }
-  .lang-switch-corner .lang-switch-btn.is-active {
-    background: #fff;
-    color: #16988d;
+  .lang-switch-corner .lang-select-chevron {
+    color: #fff;
   }
-}
-
-/* On a green banner (dashboard welcome banner) */
-.lang-switch-light {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-.lang-switch-light .lang-switch-icon,
-.lang-switch-light .lang-switch-btn {
-  color: #fff;
-}
-.lang-switch-light .lang-switch-btn.is-active {
-  background: #fff;
-  color: #16988d;
 }
