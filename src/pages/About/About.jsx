@@ -22,6 +22,12 @@ import {
 } from "../Home/landingKit.jsx";
 import { useRevealOnScroll, useScrollToTopOnMount } from "../Home/landingUtils.js";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+
 const VALUES = [
   {
     icon: Heart,
@@ -52,6 +58,7 @@ const SHIFTS = [
 ];
 
 const About = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const rootRef = useRef(null);
   useRevealOnScroll(rootRef);
@@ -65,21 +72,20 @@ const About = () => {
       <section className="lx-hero lx-page-hero">
         <div className="lx-hero-glow" aria-hidden="true" />
         <p className="lx-eyebrow lx-fade" style={{ animationDelay: "0.1s" }}>
-          ABOUT FASHIONTALLY
+          {tx("auto.aboutFashiontally_8c18")}
         </p>
         <IntroTitle lines={["Empowering fashion", "creators worldwide."]} />
         <p className="lx-hero-sub lx-fade" style={{ animationDelay: "0.75s" }}>
-          We're on a mission to transform how fashion designers and brands manage their business, connect with
-          clients, and scale their operations, built by people who understand your challenges.
+          {tx("auto.weReOnAMission_4ad6")}
         </p>
         <div className="lx-hero-ctas lx-fade" style={{ animationDelay: "0.9s" }}>
           <button type="button" className="lx-btn lx-btn-dark" onClick={() => navigate("/signup")}>
             <span className="lx-btn-roll" data-text="Start your free trial">
-              Start your free trial
+              {tx("auto.startYourFreeTrial_777c")}
             </span>
           </button>
           <button type="button" className="lx-btn lx-btn-ghost" onClick={() => navigate("/contact")}>
-            Talk to us <ArrowUpRight size={16} />
+            {tx("auto.talkToUs_9021")}{" "}<ArrowUpRight size={16} />
           </button>
         </div>
       </section>
@@ -88,45 +94,34 @@ const About = () => {
       <section className="lx-section lx-light">
         <div className="lx-wrap lx-story-grid">
           <div className="lx-story-aside">
-            <SectionTag>01 / OUR STORY</SectionTag>
-            <SplitWords text="Born inside a real fashion studio." className="lx-h2" />
+            <SectionTag>{tx("auto.01OurStory_7951")}</SectionTag>
+            <SplitWords text={tx("auto.bornInsideARealFashion_6f1a")} className="lx-h2" />
             <figure className="lx-founder-photo" data-reveal>
               <img src={founderPhoto} alt="Maimuna Anka, founder of FashionTally" loading="lazy" />
               <figcaption>
-                <b>Maimuna Anka</b>
-                <span>Founder, FashionTally</span>
+                <b>{tx("auto.maimunaAnka_bed0")}</b>
+                <span>{tx("auto.founderFashiontally_cf23")}</span>
               </figcaption>
             </figure>
           </div>
           <div className="lx-prose">
             <p data-reveal>
-              Fashion Tally was born from the real, everyday challenges inside the African fashion industry:
-              challenges that founder <strong>Maimuna Anka</strong> personally experienced while running her own
-              fashion brand, <strong>Malaabis-By-Maymz</strong>.
+              {tx("auto.fashionTallyWasBornFrom_e51c")}{" "}<strong>{tx("auto.maimunaAnka_bed0")}</strong>{" "}{tx("auto.personallyExperiencedWhileRunnin_3ef2")}{" "}<strong>{tx("auto.malaabisByMaymz_e18a")}</strong>.
             </p>
             <p data-reveal>
-              For years, Maimuna managed client measurements in notebooks, tracked orders through scattered WhatsApp
-              messages, monitored inventory manually, and handled finances using spreadsheets that rarely reflected
-              the reality of production. She understood the stress of missing measurements, losing client details,
-              delayed fittings, and the difficulty of staying consistent as the brand grew.
+              {tx("auto.forYearsMaimunaManagedClient_1241")}
             </p>
             <p data-reveal>
-              She also realised that thousands of designers across Africa faced the same problems, not because of a
-              lack of talent, but because of a lack of the right tools. Existing software was often too complex, too
-              expensive, or not built around how fashion designers actually work.
+              {tx("auto.sheAlsoRealisedThatThousands_a934")}
             </p>
             <p data-reveal>
-              This inspired Fashion Tally, a platform built with a deep understanding of how African fashion
-              businesses operate. Every feature, from client management and measurements to invoicing, appointments,
-              inventory and CRM, is shaped by real industry pain points and tested with real designers.
+              {tx("auto.thisInspiredFashionTallyA_7cb9")}
             </p>
             <p data-reveal>
-              The goal is simple but powerful: to bring structure, professionalism and digital growth to fashion
-              entrepreneurs, so they can run their businesses with confidence and clarity.
+              {tx("auto.theGoalIsSimpleBut_3b31")}
             </p>
             <blockquote className="lx-quote" data-reveal>
-              “Fashion Tally is more than software. It is a digital partner designed to help African designers stay
-              organised, save time, scale with ease, and grow into global fashion brands.”
+              {tx("auto.fashionTallyIsMoreThan_8f25")}
             </blockquote>
           </div>
         </div>
@@ -135,15 +130,15 @@ const About = () => {
       {/* ── 02 Shift ── */}
       <section className="lx-section lx-dark">
         <div className="lx-wrap">
-          <SectionTag>02 / WHAT WE SET OUT TO FIX</SectionTag>
-          <SplitWords text="From scattered to structured." className="lx-h2" />
+          <SectionTag>{tx("auto.02WhatWeSetOut_63df")}</SectionTag>
+          <SplitWords text={tx("auto.fromScatteredToStructured_076c")} className="lx-h2" />
           <div className="lx-shifts">
             {SHIFTS.map((item, i) => (
               <div key={item.before} className="lx-shift" data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
-                <span className="lx-shift-icon">{createElement(item.icon, { size: 20 })}</span>
-                <p className="lx-shift-before">{item.before}</p>
+                <span className="lx-shift-icon">{tl(createElement(item.icon, { size: 20 }))}</span>
+                <p className="lx-shift-before">{tl(item.before)}</p>
                 <ArrowRight className="lx-shift-arrow" size={20} />
-                <p className="lx-shift-after">{item.after}</p>
+                <p className="lx-shift-after">{tl(item.after)}</p>
               </div>
             ))}
           </div>
@@ -153,15 +148,15 @@ const About = () => {
       {/* ── 03 Values ── */}
       <section className="lx-section lx-light">
         <div className="lx-wrap">
-          <SectionTag>03 / WHAT DRIVES US</SectionTag>
-          <SplitWords text="The values behind every feature." className="lx-h2" />
+          <SectionTag>{tx("auto.03WhatDrivesUs_f206")}</SectionTag>
+          <SplitWords text={tx("auto.theValuesBehindEveryFeature_15ef")} className="lx-h2" />
           <div className="lx-problems">
             {VALUES.map((v, i) => (
               <article key={v.title} className="lx-problem" data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
                 <span className="lx-num">0{i + 1}</span>
-                {createElement(v.icon, { size: 22, strokeWidth: 1.6 })}
-                <h3>{v.title}</h3>
-                <p>{v.text}</p>
+                {tl(createElement(v.icon, { size: 22, strokeWidth: 1.6 }))}
+                <h3>{tl(v.title)}</h3>
+                <p>{tl(v.text)}</p>
               </article>
             ))}
           </div>
@@ -173,23 +168,22 @@ const About = () => {
         <div className="lx-wrap">
           <div className="lx-founder" data-reveal>
             <div>
-              <p className="lx-tag">04 / THE TEAM</p>
-              <h3>A founder-led startup.</h3>
+              <p className="lx-tag">{tx("auto.04TheTeam_5262")}</p>
+              <h3>{tx("auto.aFounderLedStartup_7822")}</h3>
               <p>
-                Fashion Tally is built and led by a committed founder with support from engineers and advisors, and
-                shaped every day by the designers who use it.
+                {tx("auto.fashionTallyIsBuiltAnd_169e")}
               </p>
             </div>
             <button type="button" className="lx-btn lx-btn-dark" onClick={() => navigate("/contact")}>
               <span className="lx-btn-roll" data-text="Get in touch">
-                Get in touch
+                {tx("auto.getInTouch_c49b")}
               </span>
             </button>
           </div>
         </div>
       </section>
 
-      <LandingCta eyebrow="BUILT FOR DESIGNERS, BY A DESIGNER" title="Ready to transform your fashion business?" />
+      <LandingCta eyebrow="BUILT FOR DESIGNERS, BY A DESIGNER" title={tx("auto.readyToTransformYourFashion_741b")} />
       <LandingFooter />
     </div>
   );

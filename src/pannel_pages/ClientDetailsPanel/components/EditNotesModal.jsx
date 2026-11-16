@@ -5,7 +5,11 @@ import Input from "../../../components/Input/Input";
 import { useTheme } from "../../../contexts/ThemeContext";
 import "./EditNotesModal.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
 const EditNotesModal = ({ isOpen, onClose, onSave, currentNote = "" }) => {
+  const { t: tx } = useTranslation();
   const { isDark } = useTheme();
 
   const [noteText, setNoteText] = useState(currentNote);
@@ -34,7 +38,7 @@ const EditNotesModal = ({ isOpen, onClose, onSave, currentNote = "" }) => {
       >
         {/* Header */}
         <div className="edit_notes_modal_header">
-          <h3 className="edit_notes_modal_title">Note</h3>
+          <h3 className="edit_notes_modal_title">{tx("auto.note_2c92")}</h3>
           <button className="edit_notes_modal_close" onClick={handleClose}>
             <X size={20} />
           </button>
@@ -46,7 +50,7 @@ const EditNotesModal = ({ isOpen, onClose, onSave, currentNote = "" }) => {
           <div className="edit_notes_form_group">
             <Input
               type="textarea"
-              placeholder="e.g., about client"
+              placeholder={tx("auto.eGAboutClient_7e4d")}
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               variant="rounded"
@@ -63,7 +67,7 @@ const EditNotesModal = ({ isOpen, onClose, onSave, currentNote = "" }) => {
               onClick={handleSave}
               className="edit_notes_save_btn"
             >
-              Save
+              {tx("auto.save_efc0")}
             </Button>
           </div>
         </div>

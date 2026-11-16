@@ -13,7 +13,16 @@ import AppointmentDetailsPanel from "../../../../pannel_pages/AppointmentDetails
 import "./Appointments.css";
 import Loading from "./../../../../components/Loading/Loading";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
+
 const Appointments = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -147,7 +156,7 @@ const Appointments = () => {
 
   const handleDeleteAppointment = async (appointmentId, appointmentTitle) => {
     if (!user?.email) return;
-    if (!window.confirm(`Are you sure you want to delete "${appointmentTitle}"?`)) return;
+    if (!window.confirm(tx("tpl.areYouSureYouWant_1beb", { v0: appointmentTitle }))) return;
     try {
       const token = localStorage.getItem("authToken");
       const res = await fetch(
@@ -156,10 +165,10 @@ const Appointments = () => {
       );
       const data = await res.json();
       if (data.success) fetchAppointments();
-      else alert("Failed to delete appointment. Please try again.");
+      else alert(tx("auto.failedToDeleteAppointmentPlease_d8b7"));
     } catch (error) {
       console.error("Error deleting appointment:", error);
-      alert("Failed to delete appointment. Please try again.");
+      alert(tx("auto.failedToDeleteAppointmentPlease_d8b7"));
     }
   };
 
@@ -178,7 +187,7 @@ const Appointments = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "No date";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
@@ -189,7 +198,7 @@ const Appointments = () => {
     <div className="app_appointments_calendar">
       {/* Header */}
       <div className="app_appointments_header">
-        <h1 className="app_appointments_title">Your Appointment Calendar</h1>
+        <h1 className="app_appointments_title">{tx("auto.yourAppointmentCalendar_5662")}</h1>
       </div>
 
       {/* Search and Schedule Section */}
@@ -200,7 +209,7 @@ const Appointments = () => {
             <Search className="app_search_icon" size={20} />
             <input
               type="text"
-              placeholder="Search clients by name, phone, or email"
+              placeholder={tx("auto.searchClientsByNamePhone_9984")}
               className="app_search_input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -217,14 +226,14 @@ const Appointments = () => {
             {showFilter && (
               <div className="app_filter_dropdown">
                 <div className="app_filter_section">
-                  <h4 className="app_filter_section_title">Status</h4>
+                  <h4 className="app_filter_section_title">{tx("auto.status_bae7")}</h4>
                   <button
                     className={`app_filter_option ${
                       filterStatus === "all" ? "active" : ""
                     }`}
                     onClick={() => handleFilterSelect("all")}
                   >
-                    All Appointments
+                    {tx("auto.allAppointments_4c2a")}
                   </button>
                   <button
                     className={`app_filter_option ${
@@ -232,7 +241,7 @@ const Appointments = () => {
                     }`}
                     onClick={() => handleFilterSelect("confirmed")}
                   >
-                    Confirmed
+                    {tx("auto.confirmed_8cc7")}
                   </button>
                   <button
                     className={`app_filter_option ${
@@ -240,7 +249,7 @@ const Appointments = () => {
                     }`}
                     onClick={() => handleFilterSelect("pending")}
                   >
-                    Pending
+                    {tx("auto.pending_96f6")}
                   </button>
                   <button
                     className={`app_filter_option ${
@@ -248,7 +257,7 @@ const Appointments = () => {
                     }`}
                     onClick={() => handleFilterSelect("cancelled")}
                   >
-                    Cancelled
+                    {tx("auto.cancelled_a1bf")}
                   </button>
                 </div>
               </div>
@@ -281,7 +290,7 @@ const Appointments = () => {
           className="app_block_days_btn"
           onClick={() => setShowBlockDays(true)}
         >
-          Block days
+          {tx("auto.blockDays_bf76")}
         </Button>
         <Button
           variant="primary"
@@ -291,7 +300,7 @@ const Appointments = () => {
           className="app_schedule_btn"
           onClick={openSchedulePanel}
         >
-          <span className="app_schedule_text">Schedule</span>
+          <span className="app_schedule_text">{tx("auto.schedule_0a8a")}</span>
         </Button>
 
         {/* Mobile Floating Button */}
@@ -307,42 +316,42 @@ const Appointments = () => {
       {/* Date and Update Info */}
       <div className="app_date_info_section">
         <div className="app_current_date">12/16/2025</div>
-        <div className="app_update_info">Updated 20secs ago</div>
+        <div className="app_update_info">{tx("auto.updated20secsAgo_2b7c")}</div>
       </div>
 
       {/* Stats Cards */}
       <div className="app_appointments_stats">
         <div className="app_stat_card">
           <div className="app_stat_content">
-            <h3 className="app_stat_title">Upcoming Appointments</h3>
-            <p className="app_stat_value">{upcomingAppointments}</p>
-            <p className="app_stat_change positive">+6% from last Week</p>
+            <h3 className="app_stat_title">{tx("auto.upcomingAppointments_0ea2")}</h3>
+            <p className="app_stat_value">{tl(upcomingAppointments)}</p>
+            <p className="app_stat_change positive">{tx("auto.6FromLastWeek_6c2e")}</p>
           </div>
         </div>
 
         <div className="app_stat_card">
           <div className="app_stat_content">
-            <h3 className="app_stat_title">Total Clients</h3>
+            <h3 className="app_stat_title">{tx("auto.totalClients_68f9")}</h3>
             <p className="app_stat_value">
-              {totalClients} <span className="app_stat_unit">clients</span>
+              {tl(totalClients)} <span className="app_stat_unit">{tx("auto.clients_93df")}</span>
             </p>
-            <p className="app_stat_change positive">+2 new this month</p>
+            <p className="app_stat_change positive">{tx("auto.2NewThisMonth_03aa")}</p>
           </div>
         </div>
 
         <div className="app_stat_card">
           <div className="app_stat_content">
-            <h3 className="app_stat_title">Confirmed Bookings</h3>
-            <p className="app_stat_value">{confirmedBookings}</p>
-            <p className="app_stat_change positive">+8% from last Week</p>
+            <h3 className="app_stat_title">{tx("auto.confirmedBookings_f305")}</h3>
+            <p className="app_stat_value">{tl(confirmedBookings)}</p>
+            <p className="app_stat_change positive">{tx("auto.8FromLastWeek_d495")}</p>
           </div>
         </div>
 
         <div className="app_stat_card">
           <div className="app_stat_content">
-            <h3 className="app_stat_title">Completed This Month</h3>
-            <p className="app_stat_value">{completedThisMonth}</p>
-            <p className="app_stat_change positive">+89% Attendance Rate</p>
+            <h3 className="app_stat_title">{tx("auto.completedThisMonth_b682")}</h3>
+            <p className="app_stat_value">{tl(completedThisMonth)}</p>
+            <p className="app_stat_change positive">{tx("auto.89AttendanceRate_6951")}</p>
           </div>
         </div>
       </div>
@@ -354,11 +363,11 @@ const Appointments = () => {
         ) : filteredAppointments.length === 0 ? (
           <div className="app_no_appointments">
             <Calendar size={48} />
-            <h3>No appointments found</h3>
+            <h3>{tx("auto.noAppointmentsFound_1f7a")}</h3>
             <p>
-              {searchTerm || filterStatus !== "all"
-                ? "Try adjusting your search or filter"
-                : "Schedule your first appointment to get started"}
+              {tl(searchTerm || filterStatus !== "all"
+                ? tx("auto.tryAdjustingYourSearchOr_e210")
+                : tx("auto.scheduleYourFirstAppointmentTo_34c9"))}
             </p>
             <Button
               variant="primary"
@@ -366,7 +375,7 @@ const Appointments = () => {
               icon={<Plus size={16} />}
               onClick={openSchedulePanel}
             >
-              Schedule Appointment
+              {tx("auto.scheduleAppointment_7a56")}
             </Button>
           </div>
         ) : (
@@ -379,12 +388,12 @@ const Appointments = () => {
             >
               <div className="app_appointment_header">
                 <div className="app_appointment_basic_info">
-                  <h3 className="app_appointment_title">{appointment.title}</h3>
-                  <p className="app_appointment_client">{appointment.client}</p>
+                  <h3 className="app_appointment_title">{tl(appointment.title)}</h3>
+                  <p className="app_appointment_client">{tl(appointment.client)}</p>
                 </div>
                 <div className="app_appointment_actions">
                   <div className={`app_status_badge ${appointment.status.toLowerCase()}`}>
-                    {appointment.status}
+                    {tl(appointment.status)}
                   </div>
                   <button
                     className="app_action_btn app_edit_btn"
@@ -392,7 +401,7 @@ const Appointments = () => {
                       e.stopPropagation();
                       handleEditAppointment(appointment);
                     }}
-                    title="Edit appointment"
+                    title={tx("auto.editAppointment_c029")}
                   >
                     <Edit3 size={16} />
                   </button>
@@ -402,7 +411,7 @@ const Appointments = () => {
                       e.stopPropagation();
                       handleDeleteAppointment(appointment.id, appointment.title);
                     }}
-                    title="Delete appointment"
+                    title={tx("auto.deleteAppointment_6def")}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -412,25 +421,25 @@ const Appointments = () => {
               <div className="app_appointment_meta">
                 <span>
                   <Clock size={15} />
-                  {formatDate(appointment.date)} · {appointment.time}
+                  {tl(formatDate(appointment.date))} · {tl(appointment.time)}
                 </span>
                 <span>
                   {appointment.type === "video-call" ? <Video size={15} /> : <MapPin size={15} />}
-                  {appointment.location}
+                  {tl(appointment.location)}
                 </span>
-                <span>{appointment.duration}</span>
+                <span>{tl(appointment.duration)}</span>
               </div>
 
               {appointment.email && (
                 <div className="app_appointment_email">
                   <Mail size={15} />
-                  <span>{appointment.email}</span>
+                  <span>{tl(appointment.email)}</span>
                 </div>
               )}
 
               {appointment.description && (
                 <div className="app_appointment_description">
-                  {appointment.description}
+                  {tl(appointment.description)}
                 </div>
               )}
             </div>

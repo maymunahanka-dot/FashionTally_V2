@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { X, Bell, Megaphone, CircleCheck, CalendarClock, CircleAlert, CircleX, ArrowRight } from "lucide-react";
 import "./DashboardNotification.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const getAuthHeader = () => {
@@ -20,7 +28,7 @@ const formatTime = (isoStr) => {
   if (mins  < 60)  return `${mins}m ago`;
   if (hours < 24)  return `${hours}h ago`;
   if (days  < 7)   return `${days}d ago`;
-  return new Date(isoStr).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return new Date(isoStr).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "short" });
 };
 
 /** Icon and colour for each notification type (anything unknown shows as an announcement). */
@@ -39,6 +47,7 @@ const LINK_LABEL = {
 };
 
 const DashboardNotification = ({ onClose, onReadChange }) => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading]             = useState(true);
@@ -109,13 +118,13 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
         <button className="dash_notif_close_btn" onClick={onClose}>
           <X size={20} />
         </button>
-        <h2 className="dash_notif_title">Notifications</h2>
+        <h2 className="dash_notif_title">{tx("auto.notifications_753a")}</h2>
         {unreadCount > 0 && (
-          <span className="dash_notif_header_badge">{unreadCount}</span>
+          <span className="dash_notif_header_badge">{tl(unreadCount)}</span>
         )}
         {unreadCount > 0 && (
           <button className="dash_notif_mark_all_btn" onClick={markAllRead}>
-            Mark all as read
+            {tx("auto.markAllAsRead_1b83")}
           </button>
         )}
       </div>
@@ -125,12 +134,12 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
         {loading ? (
           <div className="dash_notif_empty">
             <div className="dash_notif_spinner" />
-            <p>Loading…</p>
+            <p>{tx("auto.loading_33ce")}</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="dash_notif_empty">
             <Bell size={40} strokeWidth={1.2} />
-            <p>No notifications yet</p>
+            <p>{tx("auto.noNotificationsYet_d260")}</p>
           </div>
         ) : (
           filtered.map((n) => (
@@ -138,28 +147,28 @@ const DashboardNotification = ({ onClose, onReadChange }) => {
               <div className="dash_notif_content">
                 <div className="dash_notif_left">
                   <div className={`dash_notif_icon ${(TYPE_STYLE[n.type] || TYPE_STYLE.broadcast).tone}`}>
-                    {createElement((TYPE_STYLE[n.type] || TYPE_STYLE.broadcast).icon, { size: 18 })}
+                    {tl(createElement((TYPE_STYLE[n.type] || TYPE_STYLE.broadcast).icon, { size: 18 }))}
                   </div>
                   <div className="dash_notif_details">
-                    <h4 className="dash_notif_item_title">{n.title}</h4>
-                    <p className="dash_notif_description">{n.body}</p>
+                    <h4 className="dash_notif_item_title">{tl(n.title)}</h4>
+                    <p className="dash_notif_description">{tl(n.body)}</p>
                   </div>
                 </div>
                 <div className="dash_notif_right">
                   {!n.isRead && <div className="dash_notif_unread_dot" />}
-                  <span className="dash_notif_time">{formatTime(n.sentAt)}</span>
+                  <span className="dash_notif_time">{tl(formatTime(n.sentAt))}</span>
                 </div>
               </div>
               {(!n.isRead || n.url) && (
                 <div className="dash_notif_actions">
                   {n.url && (
                     <button className="dash_notif_link_btn" onClick={() => openLink(n)}>
-                      {LINK_LABEL[n.type] || "Open"} <ArrowRight size={13} />
+                      {tl(LINK_LABEL[n.type] || tx("auto.open_cf9b"))} <ArrowRight size={13} />
                     </button>
                   )}
                   {!n.isRead && (
                     <button className="dash_notif_mark_read_btn" onClick={() => markRead(n.id)}>
-                      ✓ Mark as read
+                      {tx("auto.markAsRead_2b94")}
                     </button>
                   )}
                 </div>

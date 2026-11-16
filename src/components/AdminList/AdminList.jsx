@@ -13,7 +13,15 @@ import Button from "../button/Button";
 import { useTheme } from "../../contexts/ThemeContext";
 import "./AdminList.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+import { dateLocale } from "../../i18n";
+
+
 const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
+  const { t: tx } = useTranslation();
   const { theme } = useTheme();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
@@ -34,7 +42,7 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
       setAdminToDelete(null);
     } catch (error) {
       console.error("Error deleting admin:", error);
-      alert("Failed to delete admin");
+      alert(tx("auto.failedToDeleteAdmin_a3e8"));
     } finally {
       setDeleting(false);
     }
@@ -42,7 +50,7 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "Never";
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString(dateLocale("en-US"), {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -91,9 +99,9 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
     return (
       <div className={`admin-list-empty ${theme.actualTheme}`}>
         <User className="admin-list-empty-icon" />
-        <h3 className="admin-list-empty-title">No admins found</h3>
+        <h3 className="admin-list-empty-title">{tx("auto.noAdminsFound_807d")}</h3>
         <p className="admin-list-empty-description">
-          Get started by creating your first admin user.
+          {tx("auto.getStartedByCreatingYour_ec6a")}
         </p>
       </div>
     );
@@ -113,14 +121,14 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
                 <button
                   className="admin-action-btn edit"
                   onClick={() => onEdit(admin)}
-                  title="Edit Admin"
+                  title={tx("auto.editAdmin_a1bc")}
                 >
                   <Edit className="admin-action-icon" />
                 </button>
                 <button
                   className="admin-action-btn delete"
                   onClick={() => handleDeleteClick(admin)}
-                  title="Delete Admin"
+                  title={tx("auto.deleteAdmin_db4d")}
                 >
                   <Trash2 className="admin-action-icon" />
                 </button>
@@ -129,32 +137,32 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
 
             {/* Card Body */}
             <div className="admin-card-body">
-              <div className="admin-name">{admin.name}</div>
+              <div className="admin-name">{tl(admin.name)}</div>
 
               <div className="admin-detail">
                 <Mail className="admin-detail-icon" />
-                <span className="admin-detail-text">{admin.email}</span>
+                <span className="admin-detail-text">{tl(admin.email)}</span>
               </div>
 
               {admin.phoneNumber && (
                 <div className="admin-detail">
                   <Phone className="admin-detail-icon" />
-                  <span className="admin-detail-text">{admin.phoneNumber}</span>
+                  <span className="admin-detail-text">{tl(admin.phoneNumber)}</span>
                 </div>
               )}
 
               <div className="admin-detail">
                 <Shield className="admin-detail-icon" />
                 <span className="admin-detail-text">
-                  Role: {getRoleDisplayName(admin.role)}
+                  {tx("auto.role_61e4")}{" "}{tl(getRoleDisplayName(admin.role))}
                 </span>
               </div>
 
               <div className="admin-detail">
                 <Shield className="admin-detail-icon" />
                 <span className="admin-detail-text">
-                  Permissions: {getPermissionCount(admin.permissions)}/
-                  {Object.keys(admin.permissions || {}).length}
+                  {tx("auto.permissions_587f")}{" "}{tl(getPermissionCount(admin.permissions))}/
+                  {tl(Object.keys(admin.permissions || {}).length)}
                 </span>
               </div>
 
@@ -162,14 +170,14 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
               <div className="admin-detail">
                 <Key className="admin-detail-icon" />
                 <span className="admin-detail-text">
-                  Password: set by the member (forgot it? use "Forgot password" on the login page)
+                  {tx("auto.passwordSetByTheMember_f057")}
                 </span>
               </div>
 
               <div className="admin-detail">
                 <Clock className="admin-detail-icon" />
                 <span className="admin-detail-text">
-                  Created: {formatDate(admin.createdAt)}
+                  {tx("auto.created_0c78")}{" "}{tl(formatDate(admin.createdAt))}
                 </span>
               </div>
 
@@ -178,7 +186,7 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
                   admin.status === "active" ? "active" : "inactive"
                 }`}
               >
-                {admin.status === "active" ? "Active" : "Inactive"}
+                {tl(admin.status === "active" ? tx("auto.active_a733") : tx("auto.inactive_09af"))}
               </div>
             </div>
           </div>
@@ -190,13 +198,12 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
         <div className="admin-delete-overlay">
           <div className="admin-delete-modal">
             <div className="admin-delete-header">
-              <h3 className="admin-delete-title">Delete Admin</h3>
+              <h3 className="admin-delete-title">{tx("auto.deleteAdmin_db4d")}</h3>
             </div>
             <div className="admin-delete-body">
               <p className="admin-delete-message">
-                Are you sure you want to delete{" "}
-                <strong>{adminToDelete.name}</strong>? This action cannot be
-                undone and will remove all access permissions for this admin.
+                {tx("auto.areYouSureYouWant_6c25")}{" "}
+                <strong>{tl(adminToDelete.name)}</strong>{tx("auto.thisActionCannotBeUndone_8e23")}
               </p>
             </div>
             <div className="admin-delete-footer">
@@ -205,14 +212,14 @@ const AdminList = ({ admins, loading = false, onEdit, onDelete }) => {
                 onClick={() => setDeleteDialogOpen(false)}
                 disabled={deleting}
               >
-                Cancel
+                {tx("auto.cancel_77df")}
               </Button>
               <Button
                 variant="danger"
                 onClick={handleDeleteConfirm}
                 disabled={deleting}
               >
-                {deleting ? "Deleting..." : "Delete Admin"}
+                {tl(deleting ? tx("auto.deleting_e16c") : tx("auto.deleteAdmin_db4d"))}
               </Button>
             </div>
           </div>

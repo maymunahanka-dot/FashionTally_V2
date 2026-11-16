@@ -1,6 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import "./SearchableSelect.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const SearchableSelect = ({
   options = [],
   value,
@@ -9,6 +14,7 @@ const SearchableSelect = ({
   label,
   error,
 }) => {
+  const { t: tx } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -104,7 +110,7 @@ const SearchableSelect = ({
 
   return (
     <div className="searchable-select-container" ref={containerRef}>
-      {label && <label className="searchable-select-label">{label}</label>}
+      {label && <label className="searchable-select-label">{tl(label)}</label>}
       <div
         className={`searchable-select-input-wrapper ${
           isOpen ? "searchable-select-open" : ""
@@ -164,16 +170,16 @@ const SearchableSelect = ({
                 onClick={() => handleSelect(option)}
                 onMouseEnter={() => setHighlightedIndex(index)}
               >
-                {option}
+                {tl(option)}
               </div>
             ))
           ) : (
-            <div className="searchable-select-no-results">No results found</div>
+            <div className="searchable-select-no-results">{tx("auto.noResultsFound_658e")}</div>
           )}
         </div>
       )}
 
-      {error && <div className="searchable-select-error-message">{error}</div>}
+      {error && <div className="searchable-select-error-message">{tl(error)}</div>}
     </div>
   );
 };

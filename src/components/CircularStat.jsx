@@ -1,6 +1,10 @@
 import "./CircularStat.css";
 
+import { tl } from "../i18n";
+import { useTranslation } from "react-i18next";
+
 const CircularStat = ({ percentage, label, subLabel, color, size = 180 }) => {
+  useTranslation(); // re-render when the language changes
   console.log("🔵 CircularStat rendered with props:", {
     percentage,
     label,
@@ -56,11 +60,11 @@ const CircularStat = ({ percentage, label, subLabel, color, size = 180 }) => {
         {/* Center Text */}
         <div className="circular-stat-text">
           {subLabel ? (
-            <span className="stat-main-text">{subLabel}</span>
+            <span className="stat-main-text">{tl(subLabel)}</span>
           ) : (
-            <span className="stat-main-text">{percentage}%</span>
+            <span className="stat-main-text">{tl(percentage)}%</span>
           )}
-          <span className="stat-label-text">{label}</span>
+          <span className="stat-label-text">{tl(label)}</span>
         </div>
       </div>
     </div>

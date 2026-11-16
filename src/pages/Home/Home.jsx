@@ -56,6 +56,12 @@ import fatiimahImage from "../../assets/Image/fatiimah-clothing.jpeg";
 import muniraImage from "../../assets/Image/munira-nuhu.jpg";
 import khadijahImage from "../../assets/Image/Khadijah-Labaran.png";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+
 /* ───────────────────────── content ───────────────────────── */
 
 /** Photo cards floating around the hero headline (free Unsplash photos, see assets/Image/hero/CREDITS.md). */
@@ -250,6 +256,7 @@ function useScrollProgress(ref, onFrame) {
 
 /** Paragraph that lights up word by word as you scroll past it. */
 function ScrollHighlight({ text, className = "" }) {
+  useTranslation(); // re-render when the language changes
   const ref = useRef(null);
   const words = useMemo(() => text.split(" "), [text]);
   const [lit, setLit] = useState(prefersReducedMotion() ? words.length : 0);
@@ -266,7 +273,7 @@ function ScrollHighlight({ text, className = "" }) {
     <p ref={ref} className={`lx-highlight ${className}`}>
       {words.map((word, i) => (
         <span key={`${word}-${i}`} className={i < lit ? "is-lit" : ""}>
-          {word}{" "}
+          {tl(word)}{" "}
         </span>
       ))}
     </p>
@@ -275,6 +282,7 @@ function ScrollHighlight({ text, className = "" }) {
 
 /** Number that counts up the first time it is seen. */
 function CountUp({ to, prefix = "", suffix = "", duration = 1400, format }) {
+  useTranslation(); // re-render when the language changes
   const ref = useRef(null);
   const [value, setValue] = useState(prefersReducedMotion() ? to : 0);
   useEffect(() => {
@@ -300,15 +308,16 @@ function CountUp({ to, prefix = "", suffix = "", duration = 1400, format }) {
   }, [to, duration]);
   return (
     <span ref={ref}>
-      {prefix}
-      {format ? format(value) : value.toLocaleString()}
-      {suffix}
+      {tl(prefix)}
+      {tl(format ? format(value) : value.toLocaleString())}
+      {tl(suffix)}
     </span>
   );
 }
 
 /** Text that types itself out, pauses, then moves to the next line. */
 function Typewriter({ lines }) {
+  useTranslation(); // re-render when the language changes
   const [index, setIndex] = useState(0);
   const [shown, setShown] = useState(() => (prefersReducedMotion() ? lines[0] : ""));
   useEffect(() => {
@@ -327,7 +336,7 @@ function Typewriter({ lines }) {
   }, [index, lines]);
   return (
     <span className="lx-type">
-      {shown}
+      {tl(shown)}
       <span className="lx-caret" aria-hidden="true" />
     </span>
   );
@@ -360,6 +369,7 @@ const SAMPLE_STATS = [
 ];
 
 function WebDashboardMock() {
+  const { t: tx } = useTranslation();
   return (
     <div className="lx-dash">
       <aside className="lx-dash-side">
@@ -368,22 +378,22 @@ function WebDashboardMock() {
           <span>FashionTally</span>
         </div>
         <div className="lx-dash-profile">
-          <span className="lx-dash-avatar">FA</span>
+          <span className="lx-dash-avatar">{tx("auto.fa_c919")}</span>
           <div>
-            <b>Fatima Atelier</b>
-            <small>Designer</small>
-            <small>hello@fatima.ng</small>
+            <b>{tx("auto.fatimaAtelier_6bd8")}</b>
+            <small>{tx("auto.designer_639d")}</small>
+            <small>{tx("auto.helloFatimaNg_2cf4")}</small>
           </div>
         </div>
         <nav className="lx-dash-nav">
           {WEB_NAV.map(([icon, label], i) => (
             <span key={label} className={i === 0 ? "is-active" : ""} style={i === 0 ? { backgroundImage: `url(${pattern})` } : undefined}>
-              {createElement(icon)} {label}
+              {tl(createElement(icon))} {tl(label)}
             </span>
           ))}
         </nav>
         <span className="lx-dash-support">
-          <Headphones /> Expert Support
+          <Headphones />{" "}{tx("auto.expertSupport_d254")}
         </span>
       </aside>
 
@@ -392,9 +402,9 @@ function WebDashboardMock() {
           <div>
             <div className="lx-dash-hello">
               <span className="lx-dash-avatar lx-dash-avatar-lg">F</span>
-              <h4>Welcome back, Fatima!</h4>
+              <h4>{tx("auto.welcomeBackFatima_4b22")}</h4>
             </div>
-            <p>Here's an overview of your fashion business</p>
+            <p>{tx("auto.hereSAnOverviewOf_3f5f")}</p>
           </div>
           <span className="lx-dash-bell">
             <Bell />
@@ -402,7 +412,7 @@ function WebDashboardMock() {
           </span>
         </div>
 
-        <h5 className="lx-dash-title">Quick Actions</h5>
+        <h5 className="lx-dash-title">{tx("auto.quickActions_c408")}</h5>
         <div className="lx-dash-actions">
           {[
             [ClipboardList, "New Order"],
@@ -412,26 +422,26 @@ function WebDashboardMock() {
           ].map(([icon, label]) => (
             <div key={label} className="lx-dash-action">
               <span>
-                {createElement(icon)}
+                {tl(createElement(icon))}
               </span>
-              {label}
+              {tl(label)}
             </div>
           ))}
         </div>
 
         <div className="lx-dash-row">
-          <h5 className="lx-dash-title">Today's Schedule</h5>
-          <small>See more</small>
+          <h5 className="lx-dash-title">{tx("auto.todaySSchedule_7ed2")}</h5>
+          <small>{tx("auto.seeMore_c510")}</small>
         </div>
         <div className="lx-dash-schedule">
           <div>
-            <b>10:30 AM</b>
+            <b>{tx("auto.1030Am_7d98")}</b>
             <span>
-              <Users /> Aisha Bello
+              <Users />{" "}{tx("auto.aishaBello_7895")}
             </span>
-            <small>Bridal gown: final fitting</small>
+            <small>{tx("auto.bridalGownFinalFitting_7bac")}</small>
           </div>
-          <em>Confirmed</em>
+          <em>{tx("auto.confirmed_8cc7")}</em>
         </div>
 
         <div className="lx-dash-stats">
@@ -439,13 +449,13 @@ function WebDashboardMock() {
             <div key={label} className="lx-dash-stat">
               <div className="lx-dash-stat-top">
                 <span>
-                  {createElement(icon)}
+                  {tl(createElement(icon))}
                 </span>
-                <strong>{value}</strong>
-                {unit && <small>{unit}</small>}
+                <strong>{tl(value)}</strong>
+                {unit && <small>{tl(unit)}</small>}
               </div>
-              <p>{label}</p>
-              <em className={`is-${tone}`}>{note}</em>
+              <p>{tl(label)}</p>
+              <em className={`is-${tone}`}>{tl(note)}</em>
             </div>
           ))}
         </div>
@@ -455,6 +465,7 @@ function WebDashboardMock() {
 }
 
 function PhoneMock() {
+  const { t: tx } = useTranslation();
   return (
     <div className="lx-phone" aria-hidden="true">
       <div className="lx-phone-screen">
@@ -465,20 +476,20 @@ function PhoneMock() {
           </div>
           <div className="lx-phone-bar">
             <Menu />
-            <b>Dashboard</b>
+            <b>{tx("auto.dashboard_d87f")}</b>
             <Bell />
           </div>
           <div className="lx-phone-hello">
             <span className="lx-dash-avatar">F</span>
             <p>
-              Welcome back,
+              {tx("auto.welcomeBack_8c8b")}
               <br />
-              Fatima
+              {tx("auto.fatima_545d")}
             </p>
           </div>
         </div>
         <div className="lx-phone-sheet">
-          <h6>Quick Actions</h6>
+          <h6>{tx("auto.quickActions_c408")}</h6>
           <div className="lx-phone-actions">
             {[
               [ClipboardList, "New Order"],
@@ -487,34 +498,34 @@ function PhoneMock() {
             ].map(([icon, label]) => (
               <div key={label}>
                 <span>
-                  {createElement(icon)}
+                  {tl(createElement(icon))}
                 </span>
-                {label}
+                {tl(label)}
               </div>
             ))}
           </div>
-          <h6>Today's Schedule</h6>
+          <h6>{tx("auto.todaySSchedule_7ed2")}</h6>
           <div className="lx-phone-sched">
             <b>10:30</b>
             <div>
-              <strong>Aisha Bello</strong>
-              <small>Final fitting</small>
+              <strong>{tx("auto.aishaBello_7895")}</strong>
+              <small>{tx("auto.finalFitting_b71d")}</small>
             </div>
           </div>
           <div className="lx-phone-date">
-            <b>Friday, Nov 6</b>
-            <small>Updated now</small>
+            <b>{tx("auto.fridayNov6_f4a6")}</b>
+            <small>{tx("auto.updatedNow_5ed9")}</small>
           </div>
           <div className="lx-phone-stats">
             {SAMPLE_STATS.map(({ icon, value, unit, label, note, tone }) => (
               <div key={label}>
                 <div className="lx-phone-stat-top">
-                  {createElement(icon)}
-                  <strong>{value}</strong>
-                  {unit && <small>{unit}</small>}
+                  {tl(createElement(icon))}
+                  <strong>{tl(value)}</strong>
+                  {unit && <small>{tl(unit)}</small>}
                 </div>
-                <p>{label}</p>
-                <em className={`is-${tone}`}>{note}</em>
+                <p>{tl(label)}</p>
+                <em className={`is-${tone}`}>{tl(note)}</em>
               </div>
             ))}
           </div>
@@ -527,6 +538,7 @@ function PhoneMock() {
 /* ───────────────────────── page ───────────────────────── */
 
 const Home = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const rootRef = useRef(null);
   const mockRef = useRef(null);
@@ -590,23 +602,23 @@ const Home = () => {
       <section className="lx-hero" id="top">
         <div className="lx-hero-glow" aria-hidden="true" />
         <p className="lx-eyebrow lx-fade" style={{ animationDelay: "0.1s" }}>
-          FASHION BUSINESS MANAGEMENT
+          {tx("auto.fashionBusinessManagement_3197")}
         </p>
         <IntroTitle
           className="lx-hero-title lx-hero-title-long"
           lines={["Smart Business Management", "for Fashion Entrepreneurs."]}
         />
         <p className="lx-hero-sub lx-fade" style={{ animationDelay: "0.75s" }}>
-          Clients, measurements, orders, invoices and finances in one calm workspace for your fashion business.
+          {tx("auto.clientsMeasurementsOrdersInvoice_8e6e")}
         </p>
         <div className="lx-hero-ctas lx-fade" style={{ animationDelay: "0.9s" }}>
           <button type="button" className="lx-btn lx-btn-dark" onClick={() => navigate("/signup")}>
             <span className="lx-btn-roll" data-text="Start your free trial">
-              Start your free trial
+              {tx("auto.startYourFreeTrial_777c")}
             </span>
           </button>
           <button type="button" className="lx-btn lx-btn-ghost" onClick={() => navigate("/schedule-demo")}>
-            Book a demo <ArrowUpRight size={16} />
+            {tx("auto.bookADemo_a83d")}{" "}<ArrowUpRight size={16} />
           </button>
         </div>
         <div className="lx-fade" style={{ animationDelay: "1.05s" }}>
@@ -620,7 +632,7 @@ const Home = () => {
               <span />
               <span />
               <span />
-              <p>app.fashiontally.com</p>
+              <p>{tx("auto.appFashiontallyCom_5424")}</p>
             </div>
             <WebDashboardMock />
           </div>
@@ -633,14 +645,13 @@ const Home = () => {
         <div className="lx-wrap">
           <div className="lx-platform-top">
             <div>
-              <SectionTag>01 / THE PLATFORM</SectionTag>
+              <SectionTag>{tx("auto.01ThePlatform_ddd8")}</SectionTag>
               <ScrollHighlight
                 className="lx-statement"
-                text="Great fashion feels effortless. FashionTally brings your clients, orders and money into one calm, connected flow."
+                text={tx("auto.greatFashionFeelsEffortlessFashi_2f9f")}
               />
               <p className="lx-lead" data-reveal>
-                Less flipping through notebooks. Fewer forgotten balances. A connected way to handle the work behind
-                every outfit, with you in control.
+                {tx("auto.lessFlippingThroughNotebooksFewe_4090")}
               </p>
             </div>
 
@@ -650,8 +661,8 @@ const Home = () => {
                 <figure key={photo.src} className={`lx-pp lx-pp-${i + 1}`}>
                   <img src={photo.src} alt="" loading="lazy" />
                   <figcaption>
-                    {createElement(photo.icon, { size: 14 })}
-                    {photo.label}
+                    {tl(createElement(photo.icon, { size: 14 }))}
+                    {tl(photo.label)}
                   </figcaption>
                 </figure>
               ))}
@@ -659,19 +670,19 @@ const Home = () => {
           </div>
           <div className="lx-stats">
             <div data-reveal>
-              <p>TOOLS IN ONE WORKSPACE</p>
+              <p>{tx("auto.toolsInOneWorkspace_dee2")}</p>
               <strong>
                 <CountUp to={7} suffix="" />
               </strong>
             </div>
             <div data-reveal style={{ transitionDelay: "0.1s" }}>
-              <p>WEB, ANDROID & iOS</p>
+              <p>{tx("auto.webAndroidIos_4740")}</p>
               <strong>
                 <CountUp to={3} />
               </strong>
             </div>
             <div data-reveal style={{ transitionDelay: "0.2s" }}>
-              <p>YOUR DATA, YOUR BUSINESS</p>
+              <p>{tx("auto.yourDataYourBusiness_3f2d")}</p>
               <strong>
                 <CountUp to={100} suffix="%" />
               </strong>
@@ -683,8 +694,8 @@ const Home = () => {
       {/* ── 02 Problems ── */}
       <section className="lx-section lx-light lx-tight-top">
         <div className="lx-wrap">
-          <SectionTag>02 / A BETTER WAY TO WORK</SectionTag>
-          <SplitWords text="You have better things to do than chase loose ends." className="lx-h2" />
+          <SectionTag>{tx("auto.02ABetterWayTo_c63b")}</SectionTag>
+          <SplitWords text={tx("auto.youHaveBetterThingsTo_4b3d")} className="lx-h2" />
           <div className="lx-problems">
             {PROBLEMS.map((item, i) => {
               const Icon = item.icon;
@@ -692,8 +703,8 @@ const Home = () => {
                 <article key={item.title} className="lx-problem" data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
                   <span className="lx-num">0{i + 1}</span>
                   <Icon size={22} strokeWidth={1.6} />
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
+                  <h3>{tl(item.title)}</h3>
+                  <p>{tl(item.text)}</p>
                 </article>
               );
             })}
@@ -704,8 +715,8 @@ const Home = () => {
       {/* ── 03 In sync ── */}
       <section className="lx-section lx-dark">
         <div className="lx-wrap lx-center">
-          <SectionTag>03 / EVERYTHING IN SYNC</SectionTag>
-          <SplitWords text="One quiet engine. Your entire fashion business." className="lx-h2" />
+          <SectionTag>{tx("auto.03EverythingInSync_f94d")}</SectionTag>
+          <SplitWords text={tx("auto.oneQuietEngineYourEntire_7b5e")} className="lx-h2" />
           <div className="lx-orbit" data-reveal>
             <div className="lx-orbit-ring lx-orbit-ring-1">
               {[Users, Ruler, ShoppingBag, Receipt].map((Icon, i) => (
@@ -745,26 +756,26 @@ const Home = () => {
       {/* ── 04 Tools (stacking cards) ── */}
       <section className="lx-section lx-dark lx-tight-top" id="tools">
         <div className="lx-wrap">
-          <SectionTag>04 / MEET YOUR NEW TOOLS</SectionTag>
-          <SplitWords text="A little order. At every step of the outfit." className="lx-h2" />
+          <SectionTag>{tx("auto.04MeetYourNewTools_9ed2")}</SectionTag>
+          <SplitWords text={tx("auto.aLittleOrderAtEvery_8e8a")} className="lx-h2" />
           <div className="lx-stack">
             {TOOLS.map((tool, i) => {
               const Icon = tool.icon;
               return (
                 <article key={tool.tag} className="lx-stack-card" style={{ "--i": i }}>
                   <div className="lx-stack-copy">
-                    <p className="lx-tag lx-tag-muted">{tool.tag}</p>
-                    <h3>{tool.title}</h3>
-                    <p>{tool.text}</p>
+                    <p className="lx-tag lx-tag-muted">{tl(tool.tag)}</p>
+                    <h3>{tl(tool.title)}</h3>
+                    <p>{tl(tool.text)}</p>
                   </div>
                   <div className="lx-widget">
                     <div className="lx-widget-icon">
                       <Icon size={22} />
                     </div>
-                    <small>{tool.widgetLabel}</small>
-                    <strong>{tool.widgetTitle}</strong>
+                    <small>{tl(tool.widgetLabel)}</small>
+                    <strong>{tl(tool.widgetTitle)}</strong>
                     <span>
-                      <Check size={14} /> {tool.widgetNote}
+                      <Check size={14} /> {tl(tool.widgetNote)}
                     </span>
                   </div>
                 </article>
@@ -777,19 +788,19 @@ const Home = () => {
       {/* ── 05 Workflows ── */}
       <section className="lx-section lx-light" id="workflows">
         <div className="lx-wrap">
-          <SectionTag>05 / SMALL STARTS. BIG POSSIBILITIES.</SectionTag>
-          <SplitWords text="Start with the work you do every day." className="lx-h2" />
+          <SectionTag>{tx("auto.05SmallStartsBigPossibilities_247f")}</SectionTag>
+          <SplitWords text={tx("auto.startWithTheWorkYou_c9b9")} className="lx-h2" />
           <div className="lx-flows">
             {FLOWS.map((flow, i) => {
               const Icon = flow.icon;
               return (
                 <article key={flow.title} className="lx-flow" data-reveal style={{ transitionDelay: `${(i % 3) * 0.08}s` }}>
-                  <p className="lx-flow-tag">FLOW / {String(i + 1).padStart(2, "0")}</p>
+                  <p className="lx-flow-tag">{tx("auto.flow_e04d")}{" "}{String(i + 1).padStart(2, "0")}</p>
                   <div className="lx-flow-icon">
                     <Icon size={22} strokeWidth={1.6} />
                   </div>
-                  <h3>{flow.title}</h3>
-                  <p>{flow.text}</p>
+                  <h3>{tl(flow.title)}</h3>
+                  <p>{tl(flow.text)}</p>
                   <span className="lx-flow-arrow">
                     <ArrowUpRight size={18} />
                   </span>
@@ -803,9 +814,9 @@ const Home = () => {
       {/* ── 06 Pricing ── */}
       <section className="lx-section lx-light lx-tight-top" id="pricing">
         <div className="lx-wrap">
-          <SectionTag>06 / ROOM TO GROW</SectionTag>
+          <SectionTag>{tx("auto.06RoomToGrow_81f6")}</SectionTag>
           <div className="lx-pricing-head">
-            <SplitWords text="A plan for your next collection." className="lx-h2" />
+            <SplitWords text={tx("auto.aPlanForYourNext_cf6e")} className="lx-h2" />
             <div className="lx-toggle" role="tablist" aria-label="Billing cycle" data-reveal>
               <span className={`lx-toggle-pill ${cycle === "yearly" ? "is-right" : ""}`} aria-hidden="true" />
               <button
@@ -815,7 +826,7 @@ const Home = () => {
                 className={cycle === "monthly" ? "is-active" : ""}
                 onClick={() => setCycle("monthly")}
               >
-                Monthly
+                {tx("auto.monthly_d31e")}
               </button>
               <button
                 type="button"
@@ -824,7 +835,7 @@ const Home = () => {
                 className={cycle === "yearly" ? "is-active" : ""}
                 onClick={() => setCycle("yearly")}
               >
-                Yearly <em>Save {yearlySaving}%</em>
+                {tx("auto.yearly_7622")}{" "}<em>{tx("auto.save_efc0")}{" "}{tl(yearlySaving)}%</em>
               </button>
             </div>
           </div>
@@ -839,8 +850,8 @@ const Home = () => {
                   style={{ transitionDelay: `${i * 0.08}s` }}
                 >
                   <div className="lx-plan-top">
-                    <h3>{plan.name}</h3>
-                    {plan.popular && <span className="lx-badge">Most popular</span>}
+                    <h3>{tl(plan.name)}</h3>
+                    {plan.popular && <span className="lx-badge">{tx("auto.mostPopular_5adb")}</span>}
                   </div>
                   <div className="lx-price">
                     {price ? (
@@ -848,24 +859,24 @@ const Home = () => {
                         <strong key={`${plan.key}-${cycle}`} className="lx-price-num">
                           ₦{price.toLocaleString()}
                         </strong>
-                        <span>/ {cycle === "monthly" ? "month" : "year"}</span>
+                        <span>/ {tl(cycle === "monthly" ? "month" : "year")}</span>
                       </>
                     ) : (
-                      <strong className="lx-price-num">Let's talk</strong>
+                      <strong className="lx-price-num">{tx("auto.letSTalk_48cd")}</strong>
                     )}
                   </div>
                   <p className="lx-plan-note">
                     {price
                       ? cycle === "monthly"
-                        ? "Billed monthly. Cancel anytime."
-                        : "Billed once a year."
-                      : "Pricing built around your brand."}
+                        ? tx("auto.billedMonthlyCancelAnytime_399f")
+                        : tx("auto.billedOnceAYear_cbb8")
+                      : tx("auto.pricingBuiltAroundYourBrand_4120")}
                   </p>
-                  <p className="lx-plan-blurb">{plan.blurb}</p>
+                  <p className="lx-plan-blurb">{tl(plan.blurb)}</p>
                   <ul>
                     {plan.features.map((f) => (
                       <li key={f}>
-                        <Check size={15} /> {f}
+                        <Check size={15} /> {tl(f)}
                       </li>
                     ))}
                   </ul>
@@ -878,7 +889,7 @@ const Home = () => {
                       className="lx-btn-roll"
                       data-text={plan.key === "custom" ? "Contact us" : `Choose ${plan.name}`}
                     >
-                      {plan.key === "custom" ? "Contact us" : `Choose ${plan.name}`}
+                      {tl(plan.key === "custom" ? tx("auto.contactUs_4832") : `Choose ${plan.name}`)}
                     </span>
                   </button>
                 </article>
@@ -893,8 +904,8 @@ const Home = () => {
         <div className="lx-wrap">
           <div className="lx-stories-head">
             <div>
-              <SectionTag>07 / REVIEWS</SectionTag>
-              <SplitWords text="Less stress. More room to create." className="lx-h2" />
+              <SectionTag>{tx("auto.07Reviews_0b31")}</SectionTag>
+              <SplitWords text={tx("auto.lessStressMoreRoomTo_79ae")} className="lx-h2" />
             </div>
             <div className="lx-arrows">
               <button type="button" aria-label="Previous story" onClick={() => goStory(-1)}>
@@ -911,10 +922,10 @@ const Home = () => {
             </div>
             <div className="lx-story-copy" key={`c-${story}`}>
               <p className="lx-tag lx-tag-muted">{current.headline.toUpperCase()}</p>
-              <blockquote>“{current.quote}”</blockquote>
+              <blockquote>“{tl(current.quote)}”</blockquote>
               <div className="lx-story-who">
-                <strong>{current.name}</strong>
-                <span>{current.business}</span>
+                <strong>{tl(current.name)}</strong>
+                <span>{tl(current.business)}</span>
               </div>
               <div className="lx-dots">
                 {TESTIMONIALS.map((t, i) => (
@@ -940,12 +951,12 @@ const Home = () => {
                   <div className="lx-review-stars" aria-label="5 out of 5 stars">
                     ★★★★★
                   </div>
-                  <blockquote>“{t.quote}”</blockquote>
+                  <blockquote>“{tl(t.quote)}”</blockquote>
                   <figcaption>
                     <img src={t.image} alt="" loading="lazy" />
                     <span>
-                      <b>{t.name}</b>
-                      <small>{t.business}</small>
+                      <b>{tl(t.name)}</b>
+                      <small>{tl(t.business)}</small>
                     </span>
                   </figcaption>
                 </figure>
@@ -959,8 +970,8 @@ const Home = () => {
       <section className="lx-section lx-light" id="faq">
         <div className="lx-wrap lx-faq">
           <div>
-            <SectionTag>08 / A LITTLE MORE CLARITY</SectionTag>
-            <SplitWords text="Answers to the questions we hear most." className="lx-h2" />
+            <SectionTag>{tx("auto.08ALittleMoreClarity_9e7e")}</SectionTag>
+            <SplitWords text={tx("auto.answersToTheQuestionsWe_a468")} className="lx-h2" />
             <div className="lx-faq-tabs" data-reveal>
               {Object.keys(FAQ).map((tab) => (
                 <button
@@ -972,7 +983,7 @@ const Home = () => {
                     setOpenFaq(0);
                   }}
                 >
-                  {tab}
+                  {tl(tab)}
                 </button>
               ))}
             </div>
@@ -983,11 +994,11 @@ const Home = () => {
               return (
                 <div key={q} className={`lx-faq-item ${open ? "is-open" : ""}`}>
                   <button type="button" aria-expanded={open} onClick={() => setOpenFaq(open ? -1 : i)}>
-                    <span>{q}</span>
+                    <span>{tl(q)}</span>
                     <Plus size={18} />
                   </button>
                   <div className="lx-faq-answer">
-                    <p>{a}</p>
+                    <p>{tl(a)}</p>
                   </div>
                 </div>
               );

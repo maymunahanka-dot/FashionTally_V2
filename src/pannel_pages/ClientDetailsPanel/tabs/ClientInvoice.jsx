@@ -3,7 +3,15 @@ import { Plus, FileText, Eye, Download, Share, Pencil, Trash2, AlertCircle } fro
 import NewAuthContext from "../../../contexts/NewAuthContext";
 import "./ClientInvoice.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+import { dateLocale } from "../../../i18n";
+
+
 const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
+  const { t: tx } = useTranslation();
   const { user } = useContext(NewAuthContext);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +64,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
 
     // Handle Firebase Timestamp
     if (date.toDate && typeof date.toDate === "function") {
-      return date.toDate().toLocaleDateString("en-US", {
+      return date.toDate().toLocaleDateString(dateLocale("en-US"), {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -65,7 +73,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
 
     // Handle Date object
     if (date instanceof Date) {
-      return date.toLocaleDateString("en-US", {
+      return date.toLocaleDateString(dateLocale("en-US"), {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -74,7 +82,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
 
     // Handle string date
     if (typeof date === "string") {
-      return new Date(date).toLocaleDateString("en-US", {
+      return new Date(date).toLocaleDateString(dateLocale("en-US"), {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -99,7 +107,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
   if (loading) {
     return (
       <div className="invoice_u_details_invoice">
-        <div className="invoice_u_loading">Loading invoices...</div>
+        <div className="invoice_u_loading">{tx("auto.loadingInvoices_de14")}</div>
       </div>
     );
   }
@@ -110,19 +118,19 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
       <div className="invoice_u_summary">
         <div className="invoice_u_summary_content">
           <div className="invoice_u_total">
-            <span className="invoice_u_total_label">Total Invoiced</span>
+            <span className="invoice_u_total_label">{tx("auto.totalInvoiced_7ee2")}</span>
             <span className="invoice_u_total_amount">
-              {formatCurrency(summary.totalInvoiced)}
+              {tl(formatCurrency(summary.totalInvoiced))}
             </span>
           </div>
           <div className="invoice_u_stats">
             <div className="invoice_u_stat">
-              <span className="invoice_u_stat_label">Paid:</span>
-              <span className="invoice_u_stat_value">{summary.paid}</span>
+              <span className="invoice_u_stat_label">{tx("auto.paid_06c5")}</span>
+              <span className="invoice_u_stat_value">{tl(summary.paid)}</span>
             </div>
             <div className="invoice_u_stat">
-              <span className="invoice_u_stat_label">Pending:</span>
-              <span className="invoice_u_stat_value">{summary.pending}</span>
+              <span className="invoice_u_stat_label">{tx("auto.pending_cacc")}</span>
+              <span className="invoice_u_stat_value">{tl(summary.pending)}</span>
             </div>
           </div>
         </div>
@@ -130,10 +138,10 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
 
       {/* Invoice Header */}
       <div className="invoice_u_header">
-        <h3 className="invoice_u_count">{invoices.length} Invoices</h3>
+        <h3 className="invoice_u_count">{tl(invoices.length)}{" "}{tx("auto.invoices_35f8")}</h3>
         <button className="invoice_u_new_btn" onClick={handleCreateInvoice}>
           <Plus size={18} />
-          New Invoice
+          {tx("auto.newInvoice_878b")}
         </button>
       </div>
 
@@ -150,15 +158,15 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
                 <div className="invoice_u_details">
                   <div className="invoice_u_number_section">
                     <h4 className="invoice_u_number">
-                      {invoice.invoiceNumber}
+                      {tl(invoice.invoiceNumber)}
                     </h4>
                     <span className="invoice_u_amount">
-                      {formatCurrency(invoice.amount)}
+                      {tl(formatCurrency(invoice.amount))}
                     </span>
                   </div>
                   <div className="invoice_u_date_section">
                     <span className="invoice_u_date">
-                      {formatDate(invoice.createdDate)}
+                      {tl(formatDate(invoice.createdDate))}
                     </span>
                     <div
                       className={`invoice_u_status_badge ${(invoice.status || 'unpaid').toLowerCase()}`}
@@ -166,7 +174,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
                       {invoice.status === "Overdue" && (
                         <AlertCircle size={14} />
                       )}
-                      {invoice.status || 'Unpaid'}
+                      {tl(invoice.status || tx("auto.unpaid_50cc"))}
                     </div>
                   </div>
                 </div>
@@ -178,7 +186,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
                   onClick={() => handleViewInvoice(invoice)}
                 >
                   <Eye size={16} />
-                  View
+                  {tx("auto.view_69bd")}
                 </button>
                 <button className="invoice_u_action_btn pdf">
                   <Download size={16} />
@@ -186,7 +194,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
                 </button>
                 <button className="invoice_u_action_btn share">
                   <Share size={16} />
-                  Share
+                  {tx("auto.share_09ca")}
                 </button>
                 <button className="invoice_u_action_btn check">
                   <Pencil size={16} />
@@ -200,7 +208,7 @@ const ClientInvoice = ({ client, onCreateInvoice, onViewInvoice }) => {
         </div>
       ) : (
         <div className="invoice_u_empty">
-          <p>No invoices yet for this client</p>
+          <p>{tx("auto.noInvoicesYetForThis_f96f")}</p>
         </div>
       )}
     </div>

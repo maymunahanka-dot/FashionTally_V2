@@ -7,9 +7,18 @@ import jsPDF from "jspdf";
 import { createRoot } from "react-dom/client";
 import "./ClientMeasurements.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+
+import { dateLocale } from "../../../i18n";
+
+
 const API = import.meta.env.VITE_BACKEND_URL;
 
 const ClientMeasurements = ({ client }) => {
+  const { t: tx } = useTranslation();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMeasurement, setEditingMeasurement] = useState(null);
   const [measurements, setMeasurements] = useState([]);
@@ -108,7 +117,7 @@ const ClientMeasurements = ({ client }) => {
 
   // Delete a measurement
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this measurement?")) return;
+    if (!window.confirm(tx("auto.deleteThisMeasurement_5e38"))) return;
     const res = await fetch(`${API}/api/measurement/delete/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token()}` },
@@ -121,13 +130,14 @@ const ClientMeasurements = ({ client }) => {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    return new Date(dateStr).toLocaleDateString(dateLocale("en-US"), {
       year: "numeric", month: "short", day: "numeric",
     });
   };
 
   // PDF Component
   const MeasurementPDFComponent = ({ client, measurements, company }) => {
+  const { t: tx } = useTranslation();
     const primaryColor = company.primaryColor || "#14b8a6";
     return (
       <div style={{ width: "1000px", fontSize: "14px", lineHeight: "1.6", color: "#333", backgroundColor: "white", padding: "48px" }}>
@@ -137,48 +147,48 @@ const ClientMeasurements = ({ client }) => {
               <img src={company.logoUrl} alt="Logo" style={{ height: "80px", objectFit: "contain" }} crossOrigin="anonymous" />
             ) : (
               <div style={{ height: "80px", width: "80px", backgroundColor: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: "bold", color: "#9ca3af", borderRadius: "8px" }}>
-                {company.businessName?.charAt(0) || "FT"}
+                {tl(company.businessName?.charAt(0) || "FT")}
               </div>
             )}
           </div>
           <div style={{ textAlign: "right" }}>
-            <h1 style={{ fontSize: "48px", fontWeight: "bold", margin: 0, color: primaryColor }}>MEASUREMENTS</h1>
-            <p style={{ fontSize: "16px", color: "#666", margin: 0 }}>{formatDate(new Date().toISOString())}</p>
+            <h1 style={{ fontSize: "48px", fontWeight: "bold", margin: 0, color: primaryColor }}>{tx("auto.measurements_b616")}</h1>
+            <p style={{ fontSize: "16px", color: "#666", margin: 0 }}>{tl(formatDate(new Date().toISOString()))}</p>
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "48px" }}>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "600", color: "#666", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>From</h3>
-            {company.businessName && <p style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0" }}>{company.businessName}</p>}
-            {company.businessAddress && <p style={{ color: "#666", margin: "4px 0" }}>{company.businessAddress}</p>}
-            {company.businessPhone && <p style={{ color: "#666", margin: "4px 0" }}>{company.businessPhone}</p>}
-            {company.businessEmail && <p style={{ color: "#666", margin: "4px 0" }}>{company.businessEmail}</p>}
+            <h3 style={{ fontSize: "12px", fontWeight: "600", color: "#666", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>{tx("auto.from_3f66")}</h3>
+            {company.businessName && <p style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0" }}>{tl(company.businessName)}</p>}
+            {company.businessAddress && <p style={{ color: "#666", margin: "4px 0" }}>{tl(company.businessAddress)}</p>}
+            {company.businessPhone && <p style={{ color: "#666", margin: "4px 0" }}>{tl(company.businessPhone)}</p>}
+            {company.businessEmail && <p style={{ color: "#666", margin: "4px 0" }}>{tl(company.businessEmail)}</p>}
           </div>
           <div style={{ flex: 1, textAlign: "right" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "600", color: "#666", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>Client</h3>
-            {client.name && <p style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0" }}>{client.name}</p>}
-            {client.phone && <p style={{ color: "#666", margin: "4px 0" }}>{client.phone}</p>}
-            {client.email && <p style={{ color: "#666", margin: "4px 0" }}>{client.email}</p>}
+            <h3 style={{ fontSize: "12px", fontWeight: "600", color: "#666", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>{tx("auto.client_1bdd")}</h3>
+            {client.name && <p style={{ fontSize: "18px", fontWeight: "bold", margin: "0 0 8px 0" }}>{tl(client.name)}</p>}
+            {client.phone && <p style={{ color: "#666", margin: "4px 0" }}>{tl(client.phone)}</p>}
+            {client.email && <p style={{ color: "#666", margin: "4px 0" }}>{tl(client.email)}</p>}
           </div>
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e5e7eb" }}>
           <thead>
             <tr style={{ backgroundColor: primaryColor }}>
-              <th style={{ padding: "16px", textAlign: "left", color: "white", fontWeight: "600" }}>Measurement</th>
-              <th style={{ padding: "16px", textAlign: "right", color: "white", fontWeight: "600" }}>Value</th>
+              <th style={{ padding: "16px", textAlign: "left", color: "white", fontWeight: "600" }}>{tx("auto.measurement_de10")}</th>
+              <th style={{ padding: "16px", textAlign: "right", color: "white", fontWeight: "600" }}>{tx("auto.value_8dce")}</th>
             </tr>
           </thead>
           <tbody>
             {measurements.map((m, i) => (
               <tr key={m.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f9fafb" }}>
-                <td style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb" }}>{m.name}</td>
-                <td style={{ padding: "14px 16px", textAlign: "right", borderBottom: "1px solid #e5e7eb", fontWeight: "600" }}>{m.value} {m.unit}</td>
+                <td style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb" }}>{tl(m.name)}</td>
+                <td style={{ padding: "14px 16px", textAlign: "right", borderBottom: "1px solid #e5e7eb", fontWeight: "600" }}>{tl(m.value)} {tl(m.unit)}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <div style={{ borderTop: "2px solid #e5e7eb", paddingTop: "24px", textAlign: "center", color: "#666", fontSize: "12px", marginTop: "48px" }}>
-          <p style={{ margin: 0 }}>Generated on {new Date().toLocaleDateString()}{company.businessName && ` by ${company.businessName}`}</p>
+          <p style={{ margin: 0 }}>{tx("auto.generatedOn_bf4e")}{" "}{new Date().toLocaleDateString(dateLocale())}{company.businessName && ` by ${company.businessName}`}</p>
         </div>
       </div>
     );
@@ -211,7 +221,7 @@ const ClientMeasurements = ({ client }) => {
       }
     } catch (err) {
       console.error("Error generating PDF:", err);
-      alert("Failed to export PDF. Please try again.");
+      alert(tx("auto.failedToExportPdfPlease_0d6f"));
     } finally {
       setDownloadingPDF(false);
     }
@@ -222,8 +232,8 @@ const ClientMeasurements = ({ client }) => {
       <div className="client_details_measurements">
         <div className="client_measurements_header">
           <div className="client_measurements_title_section">
-            <h3 className="client_measurements_title">Body Measurements</h3>
-            <p className="client_measurements_subtitle">Loading measurements...</p>
+            <h3 className="client_measurements_title">{tx("auto.bodyMeasurements_f6eb")}</h3>
+            <p className="client_measurements_subtitle">{tx("auto.loadingMeasurements_329c")}</p>
           </div>
         </div>
         <div className="loading-container"><div className="loading-spinner"></div></div>
@@ -236,11 +246,11 @@ const ClientMeasurements = ({ client }) => {
       {/* Header */}
       <div className="client_measurements_header">
         <div className="client_measurements_title_section">
-          <h3 className="client_measurements_title">Body Measurements</h3>
+          <h3 className="client_measurements_title">{tx("auto.bodyMeasurements_f6eb")}</h3>
           <p className="client_measurements_subtitle">
-            {measurements.length > 0
-              ? `${measurements.length} measurement${measurements.length > 1 ? "s" : ""} recorded`
-              : "No measurements recorded"}
+            {tl(measurements.length > 0
+              ? tx("tpl.measurementRecorded_25e9", { v0: measurements.length, v1: measurements.length > 1 ? "s" : "" })
+              : tx("auto.noMeasurementsRecorded_e10c"))}
           </p>
         </div>
         <button className="client_measurements_add_btn" onClick={() => setShowAddModal(true)}>
@@ -254,23 +264,23 @@ const ClientMeasurements = ({ client }) => {
           {measurements.map((m) => (
             <div key={m.id} className="client_measurement_item">
               <div className="client_measurement_content">
-                <div className="client_measurement_label">{m.name}</div>
+                <div className="client_measurement_label">{tl(m.name)}</div>
                 <div className="client_measurement_value">
-                  {m.value}
-                  <span className="client_measurement_unit"> {m.unit}</span>
+                  {tl(m.value)}
+                  <span className="client_measurement_unit"> {tl(m.unit)}</span>
                 </div>
               </div>
               <div className="client_measurement_actions">
                 <button
                   className="client_measurement_edit_btn"
-                  title="Edit"
+                  title={tx("auto.edit_5301")}
                   onClick={() => setEditingMeasurement(m)}
                 >
                   <Pencil size={14} />
                 </button>
                 <button
                   className="client_measurement_delete_btn"
-                  title="Delete"
+                  title={tx("auto.delete_f6fd")}
                   onClick={() => handleDelete(m.id)}
                 >
                   <Trash2 size={14} />
@@ -281,9 +291,9 @@ const ClientMeasurements = ({ client }) => {
         </div>
       ) : (
         <div className="no-measurements">
-          <p>No measurements recorded for this client</p>
+          <p>{tx("auto.noMeasurementsRecordedForThis_a498")}</p>
           <button className="add-measurement-btn" onClick={() => setShowAddModal(true)}>
-            Add First Measurement
+            {tx("auto.addFirstMeasurement_a5fb")}
           </button>
         </div>
       )}
@@ -292,12 +302,12 @@ const ClientMeasurements = ({ client }) => {
       <div className="client_measurements_guide_section">
         <div className="client_measurements_guide_header">
           <Info size={12} className="client_measurements_info_icon" />
-          <span className="client_measurements_guide_title">Measurement Guide</span>
+          <span className="client_measurements_guide_title">{tx("auto.measurementGuide_ccc6")}</span>
         </div>
         <ul className="client_measurements_guide_list">
-          <li>Always take measurements with the client standing straight.</li>
-          <li>Update measurements every 6 months for regular clients.</li>
-          <li>Record measurements in inches for consistency.</li>
+          <li>{tx("auto.alwaysTakeMeasurementsWithThe_3137")}</li>
+          <li>{tx("auto.updateMeasurementsEvery6Months_4e2c")}</li>
+          <li>{tx("auto.recordMeasurementsInInchesFor_e2b0")}</li>
         </ul>
       </div>
 
@@ -305,7 +315,7 @@ const ClientMeasurements = ({ client }) => {
       {measurements.length > 0 && (
         <button className="client_measurements_export_btn" onClick={handleDownloadPDF} disabled={downloadingPDF}>
           <Download size={14} />
-          {downloadingPDF ? "Generating PDF..." : "Download Measurements PDF"}
+          {tl(downloadingPDF ? tx("auto.generatingPdf_d73c") : tx("auto.downloadMeasurementsPdf_1749"))}
         </button>
       )}
 

@@ -1,12 +1,20 @@
 import { SubscriptionGate } from "./SubscriptionGate/SubscriptionGate";
 import { useSubscription } from "../hooks/use-subscription";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../i18n";
+
+import { tl } from "../i18n";
+import { dateLocale } from "../i18n";
+
+
 export function SubscriptionDemo() {
+  const { t: tx } = useTranslation();
   const subscription = useSubscription();
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Subscription System Demo</h1>
+      <h1>{tx("auto.subscriptionSystemDemo_20d6")}</h1>
 
       {/* Display current subscription status */}
       <div
@@ -17,32 +25,32 @@ export function SubscriptionDemo() {
           marginBottom: "24px",
         }}
       >
-        <h3>Current Subscription Status:</h3>
+        <h3>{tx("auto.currentSubscriptionStatus_5303")}</h3>
         <p>
-          <strong>Plan:</strong> {subscription.planType}
+          <strong>{tx("auto.plan_335c")}</strong> {tl(subscription.planType)}
         </p>
         <p>
-          <strong>Subscribed:</strong>{" "}
-          {subscription.isSubscribed ? "Yes" : "No"}
+          <strong>{tx("auto.subscribed_1970")}</strong>{" "}
+          {tl(subscription.isSubscribed ? tx("auto.yes_5397") : tx("auto.no_816c"))}
         </p>
         <p>
-          <strong>Trial Active:</strong>{" "}
-          {subscription.isTrialActive ? "Yes" : "No"}
+          <strong>{tx("auto.trialActive_c509")}</strong>{" "}
+          {tl(subscription.isTrialActive ? tx("auto.yes_5397") : tx("auto.no_816c"))}
         </p>
         <p>
-          <strong>Loading:</strong> {subscription.loading ? "Yes" : "No"}
+          <strong>{tx("auto.loading_a60c")}</strong> {tl(subscription.loading ? tx("auto.yes_5397") : tx("auto.no_816c"))}
         </p>
         {subscription.subscriptionEndDate && (
           <p>
-            <strong>End Date:</strong>{" "}
-            {new Date(subscription.subscriptionEndDate).toLocaleDateString()}
+            <strong>{tx("auto.endDate_5f0a")}</strong>{" "}
+            {new Date(subscription.subscriptionEndDate).toLocaleDateString(dateLocale())}
           </p>
         )}
       </div>
 
       {/* Example 1: CRM Tools Feature */}
       <div style={{ marginBottom: "32px" }}>
-        <h3>CRM Tools (Default Feature)</h3>
+        <h3>{tx("auto.crmToolsDefaultFeature_f135")}</h3>
         <SubscriptionGate requiredFeature="CRM Tools">
           <div
             style={{
@@ -52,13 +60,13 @@ export function SubscriptionDemo() {
               border: "1px solid #c3e6cb",
             }}
           >
-            <h4>🎉 CRM Tools Unlocked!</h4>
-            <p>You have access to advanced CRM features including:</p>
+            <h4>{tx("auto.crmToolsUnlocked_9075")}</h4>
+            <p>{tx("auto.youHaveAccessToAdvanced_e550")}</p>
             <ul>
-              <li>Customer relationship management</li>
-              <li>Lead tracking</li>
-              <li>Communication history</li>
-              <li>Sales pipeline</li>
+              <li>{tx("auto.customerRelationshipManagement_d608")}</li>
+              <li>{tx("auto.leadTracking_54e9")}</li>
+              <li>{tx("auto.communicationHistory_b5ae")}</li>
+              <li>{tx("auto.salesPipeline_df5e")}</li>
             </ul>
           </div>
         </SubscriptionGate>
@@ -66,7 +74,7 @@ export function SubscriptionDemo() {
 
       {/* Example 2: Inventory Management */}
       <div style={{ marginBottom: "32px" }}>
-        <h3>Inventory Management</h3>
+        <h3>{tx("auto.inventoryManagement_3c40")}</h3>
         <SubscriptionGate requiredFeature="Inventory Tool">
           <div
             style={{
@@ -76,13 +84,13 @@ export function SubscriptionDemo() {
               border: "1px solid #bee5eb",
             }}
           >
-            <h4>📦 Inventory Management Unlocked!</h4>
-            <p>You can now manage your inventory with features like:</p>
+            <h4>{tx("auto.inventoryManagementUnlocked_f85a")}</h4>
+            <p>{tx("auto.youCanNowManageYour_5c58")}</p>
             <ul>
-              <li>Stock tracking</li>
-              <li>Low stock alerts</li>
-              <li>Product categorization</li>
-              <li>Supplier management</li>
+              <li>{tx("auto.stockTracking_c74f")}</li>
+              <li>{tx("auto.lowStockAlerts_0186")}</li>
+              <li>{tx("auto.productCategorization_ab42")}</li>
+              <li>{tx("auto.supplierManagement_efb0")}</li>
             </ul>
           </div>
         </SubscriptionGate>
@@ -90,7 +98,7 @@ export function SubscriptionDemo() {
 
       {/* Example 3: Professional Feature */}
       <div style={{ marginBottom: "32px" }}>
-        <h3>Priority Support (Professional Plan)</h3>
+        <h3>{tx("auto.prioritySupportProfessionalPlan_ac65")}</h3>
         <SubscriptionGate requiredFeature="Priority Support">
           <div
             style={{
@@ -100,13 +108,13 @@ export function SubscriptionDemo() {
               border: "1px solid #ffeaa7",
             }}
           >
-            <h4>⭐ Priority Support Unlocked!</h4>
-            <p>As a Professional plan member, you get:</p>
+            <h4>{tx("auto.prioritySupportUnlocked_0b97")}</h4>
+            <p>{tx("auto.asAProfessionalPlanMember_4a92")}</p>
             <ul>
-              <li>24/7 priority support</li>
-              <li>Dedicated account manager</li>
-              <li>Phone support</li>
-              <li>Priority bug fixes</li>
+              <li>{tx("auto.247PrioritySupport_aba3")}</li>
+              <li>{tx("auto.dedicatedAccountManager_2192")}</li>
+              <li>{tx("auto.phoneSupport_8cff")}</li>
+              <li>{tx("auto.priorityBugFixes_a32c")}</li>
             </ul>
           </div>
         </SubscriptionGate>
@@ -114,7 +122,7 @@ export function SubscriptionDemo() {
 
       {/* Feature Access Testing */}
       <div style={{ marginBottom: "32px" }}>
-        <h3>Feature Access Testing</h3>
+        <h3>{tx("auto.featureAccessTesting_c589")}</h3>
         <div
           style={{
             background: "#f8f9fa",
@@ -123,28 +131,28 @@ export function SubscriptionDemo() {
           }}
         >
           <p>
-            <strong>Client Management:</strong>{" "}
-            {subscription.checkFeature("Client Management")
-              ? "✅ Available"
-              : "❌ Not Available"}
+            <strong>{tx("auto.clientManagement_e6ea")}</strong>{" "}
+            {tl(subscription.checkFeature("Client Management")
+              ? tx("auto.available_3b72")
+              : tx("auto.notAvailable_dbdc"))}
           </p>
           <p>
-            <strong>Inventory Tool:</strong>{" "}
-            {subscription.checkFeature("Inventory Tool")
-              ? "✅ Available"
-              : "❌ Not Available"}
+            <strong>{tx("auto.inventoryTool_00e9")}</strong>{" "}
+            {tl(subscription.checkFeature("Inventory Tool")
+              ? tx("auto.available_3b72")
+              : tx("auto.notAvailable_dbdc"))}
           </p>
           <p>
-            <strong>Priority Support:</strong>{" "}
-            {subscription.checkFeature("Priority Support")
-              ? "✅ Available"
-              : "❌ Not Available"}
+            <strong>{tx("auto.prioritySupport_618d")}</strong>{" "}
+            {tl(subscription.checkFeature("Priority Support")
+              ? tx("auto.available_3b72")
+              : tx("auto.notAvailable_dbdc"))}
           </p>
           <p>
-            <strong>White Label:</strong>{" "}
-            {subscription.checkFeature("White Label")
-              ? "✅ Available"
-              : "❌ Not Available"}
+            <strong>{tx("auto.whiteLabel_f296")}</strong>{" "}
+            {tl(subscription.checkFeature("White Label")
+              ? tx("auto.available_3b72")
+              : tx("auto.notAvailable_dbdc"))}
           </p>
         </div>
       </div>

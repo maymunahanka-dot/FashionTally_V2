@@ -4,10 +4,16 @@ import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input/Input";
 import Button from "../../components/button/Button";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
-import { getUsdToNgnRate } from "../../utils/exchangeRate";
+import { currencySymbol, getNgnPerUnit } from "../../utils/exchangeRate";
 import "./AddInventoryPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => {
+  const { t: tx } = useTranslation();
   // Individual useState for each input field
   const [itemName, setItemName] = useState("");
   const [sku, setSku] = useState("");
@@ -48,10 +54,10 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${encodeURIComponent(email)}`
         );
         const data = await res.json();
-        const nextCurrency = data?.data?.inventoryCurrency === "USD" ? "USD" : "NGN";
+        const nextCurrency = String(data?.data?.inventoryCurrency || "NGN").toUpperCase();
         if (!cancelled) setCurrency(nextCurrency);
-        if (nextCurrency === "USD") {
-          const rate = await getUsdToNgnRate();
+        if (nextCurrency !== "NGN") {
+          const rate = await getNgnPerUnit(nextCurrency);
           if (!cancelled) setUsdToNgn(rate);
         }
       } catch (error) {
@@ -121,7 +127,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
 
   useEffect(() => {
     if (priceTouched.current || !isEditMode || storedNaira == null) return;
-    if (currency === "USD") {
+    if (currency !== "NGN") {
       if (!usdToNgn) return;
       setPricePerUnit((storedNaira / usdToNgn).toFixed(2));
       return;
@@ -164,42 +170,42 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
     const newErrors = {};
 
     if (!itemName.trim()) {
-      newErrors.itemName = "Item name is required";
+      newErrors.itemName = tx("auto.itemNameIsRequired_e50f");
     }
 
     if (!sku.trim()) {
-      newErrors.sku = "SKU is required";
+      newErrors.sku = tx("auto.skuIsRequired_a0d0");
     }
 
     if (!category.trim()) {
-      newErrors.category = "Category is required";
+      newErrors.category = tx("auto.categoryIsRequired_eb1a");
     }
 
     if (!suppliers.some((entry) => entry.name.trim())) {
-      newErrors.supplier = "At least one supplier name is required";
+      newErrors.supplier = tx("auto.atLeastOneSupplierName_71b3");
     }
 
     if (!quantity.trim()) {
-      newErrors.quantity = "Quantity is required";
+      newErrors.quantity = tx("auto.quantityIsRequired_205d");
     } else if (isNaN(quantity) || parseFloat(quantity) < 0) {
-      newErrors.quantity = "Quantity must be a valid number";
+      newErrors.quantity = tx("auto.quantityMustBeAValid_0237");
     }
 
     if (!unit.trim()) {
-      newErrors.unit = "Unit is required";
+      newErrors.unit = tx("auto.unitIsRequired_c7db");
     }
 
     if (!pricePerUnit.trim()) {
-      newErrors.pricePerUnit = "Price per unit is required";
+      newErrors.pricePerUnit = tx("auto.pricePerUnitIsRequired_e128");
     } else if (isNaN(pricePerUnit) || parseFloat(pricePerUnit) < 0) {
-      newErrors.pricePerUnit = "Price must be a valid number";
+      newErrors.pricePerUnit = tx("auto.priceMustBeAValid_6fda");
     }
 
     if (
       minStockAlert &&
       (isNaN(minStockAlert) || parseFloat(minStockAlert) < 0)
     ) {
-      newErrors.minStockAlert = "Min stock alert must be a valid number";
+      newErrors.minStockAlert = tx("auto.minStockAlertMustBe_3755");
     }
 
     setErrors(newErrors);
@@ -222,7 +228,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    if (!user?.email) { setErrors({ submit: "You must be logged in to manage inventory" }); return; }
+    if (!user?.email) { setErrors({ submit: tx("auto.youMustBeLoggedIn_9abe") }); return; }
 
     setIsSubmitting(true);
     setErrors({});
@@ -242,7 +248,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         unit,
         price: (() => {
           const entered = parseFloat(pricePerUnit) || 0;
-          if (currency !== "USD") return entered;
+          if (currency === "NGN") return entered;
           if (!usdToNgn) throw new Error("Exchange rate is still loading. Try again in a moment.");
           return Math.round(entered * usdToNgn * 100) / 100;
         })(),
@@ -279,7 +285,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
 
       const data = await res.json();
       if (!data.success) {
-        setErrors({ submit: data.error || "Failed to save inventory item" });
+        setErrors({ submit: data.error || tx("auto.failedToSaveInventoryItem_b1ad") });
         return;
       }
 
@@ -291,7 +297,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
       onClose();
     } catch (error) {
       console.error("Error saving inventory item:", error);
-      setErrors({ submit: error.message || "Failed to save inventory item. Please try again." });
+      setErrors({ submit: error.message || tx("auto.failedToSaveInventoryItem_5e16") });
     } finally {
       setIsSubmitting(false);
     }
@@ -305,7 +311,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           <X size={24} />
         </button>
         <h2 className="add_inv_title">
-          {isEditMode ? "Edit Inventory Item" : "Add Inventory Item"}
+          {tl(isEditMode ? tx("auto.editInventoryItem_f3e5") : tx("auto.addInventoryItem_7bb3"))}
         </h2>
       </div>
 
@@ -314,9 +320,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* Item Name */}
         <div className="add_inv_form_group">
           <Input
-            label="Item Name"
+            label={tx("auto.itemName_497c")}
             type="text"
-            placeholder="e.g., Ankara Print Fabric"
+            placeholder={tx("auto.eGAnkaraPrintFabric_9d4c")}
             value={itemName}
             onChange={(e) => {
               setItemName(e.target.value);
@@ -332,9 +338,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* SKU */}
         <div className="add_inv_form_group">
           <Input
-            label="SKU (Stock Keeping Unit)"
+            label={tx("auto.skuStockKeepingUnit_48d7")}
             type="text"
-            placeholder="e.g., ANK001"
+            placeholder={tx("auto.eGAnk001_adff")}
             value={sku}
             onChange={(e) => {
               setSku(e.target.value);
@@ -350,9 +356,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* Category */}
         <div className="add_inv_form_group">
           <Input
-            label="Category"
+            label={tx("auto.category_a3c6")}
             type="text"
-            placeholder="e.g., Fabric, Notions, Threads, Accessories"
+            placeholder={tx("auto.eGFabricNotionsThreads_fb35")}
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
@@ -368,9 +374,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* Subcategory */}
         <div className="add_inv_form_group">
           <Input
-            label="Subcategory (Optional)"
+            label={tx("auto.subcategoryOptional_fda4")}
             type="text"
-            placeholder="e.g., Cotton, Silk, Polyester"
+            placeholder={tx("auto.eGCottonSilkPolyester_fd14")}
             value={subcategory}
             onChange={(e) => setSubcategory(e.target.value)}
             variant="rounded"
@@ -379,11 +385,11 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         </div>
 
         <div className="add_inv_form_group">
-          <p className="add_inv_upload_label">Suppliers</p>
+          <p className="add_inv_upload_label">{tx("auto.suppliers_6f76")}</p>
           {suppliers.map((entry, index) => (
             <div className="add_inv_supplier_block" key={index}>
               <div className="add_inv_supplier_head">
-                <span>{suppliers.length > 1 ? `Supplier ${index + 1}` : "Supplier"}</span>
+                <span>{tl(suppliers.length > 1 ? `Supplier ${index + 1}` : tx("auto.supplier_55ed"))}</span>
                 {suppliers.length > 1 && (
                   <button
                     type="button"
@@ -398,9 +404,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
               </div>
               <div className="add_inv_supplier_fields">
                 <Input
-                  label="Name"
+                  label={tx("auto.name_709a")}
                   type="text"
-                  placeholder="Lagos Textiles Ltd"
+                  placeholder={tx("auto.lagosTextilesLtd_3966")}
                   value={entry.name}
                   onChange={(e) => {
                     const next = [...suppliers];
@@ -414,9 +420,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
                   disabled={isSubmitting}
                 />
                 <Input
-                  label="Contact"
+                  label={tx("auto.contact_b374")}
                   type="text"
-                  placeholder="Phone or email"
+                  placeholder={tx("auto.phoneOrEmail_c338")}
                   value={entry.contact}
                   onChange={(e) => {
                     const next = [...suppliers];
@@ -436,7 +442,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
             disabled={isSubmitting}
           >
             <Plus size={16} />
-            Add another supplier
+            {tx("auto.addAnotherSupplier_86cd")}
           </button>
         </div>
 
@@ -444,7 +450,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         <div className="add_inv_form_row">
           <div className="add_inv_form_group add_inv_form_group_half">
             <Input
-              label="Quantity"
+              label={tx("auto.quantity_44f6")}
               type="number"
               placeholder="0"
               value={quantity}
@@ -460,9 +466,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           </div>
           <div className="add_inv_form_group add_inv_form_group_half">
             <Input
-              label="Unit"
+              label={tx("auto.unit_f6b9")}
               type="select"
-              placeholder="Select unit"
+              placeholder={tx("auto.selectUnit_bc6d")}
               value={unit}
               onChange={(e) => {
                 setUnit(e.target.value);
@@ -489,7 +495,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         <div className="add_inv_form_row">
           <div className="add_inv_form_group add_inv_form_group_half">
             <Input
-              label={currency === "USD" ? "Price per Unit ($)" : "Price per Unit (₦)"}
+              label={tx("tpl.pricePerUnit_7e4c", { v0: currencySymbol(currency) })}
               type="number"
               placeholder="0"
               step="0.01"
@@ -504,19 +510,10 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
               variant="rounded"
               disabled={isSubmitting}
             />
-            {currency === "USD" && (
-              <p className="add_inv_rate_hint">
-                {usdToNgn
-                  ? `$1 = ₦${usdToNgn.toLocaleString()} · saves as ₦${(
-                      (parseFloat(pricePerUnit) || 0) * usdToNgn
-                    ).toLocaleString()}`
-                  : "Loading the dollar exchange rate..."}
-              </p>
-            )}
           </div>
           <div className="add_inv_form_group add_inv_form_group_half">
             <Input
-              label="Reorder Point"
+              label={tx("auto.reorderPoint_4f32")}
               type="number"
               placeholder="0"
               value={minStockAlert}
@@ -534,9 +531,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* Color */}
         <div className="add_inv_form_group">
           <Input
-            label="Color (Optional)"
+            label={tx("auto.colorOptional_a3d7")}
             type="text"
-            placeholder="e.g., Red, Blue, Multi-color"
+            placeholder={tx("auto.eGRedBlueMulti_e91d")}
             value={color}
             onChange={(e) => setColor(e.target.value)}
             variant="rounded"
@@ -547,9 +544,9 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* Description */}
         <div className="add_inv_form_group">
           <Input
-            label="Description"
+            label={tx("auto.description_55f8")}
             type="textarea"
-            placeholder="Add notes about this item..."
+            placeholder={tx("auto.addNotesAboutThisItem_e26b")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             variant="rounded"
@@ -559,7 +556,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         </div>
 
         <div className="add_inv_form_group">
-          <p className="add_inv_upload_label">Item Image (Optional)</p>
+          <p className="add_inv_upload_label">{tx("auto.itemImageOptional_c259")}</p>
           <div
             className={`add_inv_upload_area ${dragOver ? "drag_over" : ""} ${imagePreview ? "has_image" : ""}`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -579,14 +576,14 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
                   <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="add_inv_remove_img_btn">
                     <X size={16} />
                   </button>
-                  <span>Click to change</span>
+                  <span>{tx("auto.clickToChange_31d9")}</span>
                 </div>
               </div>
             ) : (
               <div className="add_inv_upload_placeholder">
                 <div className="add_inv_upload_icon_wrap"><Upload size={28} /></div>
-                <p>Click or drag to upload</p>
-                <span>PNG, JPG up to 10MB</span>
+                <p>{tx("auto.clickOrDragToUpload_ef5c")}</p>
+                <span>{tx("auto.pngJpgUpTo10mb_951d")}</span>
               </div>
             )}
           </div>
@@ -595,7 +592,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
         {/* Error Display */}
         {errors.submit && (
           <div className="add_inv_error">
-            <p>{errors.submit}</p>
+            <p>{tl(errors.submit)}</p>
           </div>
         )}
 
@@ -607,7 +604,7 @@ const AddInventoryPanel = ({ onClose, selectedItem, isEditMode, onSuccess }) => 
           fullWidth
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Saving..." : isEditMode ? "Update Item" : "Add Item"}
+          {isSubmitting ? tx("auto.saving_ae7e") : isEditMode ? tx("auto.updateItem_8297") : tx("auto.addItem_4dba")}
         </Button>
       </form>
     </div>

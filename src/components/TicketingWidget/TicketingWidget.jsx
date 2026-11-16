@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import "./TicketingWidget.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 // ── Categories (kept client-side — no API needed) ─────────────────────────────
 
 const TOP_CATEGORIES = [
@@ -174,7 +182,7 @@ async function postMessage(id, text) {
 function formatDate(isoString) {
   if (!isoString) return "";
   const d = new Date(isoString);
-  return `${d.getDate()} ${d.toLocaleString("en", { month: "short" })}, ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${d.getDate()} ${d.toLocaleString(dateLocale("en"), { month: "short" })}, ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -221,15 +229,17 @@ const IconSend = () => (
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function Tabs({ active, onChange }) {
+  const { t: tx } = useTranslation();
   return (
     <div className="tw-tabs">
-      <button className={`tw-tab ${active === "new" ? "active" : ""}`} onClick={() => onChange("new")}>New ticket</button>
-      <button className={`tw-tab ${active === "my"  ? "active" : ""}`} onClick={() => onChange("my")}>My tickets</button>
+      <button className={`tw-tab ${active === "new" ? "active" : ""}`} onClick={() => onChange("new")}>{tx("auto.newTicket_b8bf")}</button>
+      <button className={`tw-tab ${active === "my"  ? "active" : ""}`} onClick={() => onChange("my")}>{tx("auto.myTickets_5394")}</button>
     </div>
   );
 }
 
 function Header({ title, subtitle, onBack, onClose, showBack }) {
+  useTranslation(); // re-render when the language changes
   return (
     <div className="tw-header">
       <div className="tw-header-left">
@@ -237,8 +247,8 @@ function Header({ title, subtitle, onBack, onClose, showBack }) {
           <button className="tw-icon-btn" onClick={onBack} aria-label="Back"><IconBack /></button>
         )}
         <div>
-          <h2 className="tw-header-title">{title}</h2>
-          <p className="tw-header-sub">{subtitle}</p>
+          <h2 className="tw-header-title">{tl(title)}</h2>
+          <p className="tw-header-sub">{tl(subtitle)}</p>
         </div>
       </div>
       <button className="tw-icon-btn" onClick={onClose} aria-label="Close"><IconClose /></button>
@@ -249,43 +259,44 @@ function Header({ title, subtitle, onBack, onClose, showBack }) {
 // ── VIEW 1 — Category / My Tickets list ──────────────────────────────────────
 
 function ViewCategories({ onSelect, activeTab, onTabChange, tickets, ticketsLoading, onTicketClick, onClose }) {
+  const { t: tx } = useTranslation();
   return (
     <>
-      <Header title="Need help?" subtitle="Choose what you need help with." showBack={false} onClose={onClose} />
+      <Header title={tx("auto.needHelp_97e2")} subtitle={tx("auto.chooseWhatYouNeedHelp_55d6")} showBack={false} onClose={onClose} />
       <div className="tw-body">
         <Tabs active={activeTab} onChange={onTabChange} />
 
         {activeTab === "new" && (
           <ul className="tw-cat-list">
-            <li className="tw-cat-section-label">Account &amp; Plan</li>
+            <li className="tw-cat-section-label">{tx("auto.accountPlan_3c78")}</li>
             {TOP_CATEGORIES.map(c => (
               <li key={c.id}>
                 <button className="tw-cat-item" onClick={() => onSelect(c)}>
                   <div className="tw-cat-text">
-                    <span className="tw-cat-title">{c.title}</span>
-                    <span className="tw-cat-desc">{c.description}</span>
+                    <span className="tw-cat-title">{tl(c.title)}</span>
+                    <span className="tw-cat-desc">{tl(c.description)}</span>
                   </div>
                 </button>
               </li>
             ))}
-            <li className="tw-cat-section-label">Features</li>
+            <li className="tw-cat-section-label">{tx("auto.features_fc33")}</li>
             {MAIN_CATEGORIES.map(c => (
               <li key={c.id}>
                 <button className="tw-cat-item" onClick={() => onSelect(c)}>
                   <div className="tw-cat-text">
-                    <span className="tw-cat-title">{c.title}</span>
-                    <span className="tw-cat-desc">{c.description}</span>
+                    <span className="tw-cat-title">{tl(c.title)}</span>
+                    <span className="tw-cat-desc">{tl(c.description)}</span>
                   </div>
                 </button>
               </li>
             ))}
-            <li className="tw-cat-section-label">Other</li>
+            <li className="tw-cat-section-label">{tx("auto.other_6e6a")}</li>
             {BOTTOM_CATEGORIES.map(c => (
               <li key={c.id}>
                 <button className="tw-cat-item" onClick={() => onSelect(c)}>
                   <div className="tw-cat-text">
-                    <span className="tw-cat-title">{c.title}</span>
-                    <span className="tw-cat-desc">{c.description}</span>
+                    <span className="tw-cat-title">{tl(c.title)}</span>
+                    <span className="tw-cat-desc">{tl(c.description)}</span>
                   </div>
                 </button>
               </li>
@@ -295,22 +306,22 @@ function ViewCategories({ onSelect, activeTab, onTabChange, tickets, ticketsLoad
 
         {activeTab === "my" && (
           <ul className="tw-ticket-list">
-            {ticketsLoading && <li className="tw-empty">Loading tickets…</li>}
-            {!ticketsLoading && tickets.length === 0 && <li className="tw-empty">No tickets yet.</li>}
+            {ticketsLoading && <li className="tw-empty">{tx("auto.loadingTickets_0c96")}</li>}
+            {!ticketsLoading && tickets.length === 0 && <li className="tw-empty">{tx("auto.noTicketsYet_cf98")}</li>}
             {!ticketsLoading && tickets.map(t => (
               <li key={t.id}>
                 <button className="tw-ticket-card" onClick={() => onTicketClick(t)}>
                   <div className="tw-ticket-card-top">
-                    <span className="tw-ticket-id">#{t.id}</span>
+                    <span className="tw-ticket-id">#{tl(t.id)}</span>
                     <span className={`tw-badge ${t.status === "resolved" ? "resolved" : t.status === "in_progress" ? "in-progress" : "open"}`}>
-                      {t.status === "resolved" ? "Resolved" : t.status === "in_progress" ? "In Progress" : "Open"}
+                      {t.status === "resolved" ? tx("auto.resolved_d999") : t.status === "in_progress" ? tx("auto.inProgress_f61e") : tx("auto.open_cf9b")}
                     </span>
                   </div>
-                  <p className="tw-ticket-sub">{t.subIssue}</p>
-                  <p className="tw-ticket-preview">{t.description}</p>
+                  <p className="tw-ticket-sub">{tl(t.subIssue)}</p>
+                  <p className="tw-ticket-preview">{tl(t.description)}</p>
                   <div className="tw-ticket-card-bottom">
-                    <span className="tw-ticket-cat">{t.category}</span>
-                    <span className="tw-ticket-date">{formatDate(t.createdAt)}</span>
+                    <span className="tw-ticket-cat">{tl(t.category)}</span>
+                    <span className="tw-ticket-date">{tl(formatDate(t.createdAt))}</span>
                   </div>
                 </button>
               </li>
@@ -325,9 +336,10 @@ function ViewCategories({ onSelect, activeTab, onTabChange, tickets, ticketsLoad
 // ── VIEW 2 — Sub-issue list ───────────────────────────────────────────────────
 
 function ViewSubIssues({ category, onSelect, onBack, onClose, activeTab, onTabChange }) {
+  const { t: tx } = useTranslation();
   return (
     <>
-      <Header title={category.title} subtitle="Select the issue that best matches your problem." showBack onBack={onBack} onClose={onClose} />
+      <Header title={tl(category.title)} subtitle={tx("auto.selectTheIssueThatBest_49f6")} showBack onBack={onBack} onClose={onClose} />
       <div className="tw-body">
         <Tabs active={activeTab} onChange={onTabChange} />
         <ul className="tw-cat-list">
@@ -335,8 +347,8 @@ function ViewSubIssues({ category, onSelect, onBack, onClose, activeTab, onTabCh
             <li key={s.id}>
               <button className="tw-cat-item" onClick={() => onSelect(s)}>
                 <div className="tw-cat-text">
-                  <span className="tw-cat-title">{s.title}</span>
-                  <span className="tw-cat-desc">{s.hint}</span>
+                  <span className="tw-cat-title">{tl(s.title)}</span>
+                  <span className="tw-cat-desc">{tl(s.hint)}</span>
                 </div>
                 <span className="tw-cat-icon"><IconDoc /></span>
               </button>
@@ -351,6 +363,7 @@ function ViewSubIssues({ category, onSelect, onBack, onClose, activeTab, onTabCh
 // ── VIEW 3 — Form ─────────────────────────────────────────────────────────────
 
 function ViewForm({ subIssue, onBack, onClose, onSubmit, submitting, activeTab, onTabChange }) {
+  const { t: tx } = useTranslation();
   const [date,  setDate]  = useState("");
   const [desc,  setDesc]  = useState("");
   const [files, setFiles] = useState([]);
@@ -367,24 +380,24 @@ function ViewForm({ subIssue, onBack, onClose, onSubmit, submitting, activeTab, 
 
   return (
     <>
-      <Header title={subIssue.title} subtitle="Fill the required details and upload files if needed." showBack onBack={onBack} onClose={onClose} />
+      <Header title={tl(subIssue.title)} subtitle={tx("auto.fillTheRequiredDetailsAnd_358c")} showBack onBack={onBack} onClose={onClose} />
       <div className="tw-body tw-body-form">
         <Tabs active={activeTab} onChange={onTabChange} />
         <form className="tw-form" onSubmit={handleSubmit}>
           <div className="tw-form-group">
-            <label className="tw-form-label">When did you notice this? <span className="tw-req">*</span></label>
+            <label className="tw-form-label">{tx("auto.whenDidYouNoticeThis_04b1")}{" "}<span className="tw-req">*</span></label>
             <input className="tw-form-input" type="date" value={date} onChange={e => setDate(e.target.value)} required />
           </div>
           <div className="tw-form-group">
-            <label className="tw-form-label">Describe the issue <span className="tw-req">*</span></label>
+            <label className="tw-form-label">{tx("auto.describeTheIssue_f7f5")}{" "}<span className="tw-req">*</span></label>
             <textarea className="tw-form-textarea" rows={5} value={desc} onChange={e => setDesc(e.target.value)} required />
           </div>
           <div className="tw-form-group">
-            <label className="tw-form-label">Supporting Documents</label>
+            <label className="tw-form-label">{tx("auto.supportingDocuments_8851")}</label>
             <label className="tw-file-drop">
               <IconPaperclip />
-              <span className="tw-file-drop-title">Upload files</span>
-              <span className="tw-file-drop-hint">JPG, PNG, or PDF. Max 5 files.</span>
+              <span className="tw-file-drop-title">{tx("auto.uploadFiles_41ac")}</span>
+              <span className="tw-file-drop-hint">{tx("auto.jpgPngOrPdfMax_11e5")}</span>
               {files.length > 0 && (
                 <span className="tw-file-names">{files.map(f => f.name).join(", ")}</span>
               )}
@@ -392,7 +405,7 @@ function ViewForm({ subIssue, onBack, onClose, onSubmit, submitting, activeTab, 
             </label>
           </div>
           <button className="tw-submit-btn" type="submit" disabled={submitting}>
-            {submitting ? "Submitting…" : "Submit Ticket"}
+            {tl(submitting ? tx("auto.submitting_25bd") : tx("auto.submitTicket_b301"))}
           </button>
         </form>
       </div>
@@ -403,33 +416,34 @@ function ViewForm({ subIssue, onBack, onClose, onSubmit, submitting, activeTab, 
 // ── VIEW 4 — Ticket created ───────────────────────────────────────────────────
 
 function ViewCreated({ ticket, onNewTicket, onViewThread, onBack, onClose, activeTab, onTabChange }) {
+  const { t: tx } = useTranslation();
   return (
     <>
-      <Header title="Ticket created" subtitle="We have received your support request." showBack onBack={onBack} onClose={onClose} />
+      <Header title={tx("auto.ticketCreated_3622")} subtitle={tx("auto.weHaveReceivedYourSupport_1b1b")} showBack onBack={onBack} onClose={onClose} />
       <div className="tw-body tw-body-created">
         <Tabs active={activeTab} onChange={onTabChange} />
         <div className="tw-created-body">
           <div className="tw-created-icon"><IconCheck /></div>
-          <h3 className="tw-created-title">Ticket Created</h3>
-          <p className="tw-created-desc">Your support ticket has been created successfully.</p>
+          <h3 className="tw-created-title">{tx("auto.ticketCreated_4bd5")}</h3>
+          <p className="tw-created-desc">{tx("auto.yourSupportTicketHasBeen_c7ed")}</p>
           <div className="tw-created-meta">
             <div className="tw-meta-row">
-              <span className="tw-meta-key">Ticket ID</span>
-              <span className="tw-meta-val tw-meta-id">#{ticket.id}</span>
+              <span className="tw-meta-key">{tx("auto.ticketId_ef4b")}</span>
+              <span className="tw-meta-val tw-meta-id">#{tl(ticket.id)}</span>
             </div>
             <div className="tw-meta-row">
-              <span className="tw-meta-key">Issue</span>
-              <span className="tw-meta-val">{ticket.subIssue}</span>
+              <span className="tw-meta-key">{tx("auto.issue_7378")}</span>
+              <span className="tw-meta-val">{tl(ticket.subIssue)}</span>
             </div>
             <div className="tw-meta-row">
-              <span className="tw-meta-key">Status</span>
-              <span className="tw-badge open">Open</span>
+              <span className="tw-meta-key">{tx("auto.status_bae7")}</span>
+              <span className="tw-badge open">{tx("auto.open_cf9b")}</span>
             </div>
           </div>
         </div>
         <div className="tw-created-actions">
-          <button className="tw-outline-btn" onClick={onNewTicket}>New Ticket</button>
-          <button className="tw-dark-btn"    onClick={onViewThread}>View Thread</button>
+          <button className="tw-outline-btn" onClick={onNewTicket}>{tx("auto.newTicket_dcaa")}</button>
+          <button className="tw-dark-btn"    onClick={onViewThread}>{tx("auto.viewThread_943d")}</button>
         </div>
       </div>
     </>
@@ -439,6 +453,7 @@ function ViewCreated({ ticket, onNewTicket, onViewThread, onBack, onClose, activ
 // ── VIEW 5 — Thread / chat ────────────────────────────────────────────────────
 
 function ViewThread({ ticket, onBack, onClose, onTicketUpdate }) {
+  const { t: tx } = useTranslation();
   const [messages, setMessages] = useState(ticket.messages || []);
   const [input,    setInput]    = useState("");
   const [sending,  setSending]  = useState(false);
@@ -482,15 +497,15 @@ function ViewThread({ ticket, onBack, onClose, onTicketUpdate }) {
 
   return (
     <>
-      <Header title="Support thread" subtitle="Keep this like a simple chat thread." showBack onBack={onBack} onClose={onClose} />
+      <Header title={tx("auto.supportThread_7a37")} subtitle={tx("auto.keepThisLikeASimple_92da")} showBack onBack={onBack} onClose={onClose} />
       <div className="tw-thread-wrap">
         {/* Ticket info card */}
         <div className="tw-thread-info-card">
           <div className="tw-thread-info-left">
-            <span className="tw-ticket-id">#{ticket.id}</span>
-            <span className="tw-ticket-sub">{ticket.subIssue}</span>
+            <span className="tw-ticket-id">#{tl(ticket.id)}</span>
+            <span className="tw-ticket-sub">{tl(ticket.subIssue)}</span>
           </div>
-          <span className={`tw-badge ${statusClass}`}>{statusLabel}</span>
+          <span className={`tw-badge ${statusClass}`}>{tl(statusLabel)}</span>
         </div>
 
         {/* Messages */}
@@ -498,7 +513,7 @@ function ViewThread({ ticket, onBack, onClose, onTicketUpdate }) {
           {/* Attachments — shown above the first message */}
           {ticket.attachments && ticket.attachments.length > 0 && (
             <div className="tw-attachments">
-              <span className="tw-attachments-label">Attachments</span>
+              <span className="tw-attachments-label">{tx("auto.attachments_6771")}</span>
               <div className="tw-attachments-grid">
                 {ticket.attachments.map((url, i) => {
                   const isPdf = url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('/raw/');
@@ -526,19 +541,19 @@ function ViewThread({ ticket, onBack, onClose, onTicketUpdate }) {
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
-                {m.sender === "user" ? "You" : "Support"}
+                {tl(m.sender === "user" ? tx("auto.you_905c") : tx("auto.support_f32d"))}
               </span>
-              <p className="tw-msg-text">{m.text}</p>
+              <p className="tw-msg-text">{tl(m.text)}</p>
             </div>
           ))}
-          <p className="tw-thread-notice">We have received your ticket. Replies from support will appear in this thread.</p>
+          <p className="tw-thread-notice">{tx("auto.weHaveReceivedYourTicket_8e90")}</p>
         </div>
 
         {/* Input — disabled when resolved */}
         <div className="tw-thread-input-row">
           <input
             className="tw-thread-input"
-            placeholder={ticket.status === "resolved" ? "This ticket is resolved." : "Type your message…"}
+            placeholder={ticket.status === "resolved" ? tx("auto.thisTicketIsResolved_dde9") : tx("auto.typeYourMessage_6733")}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
@@ -561,6 +576,7 @@ function ViewThread({ ticket, onBack, onClose, onTicketUpdate }) {
 // ── Main widget ───────────────────────────────────────────────────────────────
 
 export default function TicketingWidget() {
+  const { t: tx } = useTranslation();
   // view: "home" | "subissues" | "form" | "created" | "thread"
   const [view,             setView]             = useState("home");
   const [isOpen,           setIsOpen]           = useState(false);
@@ -629,7 +645,7 @@ export default function TicketingWidget() {
       setActiveTicket(newTicket);
       setView("created");
     } catch (err) {
-      setError(err.message || "Failed to submit ticket. Please try again.");
+      setError(err.message || tx("auto.failedToSubmitTicketPlease_ddff"));
     } finally {
       setSubmitting(false);
     }
@@ -662,7 +678,7 @@ export default function TicketingWidget() {
   return (
     <>
       {/* FAB */}
-      <button className="ticket-fab" onClick={handleOpen} aria-label="Open support" title="Support &amp; Help">
+      <button className="ticket-fab" onClick={handleOpen} aria-label="Open support" title={tx("auto.supportHelp_65ec")}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
@@ -676,7 +692,7 @@ export default function TicketingWidget() {
             {/* Global inline error banner */}
             {error && (
               <div className="tw-error-banner">
-                {error}
+                {tl(error)}
                 <button onClick={() => setError("")}>✕</button>
               </div>
             )}

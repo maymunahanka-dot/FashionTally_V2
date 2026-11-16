@@ -1,0 +1,96 @@
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--border-primary, #e5e7eb);
+  background: var(--bg-secondary, #f3f4f6);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.lang-switch-icon {
+  margin: 0 4px 0 6px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.lang-switch-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 6px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.lang-switch-btn:hover {
+  color: var(--text-primary, #111827);
+}
+
+.lang-switch-btn.is-active {
+  background: #16988d;
+  color: #fff;
+}
+
+.lang-switch-btn:focus-visible {
+  outline: 2px solid #16988d;
+  outline-offset: 2px;
+}
+
+/* Top-right corner of the login / sign-up form panel */
+.new-login-right-section,
+.n_s_u_signup-step-right-sec {
+  position: relative;
+}
+
+.lang-switch-corner {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 5;
+}
+
+/* Phones and tablets: the form panel stacks under the green header, so sit in the header */
+@media (max-width: 1008px) {
+  /* anchor to the whole page instead of the form panel: top-right of the green header */
+  .new-login-container,
+  .n_s_u_main-signup-con {
+    position: relative;
+  }
+  .new-login-right-section,
+  .n_s_u_signup-step-right-sec {
+    position: static;
+  }
+  .lang-switch-corner {
+    top: 14px;
+    right: 14px;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  .lang-switch-corner .lang-switch-icon,
+  .lang-switch-corner .lang-switch-btn {
+    color: #fff;
+  }
+  .lang-switch-corner .lang-switch-btn.is-active {
+    background: #fff;
+    color: #16988d;
+  }
+}
+
+/* On a green banner (dashboard welcome banner) */
+.lang-switch-light {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.lang-switch-light .lang-switch-icon,
+.lang-switch-light .lang-switch-btn {
+  color: #fff;
+}
+.lang-switch-light .lang-switch-btn.is-active {
+  background: #fff;
+  color: #16988d;
+}

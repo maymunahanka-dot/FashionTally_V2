@@ -18,7 +18,13 @@ import Input from "../Input/Input";
 import { useTheme } from "../../contexts/ThemeContext";
 import "./AdminForm.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
+  const { t: tx } = useTranslation();
   const { theme } = useTheme();
 
   const [formData, setFormData] = useState({
@@ -102,19 +108,19 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
 
     // Validation
     if (!formData.name.trim()) {
-      alert("Name is required");
+      alert(tx("auto.nameIsRequired_222c"));
       return;
     }
 
     if (!formData.email.trim()) {
-      alert("Email is required");
+      alert(tx("auto.emailIsRequired_4da1"));
       return;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert("Please enter a valid email address");
+      alert(tx("auto.pleaseEnterAValidEmail_0802"));
       return;
     }
 
@@ -123,7 +129,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
       (permission) => permission
     );
     if (!hasPermissions) {
-      alert("Please select at least one permission");
+      alert(tx("auto.pleaseSelectAtLeastOne_185a"));
       return;
     }
 
@@ -203,7 +209,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
         <div className="admin-form-header">
           <div className="admin-form-title">
             <User className="admin-form-icon" />
-            {admin ? "Edit Admin" : "Create New Admin"}
+            {tl(admin ? tx("auto.editAdmin_a1bc") : tx("auto.createNewAdmin_1cdc"))}
           </div>
           <button className="admin-form-close" onClick={onClose}>
             <X size={20} />
@@ -211,63 +217,63 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
         </div>
 
         <div className="admin-form-description">
-          {admin
-            ? "Update admin details and permissions"
-            : "Add a new admin user with specific permissions"}
+          {tl(admin
+            ? tx("auto.updateAdminDetailsAndPermissions_6928")
+            : tx("auto.addANewAdminUser_af1e"))}
         </div>
 
         <form onSubmit={handleSubmit} className="admin-form">
           {/* Basic Information */}
           <div className="admin-form-section">
-            <h3 className="admin-form-section-title">Basic Information</h3>
+            <h3 className="admin-form-section-title">{tx("auto.basicInformation_b0d5")}</h3>
             <div className="admin-form-grid">
               <div className="admin-form-field">
-                <label className="admin-form-label">Full Name *</label>
+                <label className="admin-form-label">{tx("auto.fullName_0756")}</label>
                 <Input
                   type="text"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="Enter full name"
+                  placeholder={tx("auto.enterFullName_2936")}
                   required
                   variant="rounded"
                 />
               </div>
               <div className="admin-form-field">
-                <label className="admin-form-label">Email Address *</label>
+                <label className="admin-form-label">{tx("auto.emailAddress_ff92")}</label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  placeholder="Enter email address"
+                  placeholder={tx("auto.enterEmailAddress_122a")}
                   required
                   variant="rounded"
                 />
               </div>
               <div className="admin-form-field">
-                <label className="admin-form-label">Phone Number</label>
+                <label className="admin-form-label">{tx("auto.phoneNumber_ab25")}</label>
                 <Input
                   type="tel"
                   value={formData.phoneNumber}
                   onChange={(e) =>
                     setFormData({ ...formData, phoneNumber: e.target.value })
                   }
-                  placeholder="Enter phone number"
+                  placeholder={tx("auto.enterPhoneNumber_a226")}
                   variant="rounded"
                 />
               </div>
               <div className="admin-form-field">
-                <label className="admin-form-label">Role</label>
+                <label className="admin-form-label">{tx("auto.role_c3f1")}</label>
                 <Input
                   type="text"
                   value={formData.role}
                   onChange={(e) =>
                     setFormData({ ...formData, role: e.target.value })
                   }
-                  placeholder="Enter role (e.g., admin, manager, staff)"
+                  placeholder={tx("auto.enterRoleEGAdmin_070b")}
                   variant="rounded"
                 />
               </div>
@@ -277,7 +283,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
           {/* Permissions */}
           <div className="admin-form-section">
             <div className="admin-form-permissions-header">
-              <h3 className="admin-form-section-title">Permissions</h3>
+              <h3 className="admin-form-section-title">{tx("auto.permissions_d06d")}</h3>
               <div className="admin-form-permission-actions">
                 <Button
                   type="button"
@@ -285,7 +291,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
                   onClick={selectAllPermissions}
                   className="admin-form-action-btn"
                 >
-                  Select Available
+                  {tx("auto.selectAvailable_5ef9")}
                 </Button>
                 <Button
                   type="button"
@@ -293,7 +299,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
                   onClick={clearAllPermissions}
                   className="admin-form-action-btn"
                 >
-                  Clear All
+                  {tx("auto.clearAll_3a88")}
                 </Button>
               </div>
             </div>
@@ -317,7 +323,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
                           <Icon className="admin-form-permission-icon" />
                         )}
                         <span className="admin-form-permission-label">
-                          {label}
+                          {tl(label)}
                         </span>
                       </div>
                       <div className="admin-form-switch">
@@ -347,7 +353,7 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
             </div>
             <div className="admin-form-locked-note">
               <span className="admin-form-note-text">
-                All permissions are available for admin users.
+                {tx("auto.allPermissionsAreAvailableFor_ed54")}
               </span>
             </div>
           </div>
@@ -359,10 +365,10 @@ const AdminForm = ({ open, onClose, admin, onSubmit, loading = false }) => {
               onClick={onClose}
               disabled={loading}
             >
-              Cancel
+              {tx("auto.cancel_77df")}
             </Button>
             <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? "Saving..." : admin ? "Update Admin" : "Create Admin"}
+              {loading ? tx("auto.saving_ae7e") : admin ? tx("auto.updateAdmin_f62a") : tx("auto.createAdmin_318d")}
             </Button>
           </div>
         </form>

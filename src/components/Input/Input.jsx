@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import "./Input.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+
 const Input = ({
   type = "text",
   label,
@@ -20,6 +26,7 @@ const Input = ({
   variant = "bottom", // New prop: "rounded" or "bottom"
   ...props
 }) => {
+  const { t: tx } = useTranslation();
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
@@ -211,7 +218,7 @@ const Input = ({
               type={getInputType()}
               value={value || ""}
               onChange={onChange}
-              placeholder={placeholder}
+              placeholder={tl(placeholder)}
               required={required}
               disabled={disabled}
               className={`_in_com_input_field _in_com_input_field_${variant} ${
@@ -221,7 +228,7 @@ const Input = ({
               }`}
               {...props}
             />
-            {renderPasswordToggle()}
+            {tl(renderPasswordToggle())}
           </div>
         );
 
@@ -231,7 +238,7 @@ const Input = ({
             type="number"
             value={value}
             onChange={handleNumberChange}
-            placeholder={placeholder}
+            placeholder={tl(placeholder)}
             required={required}
             disabled={disabled}
             max={maxNumber}
@@ -247,7 +254,7 @@ const Input = ({
           <textarea
             value={value}
             onChange={onChange}
-            placeholder={placeholder}
+            placeholder={tl(placeholder)}
             required={required}
             disabled={disabled}
             className={`_in_com_input_field _in_com_input_field_${variant} _in_com_textarea ${
@@ -269,10 +276,10 @@ const Input = ({
             } ${active ? "active" : ""}`}
             {...props}
           >
-            <option value="">{placeholder || "Select an option"}</option>
+            <option value="">{tl(placeholder || tx("auto.selectAnOption_08d7"))}</option>
             {options.map((option, index) => (
               <option key={index} value={option.value || option}>
-                {option.label || option}
+                {tl(option.label || option)}
               </option>
             ))}
           </select>
@@ -299,14 +306,14 @@ const Input = ({
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
               </svg>
             </span>
-            {label && <span className="_in_com_checkbox_label">{label}</span>}
+            {label && <span className="_in_com_checkbox_label">{tl(label)}</span>}
           </label>
         );
 
       case "switch":
         return (
           <label className="_in_com_switch_container">
-            {label && <span className="_in_com_switch_label">{label}</span>}
+            {label && <span className="_in_com_switch_label">{tl(label)}</span>}
             <div
               className={`_in_com_switch ${error ? "error" : ""} ${
                 active ? "active" : ""
@@ -396,7 +403,7 @@ const Input = ({
                           }
                         />
                         <div className="_in_com_image_overlay">
-                          <p>Click to change image</p>
+                          <p>{tx("auto.clickToChangeImage_b52b")}</p>
                         </div>
                       </div>
                     );
@@ -421,7 +428,7 @@ const Input = ({
                           }
                         />
                         <div className="_in_com_image_overlay">
-                          <p>Click to change image</p>
+                          <p>{tx("auto.clickToChangeImage_b52b")}</p>
                         </div>
                       </div>
                     );
@@ -435,7 +442,7 @@ const Input = ({
                         >
                           <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                         </svg>
-                        <p>{placeholder || "Click to Select Images"}</p>
+                        <p>{tl(placeholder || tx("auto.clickToSelectImages_73f3"))}</p>
                       </>
                     );
                   }
@@ -451,7 +458,7 @@ const Input = ({
             type={type}
             value={value}
             onChange={onChange}
-            placeholder={placeholder}
+            placeholder={tl(placeholder)}
             required={required}
             disabled={disabled}
             className={`_in_com_input_field ${error ? "error" : ""} ${
@@ -467,12 +474,12 @@ const Input = ({
     <div className={`_in_com_input_wrapper ${className}`}>
       {label && type !== "checkbox" && type !== "switch" && (
         <label className="_in_com_input_label">
-          {label}
+          {tl(label)}
           {/* {required && <span className="_in_com_required">*</span>} */}
         </label>
       )}
-      {renderInput()}
-      {error && <span className="_in_com_error_message">{error}</span>}
+      {tl(renderInput())}
+      {error && <span className="_in_com_error_message">{tl(error)}</span>}
     </div>
   );
 };

@@ -12,7 +12,13 @@ import {
 import Input from "../../components/Input";
 import "./AddFeedbackPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
@@ -142,21 +148,21 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
     const newErrors = {};
 
     if (!formData.clientName.trim()) {
-      newErrors.clientName = "Client name is required";
+      newErrors.clientName = tx("auto.clientNameIsRequired_2cf1");
     }
 
     if (!formData.clientEmail.trim()) {
-      newErrors.clientEmail = "Client email is required";
+      newErrors.clientEmail = tx("auto.clientEmailIsRequired_976c");
     } else if (!/\S+@\S+\.\S+/.test(formData.clientEmail)) {
-      newErrors.clientEmail = "Please enter a valid email address";
+      newErrors.clientEmail = tx("auto.pleaseEnterAValidEmail_0802");
     }
 
     if (!formData.comment.trim()) {
-      newErrors.comment = "Feedback comment is required";
+      newErrors.comment = tx("auto.feedbackCommentIsRequired_59a4");
     }
 
     if (formData.rating < 1 || formData.rating > 5) {
-      newErrors.rating = "Rating must be between 1 and 5 stars";
+      newErrors.rating = tx("auto.ratingMustBeBetween1_0380");
     }
 
     setErrors(newErrors);
@@ -167,7 +173,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
     e.preventDefault();
 
     if (!user?.email) {
-      alert("User not authenticated");
+      alert(tx("auto.userNotAuthenticated_dc86"));
       return;
     }
 
@@ -237,7 +243,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
       }
     } catch (error) {
       console.error("Error saving feedback:", error);
-      alert("Failed to save feedback. Please try again.");
+      alert(tx("auto.failedToSaveFeedbackPlease_bae7"));
     } finally {
       setLoading(false);
     }
@@ -276,7 +282,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
           <X size={24} />
         </button>
         <h2 className="add_feedback_title">
-          {editMode ? "Edit Client Feedback" : "Add Client Feedback"}
+          {tl(editMode ? tx("auto.editClientFeedback_53f9") : tx("auto.addClientFeedback_c329"))}
         </h2>
       </div>
 
@@ -285,7 +291,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         {/* Client Selection */}
         <div className="add_feedback_form_group">
           <Input
-            label="Select Client"
+            label={tx("auto.selectClient_bed9")}
             type="select"
             value={selectedClient?.id || "manual"}
             onChange={(e) => handleClientSelect(e.target.value)}
@@ -304,9 +310,9 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         <div className="add_feedback_form_row">
           <div className="add_feedback_form_group add_feedback_form_group_half">
             <Input
-              label="Client Name *"
+              label={tx("auto.clientName_95a0")}
               type="text"
-              placeholder="e.g., Sarah Johnson"
+              placeholder={tx("auto.eGSarahJohnson_9edf")}
               value={formData.clientName}
               onChange={(e) => handleInputChange("clientName", e.target.value)}
               error={errors.clientName}
@@ -317,7 +323,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
           </div>
           <div className="add_feedback_form_group add_feedback_form_group_half">
             <Input
-              label="Client Email *"
+              label={tx("auto.clientEmail_a93a")}
               type="email"
               placeholder="sarah@example.com"
               value={formData.clientEmail}
@@ -332,24 +338,24 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
 
         {/* Rating */}
         <div className="add_feedback_form_group">
-          <label className="add_feedback_label">Rating *</label>
+          <label className="add_feedback_label">{tx("auto.rating_3414")}</label>
           <div className="add_feedback_rating">
-            {renderStars()}
+            {tl(renderStars())}
             <span className="add_feedback_rating_text">
-              ({formData.rating} star{formData.rating !== 1 ? "s" : ""})
+              ({tl(formData.rating)}{" "}{tx("auto.star_4e3e")}{tl(formData.rating !== 1 ? "s" : "")})
             </span>
           </div>
           {errors.rating && (
-            <span className="add_feedback_error">{errors.rating}</span>
+            <span className="add_feedback_error">{tl(errors.rating)}</span>
           )}
         </div>
 
         {/* Feedback Comment */}
         <div className="add_feedback_form_group">
           <Input
-            label="Feedback Comment *"
+            label={tx("auto.feedbackComment_6405")}
             type="textarea"
-            placeholder="Share your experience with our service..."
+            placeholder={tx("auto.shareYourExperienceWithOur_30f5")}
             value={formData.comment}
             onChange={(e) => handleInputChange("comment", e.target.value)}
             error={errors.comment}
@@ -363,9 +369,9 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         <div className="add_feedback_form_row">
           <div className="add_feedback_form_group add_feedback_form_group_half">
             <Input
-              label="Product/Service"
+              label={tx("auto.productService_8b9c")}
               type="text"
-              placeholder="e.g., Custom Evening Gown"
+              placeholder={tx("auto.eGCustomEveningGown_a64c")}
               value={formData.productName}
               onChange={(e) => handleInputChange("productName", e.target.value)}
               variant="rounded"
@@ -373,7 +379,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
           </div>
           <div className="add_feedback_form_group add_feedback_form_group_half">
             <Input
-              label="Select Order (Optional)"
+              label={tx("auto.selectOrderOptional_7a00")}
               type="select"
               value={formData.orderNumber}
               onChange={(e) => handleOrderSelect(e.target.value)}
@@ -397,9 +403,9 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         ) && (
           <div className="add_feedback_form_group">
             <Input
-              label="Order Number (Manual Entry)"
+              label={tx("auto.orderNumberManualEntry_4e78")}
               type="text"
-              placeholder="e.g., ORD-2023-001"
+              placeholder={tx("auto.eGOrd2023001_6c4b")}
               value={formData.orderNumber}
               onChange={(e) => handleInputChange("orderNumber", e.target.value)}
               variant="rounded"
@@ -410,7 +416,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         {/* Invoice Selection */}
         <div className="add_feedback_form_group">
           <Input
-            label="Select Invoice (Optional)"
+            label={tx("auto.selectInvoiceOptional_f914")}
             type="select"
             value={formData.invoiceNumber}
             onChange={(e) => handleInvoiceSelect(e.target.value)}
@@ -433,9 +439,9 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         ) && (
           <div className="add_feedback_form_group">
             <Input
-              label="Invoice Number (Manual Entry)"
+              label={tx("auto.invoiceNumberManualEntry_c3dd")}
               type="text"
-              placeholder="e.g., INV-2023-001"
+              placeholder={tx("auto.eGInv2023001_6868")}
               value={formData.invoiceNumber}
               onChange={(e) =>
                 handleInputChange("invoiceNumber", e.target.value)
@@ -448,7 +454,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         {/* Status */}
         <div className="add_feedback_form_group">
           <Input
-            label="Status"
+            label={tx("auto.status_bae7")}
             type="select"
             value={formData.status}
             onChange={(e) => handleInputChange("status", e.target.value)}
@@ -474,14 +480,14 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
                 className="add_feedback_toggle_input"
               />
               <span className="add_feedback_toggle_text">
-                Make this review public
+                {tx("auto.makeThisReviewPublic_63da")}
               </span>
             </label>
           </div>
         </div>
 
         <div className="add_feedback_form_group">
-          <p className="add_feedback_upload_label">Photo (Optional)</p>
+          <p className="add_feedback_upload_label">{tx("auto.photoOptional_fc8f")}</p>
           <div
             className={`add_feedback_upload ${imagePreview ? "has_image" : ""}`}
             onClick={() => fileInputRef.current?.click()}
@@ -507,7 +513,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
             ) : (
               <div className="add_feedback_upload_placeholder">
                 <Upload size={22} />
-                <span>Click to upload</span>
+                <span>{tx("auto.clickToUpload_c77c")}</span>
               </div>
             )}
           </div>
@@ -523,7 +529,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
                 if (fileInputRef.current) fileInputRef.current.value = "";
               }}
             >
-              Remove photo
+              {tx("auto.removePhoto_c8f5")}
             </button>
           )}
         </div>
@@ -531,7 +537,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         {/* Preview */}
         <div className="add_feedback_preview">
           <div className="add_feedback_preview_header">
-            <span className="add_feedback_preview_title">Review Preview</span>
+            <span className="add_feedback_preview_title">{tx("auto.reviewPreview_4306")}</span>
           </div>
           <div className="add_feedback_preview_content">
             <div className="add_feedback_preview_rating">
@@ -549,12 +555,12 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
                 />
               ))}
               <span className="add_feedback_preview_rating_text">
-                {formData.rating}/5
+                {tl(formData.rating)}/5
               </span>
             </div>
             <p className="add_feedback_preview_client">
-              From: {formData.clientName || "Client Name"}
-              {formData.productName && ` • Product: ${formData.productName}`}
+              {tx("auto.from_c4d6")}{" "}{tl(formData.clientName || tx("auto.clientName_130c"))}
+              {formData.productName && tx("tpl.product_0d3e", { v0: formData.productName })}
             </p>
           </div>
         </div>
@@ -567,11 +573,11 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         >
           {loading
             ? editMode
-              ? "Updating..."
-              : "Adding..."
+              ? tx("auto.updating_e349")
+              : tx("auto.adding_268c")
             : editMode
-            ? "Update Feedback"
-            : "Add Feedback"}
+            ? tx("auto.updateFeedback_a322")
+            : tx("auto.addFeedback_5981")}
         </button>
       </form>
     </div>

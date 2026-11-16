@@ -5,7 +5,16 @@ import Button from "../../components/button/Button";
 import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./DesignDetailsPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
+  const { t: tx } = useTranslation();
   const { isDark } = useTheme();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -57,7 +66,7 @@ const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
       date = new Date(timestamp);
     }
 
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -77,7 +86,7 @@ const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
         <button className="close-btn" onClick={onClose}>
           <X size={20} />
         </button>
-        <h2 className="panel-title">Design Details</h2>
+        <h2 className="panel-title">{tx("auto.designDetails_583c")}</h2>
         <div className="header-actions">
           <button className="edit-btn" onClick={handleEdit}>
             <Edit3 size={20} />
@@ -139,59 +148,59 @@ const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
 
         {/* Design Information */}
         <div className="design-info-section">
-          <h1 className="design-title">{design.name || design.title}</h1>
+          <h1 className="design-title">{tl(design.name || design.title)}</h1>
 
           {/* Tags */}
           <div className="design-tags">
-            <span className="tag tag-category">{design.category}</span>
-            <span className="tag tag-status">{design.status}</span>
+            <span className="tag tag-category">{tl(design.category)}</span>
+            <span className="tag tag-status">{tl(design.status)}</span>
           </div>
 
           {/* Selling Price */}
           {design.price && (
             <div className="info-group">
-              <label className="info-label">Selling Price</label>
+              <label className="info-label">{tx("auto.sellingPrice_8976")}</label>
               <p className="info-value price"><MoneyAmount amount={design.price} /></p>
             </div>
           )}
 
           {/* Category */}
           <div className="info-group">
-            <label className="info-label">Category</label>
+            <label className="info-label">{tx("auto.category_a3c6")}</label>
             <p className="info-value">
-              {design.category === "Others" && design.customCategory
+              {tl(design.category === "Others" && design.customCategory
                 ? design.customCategory
-                : design.category}
+                : design.category)}
             </p>
           </div>
 
           {/* Client Information */}
           {design.clientName && (
             <div className="info-group">
-              <label className="info-label">Client</label>
-              <p className="info-value">{design.clientName}</p>
+              <label className="info-label">{tx("auto.client_1bdd")}</label>
+              <p className="info-value">{tl(design.clientName)}</p>
             </div>
           )}
 
           {/* Description */}
           {design.description && (
             <div className="info-group">
-              <label className="info-label">Description</label>
-              <p className="info-value description">{design.description}</p>
+              <label className="info-label">{tx("auto.description_55f8")}</label>
+              <p className="info-value description">{tl(design.description)}</p>
             </div>
           )}
 
           {/* Created Date */}
           <div className="info-group">
-            <label className="info-label">Created</label>
-            <p className="info-value">{formatDate(design.createdAt)}</p>
+            <label className="info-label">{tx("auto.created_accf")}</label>
+            <p className="info-value">{tl(formatDate(design.createdAt))}</p>
           </div>
 
           {/* Updated Date */}
           {design.updatedAt && design.updatedAt !== design.createdAt && (
             <div className="info-group">
-              <label className="info-label">Last Updated</label>
-              <p className="info-value">{formatDate(design.updatedAt)}</p>
+              <label className="info-label">{tx("auto.lastUpdated_66f3")}</label>
+              <p className="info-value">{tl(formatDate(design.updatedAt))}</p>
             </div>
           )}
         </div>
@@ -205,7 +214,7 @@ const DesignDetailsPanel = ({ design, onClose, onEdit, onDelete }) => {
             onClick={handleAddOrder}
             className="add-order-btn"
           >
-            Add Order
+            {tx("auto.addOrder_29c1")}
           </Button>
         </div>
       </div>

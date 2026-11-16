@@ -21,7 +21,16 @@ import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import "./TeamPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 const TeamPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const { theme } = useTheme();
   const { user } = useNewAuth();
   const { planType } = useSubscription();
@@ -66,7 +75,7 @@ const TeamPanel = ({ onClose }) => {
   const handleCreateAdmin = () => {
     if (!canAddMoreAdmins()) {
       alert(
-        `You have reached the limit of ${adminLimit} admins for your ${planType} plan. Please upgrade to add more admins.`
+        tx("tpl.youHaveReachedTheLimit_c9f7", { v0: adminLimit, v1: planType })
       );
       return;
     }
@@ -102,7 +111,7 @@ const TeamPanel = ({ onClose }) => {
           alert(`${result.message}`);
         } else {
           alert(
-            `Admin "${result.deletedAdmin?.name}" has been completely removed from the system.`
+            tx("tpl.adminHasBeenCompletelyRemoved_b676", { v0: result.deletedAdmin?.name })
           );
         }
         console.log(
@@ -111,7 +120,7 @@ const TeamPanel = ({ onClose }) => {
       }
     } catch (error) {
       console.error("❌❌❌❌❌❌❌❌❌❌ TEAM PANEL - Delete error:", error);
-      alert(error.message || "Failed to delete admin");
+      alert(error.message || tx("auto.failedToDeleteAdmin_a3e8"));
     }
   };
 
@@ -119,7 +128,7 @@ const TeamPanel = ({ onClose }) => {
     try {
       if (isEditing && selectedAdmin) {
         await updateAdmin(selectedAdmin.email, adminData);
-        alert("Admin updated successfully");
+        alert(tx("auto.adminUpdatedSuccessfully_16fb"));
       } else {
         const result = await createAdmin(adminData);
         if (result.success && result.password) {
@@ -142,7 +151,7 @@ const TeamPanel = ({ onClose }) => {
       setSelectedAdmin(null);
     } catch (error) {
       console.error("❌❌❌❌❌❌❌❌❌❌ TEAM PANEL - Submit error:", error);
-      alert(error.message || "Failed to save admin");
+      alert(error.message || tx("auto.failedToSaveAdmin_c776"));
     }
   };
 
@@ -157,7 +166,7 @@ const TeamPanel = ({ onClose }) => {
               <ArrowLeft size={20} />
             </button>
             <div className="team_header_content">
-              <h2 className="team_title">Team Management</h2>
+              <h2 className="team_title">{tx("auto.teamManagement_f603")}</h2>
             </div>
           </div>
         </div>
@@ -168,15 +177,12 @@ const TeamPanel = ({ onClose }) => {
             <div className="team_access_denied_icon">
               <Lock size={64} />
             </div>
-            <h3 className="team_access_denied_title">Access Restricted</h3>
+            <h3 className="team_access_denied_title">{tx("auto.accessRestricted_13a4")}</h3>
             <p className="team_access_denied_message">
-              You are currently logged in as a sub-admin. Only the main account
-              owner has access to team management features including creating,
-              editing, and managing admin users.
+              {tx("auto.youAreCurrentlyLoggedIn_13e7")}
             </p>
             <p className="team_access_denied_note">
-              If you need to manage team members, please contact the main
-              account owner or log in with the main account credentials.
+              {tx("auto.ifYouNeedToManage_2fb6")}
             </p>
           </div>
         </div>
@@ -193,19 +199,19 @@ const TeamPanel = ({ onClose }) => {
             <ArrowLeft size={20} />
           </button>
           <div className="team_header_content">
-            <h2 className="team_title">Team Management</h2>
+            <h2 className="team_title">{tx("auto.teamManagement_f603")}</h2>
             <div className="team_stats">
               <span className="team_stat">
                 <Users size={16} />
-                {stats.total} Total
+                {tl(stats.total)}{" "}{tx("auto.total_b259")}
               </span>
               <span className="team_stat">
                 <Activity size={16} />
-                {stats.active} Active
+                {tl(stats.active)}{" "}{tx("auto.active_a733")}
               </span>
               <span className="team_stat">
                 <Crown size={16} />
-                {adminLimit} Limit
+                {tl(adminLimit)}{" "}{tx("auto.limit_24d9")}
               </span>
             </div>
           </div>
@@ -223,7 +229,7 @@ const TeamPanel = ({ onClose }) => {
           className="team_refresh_btn"
         >
           <RefreshCw size={16} className={loading ? "spinning" : ""} />
-          Refresh
+          {tx("auto.refresh_56e3")}
         </Button>
         <Button
           variant="primary"
@@ -232,7 +238,7 @@ const TeamPanel = ({ onClose }) => {
           disabled={!canAddMoreAdmins()}
         >
           <UserPlus size={16} />
-          {canAddMoreAdmins() ? "Add Admin" : `Limit Reached (${adminLimit})`}
+          {tl(canAddMoreAdmins() ? tx("auto.addAdmin_975e") : tx("tpl.limitReached_b58d", { v0: adminLimit }))}
         </Button>
       </div>
 
@@ -242,22 +248,19 @@ const TeamPanel = ({ onClose }) => {
           <div className="team_password_content">
             <AlertCircle className="team_password_icon" />
             <div className="team_password_info">
-              <strong>Admin Created Successfully!</strong>
+              <strong>{tx("auto.adminCreatedSuccessfully_5c55")}</strong>
               <p>
-                Login credentials for <strong>{passwordDisplay.name}</strong> (
-                {passwordDisplay.email}) have been generated:
+                {tx("auto.loginCredentialsFor_ab15")}{" "}<strong>{tl(passwordDisplay.name)}</strong> (
+                {tl(passwordDisplay.email)}{tx("auto.haveBeenGenerated_7209")}
               </p>
               <div className="team_password_credentials">
-                <span>Email: {passwordDisplay.email}</span>
+                <span>{tx("auto.email_4c4e")}{" "}{tl(passwordDisplay.email)}</span>
                 <span>
-                  Password: <strong>{passwordDisplay.password}</strong>
+                  {tx("auto.password_be81")}{" "}<strong>{tl(passwordDisplay.password)}</strong>
                 </span>
               </div>
               <p className="team_password_note">
-                We've emailed {passwordDisplay.email} an invite link to set
-                their own password. You can also share this temporary password
-                with them. You remain logged in as the main account owner. This
-                message will disappear in 15 seconds.
+                {tx("auto.weVeEmailed_98c2")}{" "}{tl(passwordDisplay.email)}{" "}{tx("auto.anInviteLinkToSet_00af")}
               </p>
             </div>
             <button
@@ -288,14 +291,13 @@ const TeamPanel = ({ onClose }) => {
           <div className="team_subscription_card">
             <Shield className="team_subscription_icon" />
             <div className="team_subscription_details">
-              <h4>Current Plan: {planType}</h4>
+              <h4>{tx("auto.currentPlan_cb9b")}{" "}{tl(planType)}</h4>
               <p>
-                Admin Limit: {stats.total} / {adminLimit}
+                {tx("auto.adminLimit_ccab")}{" "}{tl(stats.total)} / {tl(adminLimit)}
               </p>
               {!canAddMoreAdmins() && (
                 <p className="team_subscription_warning">
-                  You've reached your admin limit. Upgrade your plan to add more
-                  team members.
+                  {tx("auto.youVeReachedYourAdmin_8fe4")}
                 </p>
               )}
             </div>
@@ -323,7 +325,7 @@ const TeamPanel = ({ onClose }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal_header">
-              <h3 className="modal_title">Admin Details</h3>
+              <h3 className="modal_title">{tx("auto.adminDetails_a579")}</h3>
               <button
                 className="modal_close_btn"
                 onClick={() => setShowViewModal(false)}
@@ -338,23 +340,23 @@ const TeamPanel = ({ onClose }) => {
                   <Users size={24} />
                 </div>
                 <div className="admin_view_details">
-                  <h4>{selectedAdmin.name}</h4>
-                  <p>{selectedAdmin.email}</p>
+                  <h4>{tl(selectedAdmin.name)}</h4>
+                  <p>{tl(selectedAdmin.email)}</p>
                   <div className="admin_view_meta">
                     <span className="admin_view_role">
-                      {selectedAdmin.role}
+                      {tl(selectedAdmin.role)}
                     </span>
                     <span
                       className={`admin_view_status ${selectedAdmin.status}`}
                     >
-                      {selectedAdmin.status}
+                      {tl(selectedAdmin.status)}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div className="admin_view_permissions">
-                <h5>Permissions</h5>
+                <h5>{tx("auto.permissions_d06d")}</h5>
                 <div className="admin_permissions_grid">
                   {Object.entries(selectedAdmin.permissions || {}).map(
                     ([key, value]) => (
@@ -377,13 +379,13 @@ const TeamPanel = ({ onClose }) => {
 
               <div className="admin_view_dates">
                 <div className="admin_view_date">
-                  <strong>Created:</strong>{" "}
-                  {new Date(selectedAdmin.createdAt).toLocaleDateString()}
+                  <strong>{tx("auto.created_0c78")}</strong>{" "}
+                  {new Date(selectedAdmin.createdAt).toLocaleDateString(dateLocale())}
                 </div>
                 {selectedAdmin.lastLogin && (
                   <div className="admin_view_date">
-                    <strong>Last Login:</strong>{" "}
-                    {new Date(selectedAdmin.lastLogin).toLocaleDateString()}
+                    <strong>{tx("auto.lastLogin_c6a4")}</strong>{" "}
+                    {new Date(selectedAdmin.lastLogin).toLocaleDateString(dateLocale())}
                   </div>
                 )}
               </div>
@@ -397,7 +399,7 @@ const TeamPanel = ({ onClose }) => {
                   handleEditAdmin(selectedAdmin);
                 }}
               >
-                Edit Admin
+                {tx("auto.editAdmin_a1bc")}
               </Button>
             </div>
           </div>

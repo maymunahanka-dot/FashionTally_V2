@@ -10,7 +10,12 @@ import toast from "react-hot-toast";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 import "./ProfilePanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
 const ProfilePanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const { user, updateUserProfile, refreshUserData } = useNewAuth();
 
   // Form state
@@ -112,17 +117,17 @@ const ProfilePanel = ({ onClose }) => {
     const newErrors = {};
 
     if (!fullName.trim()) {
-      newErrors.fullName = "Full name is required";
+      newErrors.fullName = tx("auto.fullNameIsRequired_abf3");
     }
 
     if (!email.trim()) {
-      newErrors.email = "Email address is required";
+      newErrors.email = tx("auto.emailAddressIsRequired_e7f0");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email address is invalid";
+      newErrors.email = tx("auto.emailAddressIsInvalid_85f8");
     }
 
     if (!phone.trim()) {
-      newErrors.phone = "Phone number is required";
+      newErrors.phone = tx("auto.phoneNumberIsRequired_f845");
     }
 
     setErrors(newErrors);
@@ -177,7 +182,7 @@ const ProfilePanel = ({ onClose }) => {
 
     // Check if user is authenticated
     if (!user || !auth.currentUser) {
-      toast.error("You must be logged in to update your profile.");
+      toast.error(tx("auto.youMustBeLoggedIn_fbf8"));
       return;
     }
 
@@ -191,14 +196,14 @@ const ProfilePanel = ({ onClose }) => {
       if (profileImage) {
         try {
           imageUrl = await uploadImageToStorage(profileImage);
-          toast.success("Profile image uploaded successfully!");
+          toast.success(tx("auto.profileImageUploadedSuccessfully_2134"));
         } catch (imageError) {
           console.error("Image upload failed:", imageError);
           imageUploadFailed = true;
 
           // Show specific error message but continue with profile update
-          toast.error(`Image upload failed: ${imageError.message}`);
-          toast.info("Continuing with profile update without image change...");
+          toast.error(tx("tpl.imageUploadFailed_aa4f", { v0: imageError.message }));
+          toast.info(tx("auto.continuingWithProfileUpdateWitho_6c22"));
 
           // Keep the current image URL
           imageUrl = currentImageUrl;
@@ -258,11 +263,11 @@ const ProfilePanel = ({ onClose }) => {
       // Show success message with toast
       if (imageUploadFailed && profileImage) {
         toast.success(
-          "Profile updated successfully! Note: Image upload failed, but other changes are saved."
+          tx("auto.profileUpdatedSuccessfullyNoteIm_04ab")
         );
       } else {
         toast.success(
-          "Profile updated successfully! Changes are now visible across the app."
+          tx("auto.profileUpdatedSuccessfullyChange_c3d3")
         );
       }
 
@@ -270,7 +275,7 @@ const ProfilePanel = ({ onClose }) => {
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error(
-        error.message || "Failed to update profile. Please try again."
+        error.message || tx("auto.failedToUpdateProfilePlease_e7c3")
       );
     } finally {
       setLoading(false);
@@ -282,13 +287,13 @@ const ProfilePanel = ({ onClose }) => {
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        toast.error("Please select a valid image file.");
+        toast.error(tx("auto.pleaseSelectAValidImage_9b41"));
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB.");
+        toast.error(tx("auto.imageSizeShouldBeLess_d023"));
         return;
       }
 
@@ -318,7 +323,7 @@ const ProfilePanel = ({ onClose }) => {
       <div className="profile_panel">
         <div className="profile_loading">
           <Loader2 size={32} className="profile_loading_spinner" />
-          <p>Loading profile...</p>
+          <p>{tx("auto.loadingProfile_a9e1")}</p>
         </div>
       </div>
     );
@@ -330,13 +335,13 @@ const ProfilePanel = ({ onClose }) => {
       <div className="profile_header">
         <button className="profile_back_btn" onClick={onClose}>
           <ChevronLeft size={20} />
-          Profile
+          {tx("auto.profile_ff4f")}
         </button>
       </div>
 
       {/* Subtitle */}
       <div className="profile_subtitle">
-        <p>Update your personal information</p>
+        <p>{tx("auto.updateYourPersonalInformation_e6cd")}</p>
       </div>
 
       {/* Form */}
@@ -353,13 +358,13 @@ const ProfilePanel = ({ onClose }) => {
                 />
               ) : (
                 <span className="profile_avatar_initials">
-                  {getInitials(fullName)}
+                  {tl(getInitials(fullName))}
                 </span>
               )}
               {imageUploading && (
                 <div className="profile_avatar_loading">
                   <Loader2 size={24} className="profile_avatar_spinner" />
-                  <span className="profile_upload_text">Uploading...</span>
+                  <span className="profile_upload_text">{tx("auto.uploading_070e")}</span>
                 </div>
               )}
             </div>
@@ -387,16 +392,16 @@ const ProfilePanel = ({ onClose }) => {
             />
           </div>
           <p className="profile_image_hint">
-            Click the camera icon to change your profile picture
+            {tx("auto.clickTheCameraIconTo_05c6")}
           </p>
         </div>
 
         {/* Form Fields */}
         <div className="profile_form_group">
           <Input
-            label="Full Name"
+            label={tx("auto.fullName_6434")}
             type="text"
-            placeholder="Enter your full name"
+            placeholder={tx("auto.enterYourFullName_5c4c")}
             value={fullName}
             onChange={(e) => {
               setFullName(e.target.value);
@@ -410,7 +415,7 @@ const ProfilePanel = ({ onClose }) => {
 
         <div className="profile_form_group">
           <Input
-            label="Email Address"
+            label={tx("auto.emailAddress_09ba")}
             type="email"
             placeholder="your@email.com"
             value={email}
@@ -422,13 +427,13 @@ const ProfilePanel = ({ onClose }) => {
             required
             variant="rounded"
             disabled={true}
-            helperText="Email cannot be changed"
+            helperText={tx("auto.emailCannotBeChanged_dfa8")}
           />
         </div>
 
         <div className="profile_form_group">
           <Input
-            label="Phone Number"
+            label={tx("auto.phoneNumber_ab25")}
             type="tel"
             placeholder="+234 800 000 0000"
             value={phone}
@@ -444,9 +449,9 @@ const ProfilePanel = ({ onClose }) => {
 
         <div className="profile_form_group">
           <Input
-            label="Address"
+            label={tx("auto.address_d70f")}
             type="text"
-            placeholder="Enter your address"
+            placeholder={tx("auto.enterYourAddress_f565")}
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             variant="rounded"
@@ -455,9 +460,9 @@ const ProfilePanel = ({ onClose }) => {
 
         <div className="profile_form_group">
           <Input
-            label="Bio"
+            label={tx("auto.bio_b31f")}
             type="textarea"
-            placeholder="Tell us about yourself..."
+            placeholder={tx("auto.tellUsAboutYourself_157a")}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             variant="rounded"
@@ -474,10 +479,10 @@ const ProfilePanel = ({ onClose }) => {
           {loading ? (
             <>
               <Loader2 size={16} className="profile_save_spinner" />
-              Saving...
+              {tx("auto.saving_ae7e")}
             </>
           ) : (
-            "Save Changes"
+            tx("auto.saveChanges_fa29")
           )}
         </button>
       </form>

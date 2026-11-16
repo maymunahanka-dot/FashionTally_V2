@@ -17,7 +17,11 @@ import TicketingWidget from "../../components/TicketingWidget/TicketingWidget";
 import { useNotificationSetup } from "../../hooks/useNotificationSetup";
 import "./Dashboard.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
 export const Dashboard = () => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const { actualTheme } = useTheme();
 
@@ -39,7 +43,7 @@ export const Dashboard = () => {
             fontSize: "18px",
           }}
         >
-          Loading dashboard...
+          {tx("auto.loadingDashboard_a2fa")}
         </div>
       </div>
     );

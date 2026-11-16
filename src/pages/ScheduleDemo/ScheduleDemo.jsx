@@ -14,6 +14,10 @@ import {
 import { LandingFooter, LandingNav, SectionTag, SplitWords } from "../Home/landingKit.jsx";
 import { useRevealOnScroll, useScrollToTopOnMount } from "../Home/landingUtils.js";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
 const EMPTY_FORM = {
   fullName: "",
   email: "",
@@ -47,6 +51,7 @@ const WHAT_YOU_SEE = [
 ];
 
 const ScheduleDemo = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const rootRef = useRef(null);
   useRevealOnScroll(rootRef);
@@ -103,22 +108,22 @@ const ScheduleDemo = () => {
       {/* ── Form (first on the page, so it clears the floating menu bar) ── */}
       <section className="lx-section lx-dark lx-demo-page" id="book">
         <div className="lx-wrap">
-          <SectionTag>SCHEDULE A DEMO</SectionTag>
-          <SplitWords text="Let's schedule your demo." className="lx-h2" />
+          <SectionTag>{tx("auto.scheduleADemo_680e")}</SectionTag>
+          <SplitWords text={tx("auto.letSScheduleYourDemo_6537")} className="lx-h2" />
           <p className="lx-demo-intro" data-reveal>
-            Book a personalised demo and see how FashionTally can transform your fashion business.
+            {tx("auto.bookAPersonalisedDemoAnd_23aa")}
           </p>
 
           <div className="lx-contact-grid">
             <form className="lx-form" onSubmit={handleSubmit} data-reveal noValidate>
-              <p className="lx-form-group">Your details</p>
+              <p className="lx-form-group">{tx("auto.yourDetails_a625")}</p>
               <div className="lx-form-row">
                 <label>
-                  <span>Full name *</span>
-                  <input name="fullName" value={form.fullName} onChange={onChange} placeholder="Your full name" required />
+                  <span>{tx("auto.fullName_ca27")}</span>
+                  <input name="fullName" value={form.fullName} onChange={onChange} placeholder={tx("auto.yourFullName_d904")} required />
                 </label>
                 <label>
-                  <span>Email *</span>
+                  <span>{tx("auto.email_604e")}</span>
                   <input
                     name="email"
                     type="email"
@@ -130,47 +135,47 @@ const ScheduleDemo = () => {
                 </label>
               </div>
               <label>
-                <span>Phone number *</span>
+                <span>{tx("auto.phoneNumber_f6fa")}</span>
                 <input
                   name="phoneNumber"
                   type="tel"
                   value={form.phoneNumber}
                   onChange={onChange}
-                  placeholder="+234 xxx xxx xxxx"
+                  placeholder={tx("auto.234XxxXxxXxxx_61ff")}
                   required
                 />
               </label>
 
-              <p className="lx-form-group">Your business</p>
+              <p className="lx-form-group">{tx("auto.yourBusiness_d8f3")}</p>
               <div className="lx-form-row">
                 <label>
-                  <span>Business / brand name *</span>
+                  <span>{tx("auto.businessBrandName_b80d")}</span>
                   <input
                     name="businessName"
                     value={form.businessName}
                     onChange={onChange}
-                    placeholder="Your fashion brand"
+                    placeholder={tx("auto.yourFashionBrand_3e80")}
                     required
                   />
                 </label>
                 <label>
-                  <span>Business type</span>
+                  <span>{tx("auto.businessType_9e77")}</span>
                   <select name="businessType" value={form.businessType} onChange={onChange}>
-                    <option value="">Select your business type</option>
-                    <option value="fashion-designer">Fashion Designer</option>
-                    <option value="tailor">Tailor/Seamstress</option>
-                    <option value="fashion-retailer">Fashion Retailer</option>
-                    <option value="fashion-brand">Fashion Brand</option>
-                    <option value="boutique">Boutique Owner</option>
-                    <option value="other">Other</option>
+                    <option value="">{tx("auto.selectYourBusinessType_2b48")}</option>
+                    <option value="fashion-designer">{tx("auto.fashionDesigner_7d31")}</option>
+                    <option value="tailor">{tx("auto.tailorSeamstress_ab54")}</option>
+                    <option value="fashion-retailer">{tx("auto.fashionRetailer_ced4")}</option>
+                    <option value="fashion-brand">{tx("auto.fashionBrand_6cea")}</option>
+                    <option value="boutique">{tx("auto.boutiqueOwner_2111")}</option>
+                    <option value="other">{tx("auto.other_6e6a")}</option>
                   </select>
                 </label>
               </div>
 
-              <p className="lx-form-group">When suits you</p>
+              <p className="lx-form-group">{tx("auto.whenSuitsYou_7776")}</p>
               <div className="lx-form-row">
                 <label>
-                  <span>Preferred date *</span>
+                  <span>{tx("auto.preferredDate_130d")}</span>
                   <input
                     name="preferredDate"
                     type="date"
@@ -181,12 +186,12 @@ const ScheduleDemo = () => {
                   />
                 </label>
                 <label>
-                  <span>Preferred time *</span>
+                  <span>{tx("auto.preferredTime_13a0")}</span>
                   <select name="preferredTime" value={form.preferredTime} onChange={onChange} required>
-                    <option value="">Select time</option>
+                    <option value="">{tx("auto.selectTime_3d7f")}</option>
                     {TIMES.map(([value, label]) => (
                       <option key={value} value={value}>
-                        {label}
+                        {tl(label)}
                       </option>
                     ))}
                   </select>
@@ -194,65 +199,65 @@ const ScheduleDemo = () => {
               </div>
 
               <label>
-                <span>Message (optional)</span>
+                <span>{tx("auto.messageOptional_e0de")}</span>
                 <textarea
                   name="message"
                   rows={4}
                   value={form.message}
                   onChange={onChange}
-                  placeholder="Tell us about your specific needs or questions about FashionTally…"
+                  placeholder={tx("auto.tellUsAboutYourSpecific_513c")}
                 />
               </label>
 
               {status && (
                 <p className={`lx-form-status is-${status.type}`} role="status">
                   {status.type === "ok" ? <CircleCheck size={18} /> : <CircleAlert size={18} />}
-                  {status.text}
+                  {tl(status.text)}
                 </p>
               )}
 
               <button type="submit" className="lx-btn lx-btn-accent lx-btn-block" disabled={loading}>
                 {loading ? (
                   <>
-                    <LoaderCircle size={18} className="lx-spin" /> Scheduling demo…
+                    <LoaderCircle size={18} className="lx-spin" />{" "}{tx("auto.schedulingDemo_c946")}
                   </>
                 ) : (
                   <>
-                    Schedule my demo <CalendarCheck size={16} />
+                    {tx("auto.scheduleMyDemo_0828")}{" "}<CalendarCheck size={16} />
                   </>
                 )}
               </button>
             </form>
 
             <aside className="lx-office" data-reveal style={{ transitionDelay: "0.1s" }}>
-              <h3>What to expect</h3>
-              <p className="lx-office-lead">A friendly walkthrough, built around your business.</p>
+              <h3>{tx("auto.whatToExpect_ed98")}</h3>
+              <p className="lx-office-lead">{tx("auto.aFriendlyWalkthroughBuiltAround_3b65")}</p>
               <div className="lx-office-item">
                 <Clock3 size={18} />
                 <div>
-                  <b>30–45 minutes</b>
-                  <span>Our demo sessions cover all the key features of FashionTally.</span>
+                  <b>{tx("auto.3045Minutes_f1fa")}</b>
+                  <span>{tx("auto.ourDemoSessionsCoverAll_c7ea")}</span>
                 </div>
               </div>
               <div className="lx-office-item">
                 <MessageCircle size={18} />
                 <div>
-                  <b>We confirm within 24 hours</b>
-                  <span>We'll reach out to confirm your date and time.</span>
+                  <b>{tx("auto.weConfirmWithin24Hours_5420")}</b>
+                  <span>{tx("auto.weLlReachOutTo_2049")}</span>
                 </div>
               </div>
               <div className="lx-office-item lx-demo-list">
                 <CalendarCheck size={18} />
                 <div>
-                  <b>What you'll see</b>
+                  <b>{tx("auto.whatYouLlSee_cda6")}</b>
                   {WHAT_YOU_SEE.map((item) => (
-                    <span key={item.text}>· {item.text}</span>
+                    <span key={item.text}>· {tl(item.text)}</span>
                   ))}
                 </div>
               </div>
               <button type="button" className="lx-btn lx-btn-light lx-btn-block" onClick={() => navigate("/contact")}>
                 <span className="lx-btn-roll" data-text="Have questions? Contact us">
-                  Have questions? Contact us
+                  {tx("auto.haveQuestionsContactUs_101d")}
                 </span>
               </button>
             </aside>

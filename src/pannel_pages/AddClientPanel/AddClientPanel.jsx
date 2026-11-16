@@ -5,7 +5,13 @@ import Input from "../../components/Input/Input";
 import "./AddClientPanel.css";
 import { X } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSuccess }) => {
+  const { t: tx } = useTranslation();
   const [formData, setFormData] = useState({
     fullName: editMode && clientData ? clientData.name || "" : "",
     email: editMode && clientData ? clientData.email || "" : "",
@@ -39,21 +45,21 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
     const newErrors = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
+      newErrors.fullName = tx("auto.fullNameIsRequired_abf3");
     } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName = "Name must be at least 2 characters";
+      newErrors.fullName = tx("auto.nameMustBeAtLeast_0acc");
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email address is required";
+      newErrors.email = tx("auto.emailAddressIsRequired_e7f0");
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = tx("auto.pleaseEnterAValidEmail_0802");
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
+      newErrors.phone = tx("auto.phoneNumberIsRequired_f845");
     } else if (formData.phone.trim().length < 6) {
-      newErrors.phone = "Please enter a valid phone number";
+      newErrors.phone = tx("auto.pleaseEnterAValidPhone_4986");
     }
 
     setErrors(newErrors);
@@ -66,7 +72,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
     if (!validateForm()) return;
 
     if (!user?.email) {
-      setErrors({ submit: "You must be logged in to add clients" });
+      setErrors({ submit: tx("auto.youMustBeLoggedIn_b23c") });
       return;
     }
 
@@ -124,7 +130,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
       onClose();
     } catch (error) {
       console.error("Error saving client:", error);
-      setErrors({ submit: "Failed to save client. Please try again." });
+      setErrors({ submit: tx("auto.failedToSaveClientPlease_3a05") });
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +150,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
         <button className="add_client_back_btn" onClick={onClose}>
           <X size={24} />
         </button>
-        <h2 className="add_client_title">{editMode ? "Edit Client" : "Add New Client"}</h2>
+        <h2 className="add_client_title">{tl(editMode ? tx("auto.editClient_f618") : tx("auto.addNewClient_69d9"))}</h2>
       </div>
 
       {/* Form */}
@@ -153,16 +159,16 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
         <div className="add_client_section">
           <div className="add_client_section_header">
             <User size={20} className="add_client_section_icon" />
-            <h3 className="add_client_section_title">Client Information</h3>
+            <h3 className="add_client_section_title">{tx("auto.clientInformation_9b2e")}</h3>
           </div>
 
           <div className="add_client_form_group">
             <label className="add_client_label">
-              Full Name <span className="add_client_required">*</span>
+              {tx("auto.fullName_6434")}{" "}<span className="add_client_required">*</span>
             </label>
             <Input
               type="text"
-              placeholder="Enter client's full name"
+              placeholder={tx("auto.enterClientSFullName_29f9")}
               value={formData.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
               error={errors.fullName}
@@ -173,7 +179,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
 
           <div className="add_client_form_group">
             <label className="add_client_label">
-              Email Address <span className="add_client_required">*</span>
+              {tx("auto.emailAddress_09ba")}{" "}<span className="add_client_required">*</span>
             </label>
             <Input
               type="email"
@@ -189,7 +195,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
 
           <div className="add_client_form_group">
             <label className="add_client_label">
-              Phone Number <span className="add_client_required">*</span>
+              {tx("auto.phoneNumber_ab25")}{" "}<span className="add_client_required">*</span>
             </label>
             <Input
               type="tel"
@@ -203,10 +209,10 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
           </div>
 
           <div className="add_client_form_group">
-            <label className="add_client_label">Address</label>
+            <label className="add_client_label">{tx("auto.address_d70f")}</label>
             <Input
               type="text"
-              placeholder="Enter client's address (optional)"
+              placeholder={tx("auto.enterClientSAddressOptional_5ed9")}
               value={formData.address}
               onChange={(e) => handleInputChange("address", e.target.value)}
               error={errors.address}
@@ -222,7 +228,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
             <div className="add_client_status_icon">
               <div className="add_client_status_dot"></div>
             </div>
-            <h3 className="add_client_section_title">Status</h3>
+            <h3 className="add_client_section_title">{tx("auto.status_bae7")}</h3>
           </div>
 
           <div className="add_client_status_buttons">
@@ -235,7 +241,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
               disabled={isSubmitting}
             >
               <div className="add_client_status_indicator active"></div>
-              Active
+              {tx("auto.active_a733")}
             </button>
             <button
               type="button"
@@ -246,7 +252,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
               disabled={isSubmitting}
             >
               <div className="add_client_status_indicator inactive"></div>
-              Inactive
+              {tx("auto.inactive_09af")}
             </button>
           </div>
         </div>
@@ -255,13 +261,13 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
         <div className="add_client_section">
           <div className="add_client_section_header">
             <FileText size={20} className="add_client_section_icon" />
-            <h3 className="add_client_section_title">Notes</h3>
+            <h3 className="add_client_section_title">{tx("auto.notes_7044")}</h3>
           </div>
 
           <div className="add_client_form_group">
             <Input
               type="textarea"
-              placeholder="Add notes about this client (preferences, special requirements, etc.)"
+              placeholder={tx("auto.addNotesAboutThisClient_e321")}
               value={formData.notes}
               onChange={(e) => handleInputChange("notes", e.target.value)}
               variant="rounded"
@@ -269,7 +275,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
               disabled={isSubmitting}
             />
             <p className="add_client_optional_text">
-              Optional - Add any relevant information about the client
+              {tx("auto.optionalAddAnyRelevantInformatio_73ad")}
             </p>
           </div>
         </div>
@@ -277,7 +283,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
         {/* Error Display */}
         {errors.submit && (
           <div className="add_client_error">
-            <p>{errors.submit}</p>
+            <p>{tl(errors.submit)}</p>
           </div>
         )}
 
@@ -288,7 +294,7 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
           disabled={isSubmitting}
         >
           <FileText size={20} />
-          {isSubmitting ? "Saving..." : editMode ? "Save Changes" : "Save Client"}
+          {isSubmitting ? tx("auto.saving_ae7e") : editMode ? tx("auto.saveChanges_fa29") : tx("auto.saveClient_1958")}
         </button>
 
         {/* Next Steps Info - only shown when creating */}
@@ -296,11 +302,10 @@ const AddClientPanel = ({ onClose, editMode = false, clientData = null, onSucces
         <div className="add_client_next_steps">
           <div className="add_client_next_steps_header">
             <Info size={16} className="add_client_info_icon" />
-            <span className="add_client_next_steps_title">Next Steps</span>
+            <span className="add_client_next_steps_title">{tx("auto.nextSteps_3f17")}</span>
           </div>
           <p className="add_client_next_steps_text">
-            After saving the client, you can add measurements, attach orders,
-            and create invoices from their profile.
+            {tx("auto.afterSavingTheClientYou_bf24")}
           </p>
         </div>
         )}

@@ -9,7 +9,13 @@ import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import "./SecurityPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const SecurityPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
 
   const [passwordData, setPasswordData] = useState({
@@ -55,24 +61,24 @@ const SecurityPanel = ({ onClose }) => {
     const newErrors = {};
 
     if (!passwordData.currentPassword) {
-      newErrors.currentPassword = "Current password is required";
+      newErrors.currentPassword = tx("auto.currentPasswordIsRequired_5166");
     }
 
     if (!passwordData.newPassword) {
-      newErrors.newPassword = "New password is required";
+      newErrors.newPassword = tx("auto.newPasswordIsRequired_ded2");
     } else if (passwordData.newPassword.length < 6) {
-      newErrors.newPassword = "Password must be at least 6 characters";
+      newErrors.newPassword = tx("auto.passwordMustBeAtLeast_c017");
     }
 
     if (!passwordData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your new password";
+      newErrors.confirmPassword = tx("auto.pleaseConfirmYourNewPassword_d331");
     } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = tx("auto.passwordsDoNotMatch_d69c");
     }
 
     if (passwordData.currentPassword === passwordData.newPassword) {
       newErrors.newPassword =
-        "New password must be different from current password";
+        tx("auto.newPasswordMustBeDifferent_3c75");
     }
 
     setErrors(newErrors);
@@ -83,7 +89,7 @@ const SecurityPanel = ({ onClose }) => {
     if (!validatePasswordForm()) return;
 
     if (!user) {
-      setErrors({ general: "User not authenticated" });
+      setErrors({ general: tx("auto.userNotAuthenticated_dc86") });
       return;
     }
 
@@ -119,11 +125,11 @@ const SecurityPanel = ({ onClose }) => {
       }
 
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      setSuccessMessage("Password updated successfully!");
+      setSuccessMessage(tx("auto.passwordUpdatedSuccessfully_c0e2"));
       setTimeout(() => onClose(), 2000);
     } catch (error) {
       console.error("Error updating password:", error);
-      setErrors({ general: "Failed to update password. Please try again." });
+      setErrors({ general: tx("auto.failedToUpdatePasswordPlease_d553") });
     } finally {
       setIsUpdating(false);
     }
@@ -137,8 +143,8 @@ const SecurityPanel = ({ onClose }) => {
           <ArrowLeft size={20} />
         </button>
         <div className="sec_header_content">
-          <h2 className="sec_title">Security</h2>
-          <p className="sec_subtitle">Manage your password</p>
+          <h2 className="sec_title">{tx("auto.security_f25c")}</h2>
+          <p className="sec_subtitle">{tx("auto.manageYourPassword_824b")}</p>
         </div>
       </div>
 
@@ -146,7 +152,7 @@ const SecurityPanel = ({ onClose }) => {
       <div className="sec_content">
         {/* Login Method Info */}
         <div className="sec_section">
-          <h3 className="sec_section_title">Account Information</h3>
+          <h3 className="sec_section_title">{tx("auto.accountInformation_0cbd")}</h3>
 
           {loginInfo && (
             <div className="sec_login_info">
@@ -155,9 +161,9 @@ const SecurityPanel = ({ onClose }) => {
                   {loginInfo.isGoogle ? "🔍" : loginInfo.isEmail ? "📧" : "📱"}
                 </span>
                 <div className="sec_login_details">
-                  <h4 className="sec_login_title">Login Method</h4>
+                  <h4 className="sec_login_title">{tx("auto.loginMethod_3859")}</h4>
                   <p className="sec_login_description">
-                    {getLoginMethodDescription(user)}
+                    {tl(getLoginMethodDescription(user))}
                   </p>
                 </div>
               </div>
@@ -166,9 +172,9 @@ const SecurityPanel = ({ onClose }) => {
                 <div className="sec_info_note">
                   <AlertCircle size={16} />
                   <span>
-                    {loginInfo.isGoogle
-                      ? "Password changes are managed through your Google account"
-                      : "Password changes are not available for phone-based accounts"}
+                    {tl(loginInfo.isGoogle
+                      ? tx("auto.passwordChangesAreManagedThrough_49bd")
+                      : tx("auto.passwordChangesAreNotAvailable_1400"))}
                   </span>
                 </div>
               )}
@@ -179,25 +185,25 @@ const SecurityPanel = ({ onClose }) => {
         {/* Change Password Section - Only show for email users */}
         {loginInfo?.canChangePassword && (
           <div className="sec_section">
-            <h3 className="sec_section_title">Change Password</h3>
+            <h3 className="sec_section_title">{tx("auto.changePassword_4928")}</h3>
 
             {/* General Error Message */}
             {errors.general && (
               <div className="sec_error_message">
                 <AlertCircle size={16} />
-                <span>{errors.general}</span>
+                <span>{tl(errors.general)}</span>
               </div>
             )}
 
             {/* Success Message */}
             {successMessage && (
               <div className="sec_success_message">
-                <span>{successMessage}</span>
+                <span>{tl(successMessage)}</span>
               </div>
             )}
 
             <div className="sec_form_group">
-              <label className="sec_form_label">Current Password</label>
+              <label className="sec_form_label">{tx("auto.currentPassword_4d59")}</label>
               <Input
                 type="password"
                 variant="rounded"
@@ -205,7 +211,7 @@ const SecurityPanel = ({ onClose }) => {
                 onChange={(e) =>
                   handlePasswordChange("currentPassword", e.target.value)
                 }
-                placeholder="Enter current password"
+                placeholder={tx("auto.enterCurrentPassword_149b")}
                 error={errors.currentPassword}
                 className="sec_input"
                 disabled={isUpdating}
@@ -213,7 +219,7 @@ const SecurityPanel = ({ onClose }) => {
             </div>
 
             <div className="sec_form_group">
-              <label className="sec_form_label">New Password</label>
+              <label className="sec_form_label">{tx("auto.newPassword_4894")}</label>
               <Input
                 type="password"
                 variant="rounded"
@@ -221,7 +227,7 @@ const SecurityPanel = ({ onClose }) => {
                 onChange={(e) =>
                   handlePasswordChange("newPassword", e.target.value)
                 }
-                placeholder="Enter new password"
+                placeholder={tx("auto.enterNewPassword_a8b1")}
                 error={errors.newPassword}
                 className="sec_input"
                 disabled={isUpdating}
@@ -229,7 +235,7 @@ const SecurityPanel = ({ onClose }) => {
             </div>
 
             <div className="sec_form_group">
-              <label className="sec_form_label">Confirm New Password</label>
+              <label className="sec_form_label">{tx("auto.confirmNewPassword_68dc")}</label>
               <Input
                 type="password"
                 variant="rounded"
@@ -237,7 +243,7 @@ const SecurityPanel = ({ onClose }) => {
                 onChange={(e) =>
                   handlePasswordChange("confirmPassword", e.target.value)
                 }
-                placeholder="Confirm new password"
+                placeholder={tx("auto.confirmNewPassword_f850")}
                 error={errors.confirmPassword}
                 className="sec_input"
                 disabled={isUpdating}
@@ -253,10 +259,10 @@ const SecurityPanel = ({ onClose }) => {
               {isUpdating ? (
                 <>
                   <Loader2 className="animate-spin" size={16} />
-                  Updating Password...
+                  {tx("auto.updatingPassword_ab06")}
                 </>
               ) : (
-                "Update Password"
+                tx("auto.updatePassword_61dc")
               )}
             </Button>
 
@@ -266,10 +272,9 @@ const SecurityPanel = ({ onClose }) => {
                 <AlertCircle size={20} />
               </div>
               <div className="sec_tip_content">
-                <h4 className="sec_tip_title">Security Tip</h4>
+                <h4 className="sec_tip_title">{tx("auto.securityTip_8418")}</h4>
                 <p className="sec_tip_text">
-                  Use a strong password with at least 6 characters, including
-                  uppercase, lowercase, numbers, and symbols.
+                  {tx("auto.useAStrongPasswordWith_79f1")}
                 </p>
               </div>
             </div>

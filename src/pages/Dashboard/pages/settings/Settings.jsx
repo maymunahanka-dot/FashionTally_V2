@@ -24,8 +24,18 @@ import TeamPanel from "../../../../pannel_pages/TeamPanel";
 import SubscriptionPanel from "../../../../pannel_pages/SubscriptionPanel";
 import HelpPanel from "../../../../pannel_pages/HelpPanel";
 import "./Settings.css";
+import { useTranslation } from "react-i18next";
+
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
 
 const Settings = () => {
+  const { t: tx } = useTranslation();
+  const { t } = useTranslation();
   const { signOut, user } = useNewAuth();
   const subscription = useSubscription();
   const [, setActiveSection] = useState(null);
@@ -125,11 +135,11 @@ const Settings = () => {
           window.location.href = "/login";
         }, 500);
       } else {
-        setLogoutError(result.error || "Failed to logout. Please try again.");
+        setLogoutError(result.error || tx("auto.failedToLogoutPleaseTry_9d05"));
       }
     } catch (error) {
       console.error("Logout error:", error);
-      setLogoutError("An unexpected error occurred. Please try again.");
+      setLogoutError(tx("auto.anUnexpectedErrorOccurredPlease_d07a"));
     } finally {
       // Keep loading state for a bit longer to show feedback
       setTimeout(() => {
@@ -241,13 +251,13 @@ const Settings = () => {
     const s = subscription.summary;
     if (s) {
       // Same wording as the mobile app
-      if (s.status === "trial") return `${s.plan} (Trial)`;
+      if (s.status === "trial") return tx("tpl.trial_54a0", { v0: s.plan });
       if (s.status === "active") return s.plan;
       if (s.status === "trial_ended") return "Trial ended";
-      if (s.status === "expired") return `${s.plan} (Expired)`;
+      if (s.status === "expired") return tx("tpl.expired_6e40", { v0: s.plan });
       return "Free";
     }
-    if (subscription.isTrialActive) return `${subscription.planType} (Trial)`;
+    if (subscription.isTrialActive) return tx("tpl.trial_54a0", { v0: subscription.planType });
     if (subscription.isSubscribed) return subscription.planType;
     return "Free";
   };
@@ -282,7 +292,7 @@ const Settings = () => {
       phone: getDisplayValue(currentUser?.phone || currentUser?.phoneNumber),
       plan: getSubscriptionStatus(),
       joinedDate: currentUser?.createdAt
-        ? new Date(currentUser.createdAt).toLocaleDateString()
+        ? new Date(currentUser.createdAt).toLocaleDateString(dateLocale())
         : "Recently",
       uid: currentUser?.uid || "N/A",
     },
@@ -310,8 +320,8 @@ const Settings = () => {
       },
       {
         id: "appearance",
-        title: "Appearance",
-        description: "Theme settings",
+        title: t("appearance.title"),
+        description: t("appearance.settingsDescription"),
         icon: Palette,
         color: "var(--primary-color)",
       },
@@ -351,10 +361,10 @@ const Settings = () => {
       {/* Header */}
       <div className="sett_settings_header">
         <div className="sett_header_content">
-          <h1 className="sett_settings_title">Settings</h1>
+          <h1 className="sett_settings_title">{tx("auto.settings_c7f7")}</h1>
           <div className="sett_header_actions">
             {logoutError && (
-              <div className="sett_logout_error">{logoutError}</div>
+              <div className="sett_logout_error">{tl(logoutError)}</div>
             )}
             <Button
               variant="primary"
@@ -366,7 +376,7 @@ const Settings = () => {
               iconPosition="left"
               className="sett_logout_btn"
             >
-              {isLoggingOut ? "Signing out..." : "Logout"}
+              {tl(isLoggingOut ? tx("auto.signingOut_b941") : tx("auto.logout_e43d"))}
             </Button>
           </div>
         </div>
@@ -376,8 +386,8 @@ const Settings = () => {
       <div className="sett_business_info_card">
         <div className="sett_ipo">
           <div className="sett_ipols">
-            <h1>Settings</h1>
-            <p>Manage your settings</p>
+            <h1>{tx("auto.settings_c7f7")}</h1>
+            <p>{tx("auto.manageYourSettings_99b6")}</p>
           </div>
         </div>
         <div className="sett_business_logo">
@@ -388,37 +398,37 @@ const Settings = () => {
               className="sett_logo_image"
             />
           ) : (
-            <span className="sett_logo_text">{getUserInitials()}</span>
+            <span className="sett_logo_text">{tl(getUserInitials())}</span>
           )}
         </div>
         <div className="sett_business_details">
           <h2 className="sett_business_name">
-            {settingsData.businessInfo.name}
+            {tl(settingsData.businessInfo.name)}
           </h2>
 
           <div className="sett_business_contact">
             <div className="sett_contact_row">
               <LocationIcon />
               <span className="sett_contact_text">
-                {settingsData.businessInfo.address}
+                {tl(settingsData.businessInfo.address)}
               </span>
             </div>
             <div className="sett_contact_row">
               <EmailIcon />
               <span className="sett_contact_text">
-                {settingsData.businessInfo.email}
+                {tl(settingsData.businessInfo.email)}
               </span>
             </div>
             <div className="sett_contact_row">
               <PhoneIcon />
               <span className="sett_contact_text">
-                {settingsData.businessInfo.phone}
+                {tl(settingsData.businessInfo.phone)}
               </span>
             </div>
           </div>
 
           <div className="sett_current_plan">
-            <span className="sett_plan_label">Current Plan</span>
+            <span className="sett_plan_label">{tx("auto.currentPlan_440a")}</span>
             <span
               className={`sett_plan_value ${
                 subscription.isTrialActive
@@ -428,7 +438,7 @@ const Settings = () => {
                   : "free"
               }`}
             >
-              {settingsData.businessInfo.plan}
+              {tl(settingsData.businessInfo.plan)}
             </span>
           </div>
         </div>
@@ -443,10 +453,10 @@ const Settings = () => {
             iconPosition="left"
             className="sett_mobile_logout_btn"
           >
-            {isLoggingOut ? "Signing out..." : "Logout"}
+            {tl(isLoggingOut ? tx("auto.signingOut_b941") : tx("auto.logout_e43d"))}
           </Button>
           {logoutError && (
-            <div className="sett_mobile_logout_error">{logoutError}</div>
+            <div className="sett_mobile_logout_error">{tl(logoutError)}</div>
           )}
         </div>
       </div>
@@ -488,10 +498,10 @@ const Settings = () => {
                   </div>
                   <div className="sett_settings_info">
                     <h3 className="sett_settings_card_title">
-                      {section.title}
+                      {tl(section.title)}
                     </h3>
                     <p className="sett_settings_card_description">
-                      {section.description}
+                      {tl(section.description)}
                     </p>
                   </div>
                 </div>

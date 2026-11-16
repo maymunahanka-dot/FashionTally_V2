@@ -16,7 +16,16 @@ import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 import Loading from "../../../../components/Loading/Loading";
 import "./Designs.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
+
 const Designs = () => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Designs");
@@ -73,7 +82,7 @@ const Designs = () => {
 
   // Handle design deletion
   const handleDeleteDesign = async (designId) => {
-    if (!confirm("Are you sure you want to delete this design?")) {
+    if (!confirm(tx("auto.areYouSureYouWant_0097"))) {
       return;
     }
 
@@ -84,7 +93,7 @@ const Designs = () => {
       setSelectedDesign(null);
     } catch (error) {
       console.error("Error deleting design:", error);
-      alert("Error deleting design. Please try again.");
+      alert(tx("auto.errorDeletingDesignPleaseTry_b7a4"));
     }
   };
 
@@ -133,7 +142,7 @@ const Designs = () => {
       date = new Date(timestamp);
     }
 
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -166,7 +175,7 @@ const Designs = () => {
     <div className="designs-gallery">
       {/* Header */}
       <div className="designs-header">
-        <h1 className="designs-title">Your designs Gallery</h1>
+        <h1 className="designs-title">{tx("auto.yourDesignsGallery_39a1")}</h1>
       </div>
 
       {/* Search and Add Design Section */}
@@ -177,7 +186,7 @@ const Designs = () => {
             <Search className="design_search_icon" size={20} />
             <input
               type="text"
-              placeholder="Search designs by name"
+              placeholder={tx("auto.searchDesignsByName_5eb5")}
               className="design_search_input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -197,7 +206,7 @@ const Designs = () => {
           {showFilter && (
             <div className="design_filter_dropdown">
               <div className="design_filter_header">
-                <h4>Filter by Status</h4>
+                <h4>{tx("auto.filterByStatus_c976")}</h4>
               </div>
               <div className="design_filter_option">
                 <input
@@ -211,7 +220,7 @@ const Designs = () => {
                     setShowFilter(false);
                   }}
                 />
-                <label htmlFor="design_all">All Designs</label>
+                <label htmlFor="design_all">{tx("auto.allDesigns_347e")}</label>
               </div>
               <div className="design_filter_option">
                 <input
@@ -225,7 +234,7 @@ const Designs = () => {
                     setShowFilter(false);
                   }}
                 />
-                <label htmlFor="design_active">Active</label>
+                <label htmlFor="design_active">{tx("auto.active_a733")}</label>
               </div>
               <div className="design_filter_option">
                 <input
@@ -239,7 +248,7 @@ const Designs = () => {
                     setShowFilter(false);
                   }}
                 />
-                <label htmlFor="design_archived">Archived</label>
+                <label htmlFor="design_archived">{tx("auto.archived_eddc")}</label>
               </div>
             </div>
           )}
@@ -259,7 +268,7 @@ const Designs = () => {
             className="sort-by-btn"
             aria-label="Sort by"
           >
-            Sort by
+            {tx("auto.sortBy_a2a5")}
           </Button>
           {showSort && (
             <div className="sort-dropdown" role="menu">
@@ -281,7 +290,7 @@ const Designs = () => {
                     setShowSort(false);
                   }}
                 >
-                  {option.label}
+                  {tl(option.label)}
                 </button>
               ))}
             </div>
@@ -301,7 +310,7 @@ const Designs = () => {
             setShowAddDesignPanel(true);
           }}
         >
-          <span className="add-design-text">Add Design</span>
+          <span className="add-design-text">{tx("auto.addDesign_8233")}</span>
         </Button>
 
         {/* Mobile Floating Button */}
@@ -328,14 +337,14 @@ const Designs = () => {
             }`}
             onClick={() => setActiveCategory(category)}
           >
-            {category}
+            {tl(category)}
           </button>
         ))}
       </div>
 
       {/* Designs Count Section */}
       <div className="designs-count-section">
-        <span className="designs-count">{filteredDesigns.length} Designs</span>
+        <span className="designs-count">{tl(filteredDesigns.length)}{" "}{tx("auto.designs_fdea")}</span>
       </div>
 
       {/* Designs Grid */}
@@ -366,7 +375,7 @@ const Designs = () => {
                   ?.toLowerCase()
                   .replace(" ", "-")}`}
               >
-                {design.status}
+                {tl(design.status)}
               </div>
               <button className="nav-arrow nav-arrow-left">
                 <ChevronLeft size={16} />
@@ -377,8 +386,8 @@ const Designs = () => {
             </div>
 
             <div className="design-info">
-              <h3 className="design-title">{design.name}</h3>
-              <p className="design-date">{formatDate(design.createdAt)}</p>
+              <h3 className="design-title">{tl(design.name)}</h3>
+              <p className="design-date">{tl(formatDate(design.createdAt))}</p>
               <p className="design-price"><MoneyAmount amount={design.price} /></p>
             </div>
           </div>
@@ -387,7 +396,7 @@ const Designs = () => {
 
       {filteredDesigns.length === 0 && (
         <div className="no-designs">
-          <p>No designs found matching your criteria.</p>
+          <p>{tx("auto.noDesignsFoundMatchingYour_0bf5")}</p>
         </div>
       )}
 

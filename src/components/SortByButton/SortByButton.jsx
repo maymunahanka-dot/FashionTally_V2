@@ -3,6 +3,10 @@ import { ArrowUpDown } from "lucide-react";
 import Button from "../button/Button";
 import "./SortByButton.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
 export function useSavedSort(storageKey, fallback = "newest") {
   const [sortBy, setSortBy] = useState(() => {
     try {
@@ -25,6 +29,7 @@ export function useSavedSort(storageKey, fallback = "newest") {
 }
 
 const SortByButton = ({ value, onChange, options, open, onToggle }) => {
+  const { t: tx } = useTranslation();
   return (
     <div className="clients-sort">
       <Button
@@ -37,7 +42,7 @@ const SortByButton = ({ value, onChange, options, open, onToggle }) => {
         className="sort-by-btn"
         onClick={onToggle}
       >
-        Sort by
+        {tx("auto.sortBy_a2a5")}
       </Button>
       {open && (
         <div className="sort-dropdown" role="menu">
@@ -53,7 +58,7 @@ const SortByButton = ({ value, onChange, options, open, onToggle }) => {
                 onToggle();
               }}
             >
-              {option.label}
+              {tl(option.label)}
             </button>
           ))}
         </div>

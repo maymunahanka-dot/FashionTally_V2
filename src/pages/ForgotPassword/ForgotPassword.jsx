@@ -6,7 +6,12 @@ import Button from "../../components/button/Button";
 import logo from "../../assets/Image/logo.png";
 import "./ForgotPassword.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
 const ForgotPassword = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const { resetPassword } = useNewAuth();
   const [email, setEmail] = useState("");
@@ -18,13 +23,13 @@ const ForgotPassword = () => {
     e.preventDefault();
 
     if (!email.trim()) {
-      setError("Please enter your email address");
+      setError(tx("auto.pleaseEnterYourEmailAddress_103d"));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
+      setError(tx("auto.pleaseEnterAValidEmail_0802"));
       return;
     }
 
@@ -36,7 +41,7 @@ const ForgotPassword = () => {
     if (result.success) {
       setSuccess(true);
     } else {
-      setError(result.error || "Failed to send password reset email");
+      setError(result.error || tx("auto.failedToSendPasswordReset_4653"));
     }
 
     setLoading(false);
@@ -64,7 +69,7 @@ const ForgotPassword = () => {
               className="forgot-password-logo"
             />
             <h2 className="forgot-password-tagline">
-              Empowering African Fashion Entrepreneurs With Smart Tools
+              {tx("auto.empoweringAfricanFashionEntrepre_2252")}
             </h2>
           </div>
         </div>
@@ -73,23 +78,22 @@ const ForgotPassword = () => {
           <div className="forgot-password-right-content">
             <div className="forgot-password-header">
               <div className="forgot-password-success-icon">✅</div>
-              <h1 className="forgot-password-title">Check Your Email</h1>
+              <h1 className="forgot-password-title">{tx("auto.checkYourEmail_e80f")}</h1>
               <p className="forgot-password-subtitle">
-                We've sent a password reset link to <strong>{email}</strong>
+                {tx("auto.weVeSentAPassword_bb0c")}{" "}<strong>{tl(email)}</strong>
               </p>
             </div>
 
             <div className="forgot-password-success-alert">
               <p className="forgot-password-alert-text">
-                If an account with this email exists, you'll receive a password
-                reset link shortly.
+                {tx("auto.ifAnAccountWithThis_dcc3")}
               </p>
             </div>
 
             <div className="forgot-password-instructions">
-              <p>• Check your spam folder if you don't see the email</p>
-              <p>• The link will expire in 1 hour</p>
-              <p>• Make sure to check the email address you used to sign up</p>
+              <p>{tx("auto.checkYourSpamFolderIf_f9dd")}</p>
+              <p>{tx("auto.theLinkWillExpireIn_b960")}</p>
+              <p>{tx("auto.makeSureToCheckThe_a2d7")}</p>
             </div>
 
             <div className="forgot-password-actions">
@@ -99,7 +103,7 @@ const ForgotPassword = () => {
                 fullWidth
                 onClick={resetState}
               >
-                Send Another Email
+                {tx("auto.sendAnotherEmail_416c")}
               </Button>
 
               <Button
@@ -108,7 +112,7 @@ const ForgotPassword = () => {
                 fullWidth
                 onClick={() => navigate("/login")}
               >
-                ← Back to Login
+                {tx("auto.backToLogin_71bc")}
               </Button>
             </div>
           </div>
@@ -127,7 +131,7 @@ const ForgotPassword = () => {
             className="forgot-password-logo"
           />
           <h2 className="forgot-password-tagline">
-            Empowering African Fashion Entrepreneurs With Smart Tools
+            {tx("auto.empoweringAfricanFashionEntrepre_2252")}
           </h2>
         </div>
       </div>
@@ -135,15 +139,15 @@ const ForgotPassword = () => {
       <div className="forgot-password-right-section">
         <div className="forgot-password-right-content">
           <div className="forgot-password-header">
-            <h1 className="forgot-password-title">Forgot Password?</h1>
+            <h1 className="forgot-password-title">{tx("auto.forgotPassword_1cc8")}</h1>
             <p className="forgot-password-subtitle">
-              Enter your email to receive a password reset link
+              {tx("auto.enterYourEmailToReceive_6492")}
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
             {error && (
-              <div className="forgot-password-error-message">{error}</div>
+              <div className="forgot-password-error-message">{tl(error)}</div>
             )}
 
             <Input
@@ -151,7 +155,7 @@ const ForgotPassword = () => {
               label=""
               value={email}
               onChange={handleInputChange}
-              placeholder="Email Address"
+              placeholder={tx("auto.emailAddress_09ba")}
               required
               error={error}
               active={!!email}
@@ -166,17 +170,17 @@ const ForgotPassword = () => {
                 disabled={!email}
                 className={email ? "" : "forgot-password-btn-inactive"}
               >
-                Send Reset Link
+                {tx("auto.sendResetLink_987b")}
               </Button>
             </div>
 
             <p className="forgot-password-login-link">
-              Remember your password?{" "}
+              {tx("auto.rememberYourPassword_0eb2")}{" "}
               <span
                 className="forgot-password-link"
                 onClick={() => navigate("/login")}
               >
-                Sign in here
+                {tx("auto.signInHere_3b04")}
               </span>
             </p>
           </form>

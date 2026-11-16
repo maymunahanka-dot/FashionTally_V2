@@ -4,6 +4,12 @@ import OTPInput from "../OTPInput/OTPInput";
 import Button from "../button/Button";
 import "./OTPVerificationModal.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+
 const RESEND_SECONDS = 30;
 
 const OTPVerificationModal = ({
@@ -15,6 +21,7 @@ const OTPVerificationModal = ({
   message = "Please enter the OTP sent to your email/phone",
   otpLength = 6,
 }) => {
+  const { t: tx } = useTranslation();
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
@@ -40,7 +47,7 @@ const OTPVerificationModal = ({
       setOtp("");
       setResendIn(RESEND_SECONDS);
     } catch (err) {
-      setError(err.message || "Could not resend the code. Please try again.");
+      setError(err.message || tx("auto.couldNotResendTheCode_cab1"));
     } finally {
       setIsResending(false);
     }
@@ -54,7 +61,7 @@ const OTPVerificationModal = ({
 
   const handleVerify = async () => {
     if (otp.length !== otpLength) {
-      setError(`Please enter all ${otpLength} digits`);
+      setError(tx("tpl.pleaseEnterAllDigits_9c7e", { v0: otpLength }));
       return;
     }
 
@@ -66,7 +73,7 @@ const OTPVerificationModal = ({
       await onVerify(otp);
       // Parent component will handle navigation/next steps
     } catch (err) {
-      setError(err.message || "Verification failed. Please try again.");
+      setError(err.message || tx("auto.verificationFailedPleaseTryAgain_79a2"));
     } finally {
       setIsVerifying(false);
     }
@@ -89,10 +96,10 @@ const OTPVerificationModal = ({
         </button>
 
         {/* Title */}
-        <h2 className="otp-modal-title">{title}</h2>
+        <h2 className="otp-modal-title">{tl(title)}</h2>
 
         {/* Message */}
-        <p className="otp-modal-message">{message}</p>
+        <p className="otp-modal-message">{tl(message)}</p>
 
         {/* OTP Input */}
         <div className="otp-input-container">
@@ -105,12 +112,12 @@ const OTPVerificationModal = ({
         </div>
 
         {/* Error Message */}
-        {error && <p className="otp-error-message">{error}</p>}
+        {error && <p className="otp-error-message">{tl(error)}</p>}
 
         {onResend && (
           <p className="otp-resend">
             {resendIn > 0 ? (
-              `Didn't get the code? Resend in ${resendIn}s`
+              tx("tpl.didnTGetTheCode_bcae", { v0: resendIn })
             ) : (
               <button
                 type="button"
@@ -118,7 +125,7 @@ const OTPVerificationModal = ({
                 onClick={handleResend}
                 disabled={isResending || isVerifying}
               >
-                {isResending ? "Sending..." : "Resend code"}
+                {tl(isResending ? tx("auto.sending_c338") : tx("auto.resendCode_1d3c"))}
               </button>
             )}
           </p>
@@ -132,7 +139,7 @@ const OTPVerificationModal = ({
             disabled={isVerifying}
             className="otp-cancel-btn"
           >
-            Cancel
+            {tx("auto.cancel_77df")}
           </Button>
           <Button
             variant="primary"
@@ -140,7 +147,7 @@ const OTPVerificationModal = ({
             disabled={isVerifying || otp.length !== otpLength}
             className="otp-verify-btn"
           >
-            {isVerifying ? "Verifying..." : "Verify"}
+            {tl(isVerifying ? tx("auto.verifying_bf6e") : tx("auto.verify_dda6"))}
           </Button>
         </div>
       </div>

@@ -21,6 +21,12 @@ import Input from "../../components/Input/Input";
 import "./Subscription.css";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+
 const pricingPlans = [
   {
     name: "STARTER",
@@ -121,6 +127,7 @@ const pricingPlans = [
 ];
 
 export default function SubscriptionPage() {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const planParam = searchParams.get("plan") || "growth";
@@ -165,19 +172,19 @@ export default function SubscriptionPage() {
     const newErrors = {};
 
     if (!paymentForm.firstName.trim())
-      newErrors.firstName = "First name is required";
+      newErrors.firstName = tx("auto.firstNameIsRequired_df38");
     if (!paymentForm.lastName.trim())
-      newErrors.lastName = "Last name is required";
-    if (!paymentForm.email.trim()) newErrors.email = "Email is required";
+      newErrors.lastName = tx("auto.lastNameIsRequired_b1d9");
+    if (!paymentForm.email.trim()) newErrors.email = tx("auto.emailIsRequired_4da1");
     else if (!/\S+@\S+\.\S+/.test(paymentForm.email))
-      newErrors.email = "Email is invalid";
+      newErrors.email = tx("auto.emailIsInvalid_fe7d");
     if (!paymentForm.phoneNumber.trim())
-      newErrors.phoneNumber = "Phone number is required";
+      newErrors.phoneNumber = tx("auto.phoneNumberIsRequired_f845");
     else if (!/^(\+234|0)[789]\d{9}$/.test(paymentForm.phoneNumber))
-      newErrors.phoneNumber = "Invalid Nigerian phone number";
+      newErrors.phoneNumber = tx("auto.invalidNigerianPhoneNumber_8c4f");
     if (!paymentForm.businessName.trim())
-      newErrors.businessName = "Business name is required";
-    if (!paymentForm.address.trim()) newErrors.address = "Address is required";
+      newErrors.businessName = tx("auto.businessNameIsRequired_b048");
+    if (!paymentForm.address.trim()) newErrors.address = tx("auto.addressIsRequired_34bb");
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -214,7 +221,7 @@ export default function SubscriptionPage() {
       }
     } catch (error) {
       console.error("Error initiating payment:", error);
-      alert(error.message || "Failed to initiate payment. Please try again.");
+      alert(error.message || tx("auto.failedToInitiatePaymentPlease_9159"));
     } finally {
       setLoading(false);
     }
@@ -233,9 +240,9 @@ export default function SubscriptionPage() {
       <div className="subscription-loading" data-theme={actualTheme}>
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <h2 className="loading-title">Loading Subscription Plans...</h2>
+          <h2 className="loading-title">{tx("auto.loadingSubscriptionPlans_c2ab")}</h2>
           <p className="loading-message">
-            Please wait while we prepare your subscription options.
+            {tx("auto.pleaseWaitWhileWePrepare_a7c5")}
           </p>
         </div>
       </div>
@@ -246,10 +253,10 @@ export default function SubscriptionPage() {
     return (
       <div className="subscription-error" data-theme={actualTheme}>
         <div className="error-content">
-          <h1>Plan Not Found</h1>
-          <p>The requested subscription plan could not be found.</p>
+          <h1>{tx("auto.planNotFound_f949")}</h1>
+          <p>{tx("auto.theRequestedSubscriptionPlanCoul_002c")}</p>
           <Button onClick={() => navigate("/subscription")}>
-            View Available Plans
+            {tx("auto.viewAvailablePlans_b14f")}
           </Button>
         </div>
       </div>
@@ -263,17 +270,17 @@ export default function SubscriptionPage() {
         <div className="header-content">
           <button className="back-button" onClick={() => navigate(-1)}>
             <ArrowLeft className="back-icon" />
-            <span>Back</span>
+            <span>{tx("auto.back_b52b")}</span>
           </button>
           <div className="progress-steps">
             <div className={`step ${step >= 1 ? "active" : ""}`}>
               <div className="step-number">1</div>
-              <span className="step-label">Details</span>
+              <span className="step-label">{tx("auto.details_dc3d")}</span>
             </div>
             <div className="step-divider"></div>
             <div className={`step ${step >= 2 ? "active" : ""}`}>
               <div className="step-number">2</div>
-              <span className="step-label">Payment</span>
+              <span className="step-label">{tx("auto.payment_b41a")}</span>
             </div>
           </div>
         </div>
@@ -286,9 +293,9 @@ export default function SubscriptionPage() {
             <div className="summary-card">
               <div className="summary-header">
                 <div className="plan-info">
-                  <h2 className="plan-name">{selectedPlan.name}</h2>
+                  <h2 className="plan-name">{tl(selectedPlan.name)}</h2>
                   <div className={`plan-badge ${selectedPlan.badgeColor}`}>
-                    {selectedPlan.badge}
+                    {tl(selectedPlan.badge)}
                   </div>
                 </div>
                 <div className="plan-pricing">
@@ -299,7 +306,7 @@ export default function SubscriptionPage() {
                       aria-pressed={!isYearly}
                       onClick={() => setBillingCycle("monthly")}
                     >
-                      Monthly
+                      {tx("auto.monthly_d31e")}
                     </button>
                     <button
                       type="button"
@@ -307,29 +314,29 @@ export default function SubscriptionPage() {
                       aria-pressed={isYearly}
                       onClick={() => setBillingCycle("yearly")}
                     >
-                      Yearly <span className="billing-cycle-save">2 months free</span>
+                      {tx("auto.yearly_7622")}{" "}<span className="billing-cycle-save">{tx("auto.2MonthsFree_e093")}</span>
                     </button>
                   </div>
                   <div className="price">
-                    <span className="amount">{formatCurrency(price)}</span>
-                    <span className="period">/{isYearly ? "year" : "month"}</span>
+                    <span className="amount">{tl(formatCurrency(price))}</span>
+                    <span className="period">/{tl(isYearly ? "year" : "month")}</span>
                   </div>
-                  <p className="plan-description">{selectedPlan.description}</p>
+                  <p className="plan-description">{tl(selectedPlan.description)}</p>
                 </div>
               </div>
               <div className="summary-content">
                 <div className="features-section">
-                  <h4 className="features-title">What's included:</h4>
+                  <h4 className="features-title">{tx("auto.whatSIncluded_fd5c")}</h4>
                   <ul className="features-list">
                     {selectedPlan.features.slice(0, 6).map((feature, index) => (
                       <li key={index} className="feature-item">
                         <Check className="check-icon" />
-                        <span>{feature}</span>
+                        <span>{tl(feature)}</span>
                       </li>
                     ))}
                     {selectedPlan.features.length > 6 && (
                       <li className="more-features">
-                        +{selectedPlan.features.length - 6} more features
+                        +{selectedPlan.features.length - 6}{" "}{tx("auto.moreFeatures_2175")}
                       </li>
                     )}
                   </ul>
@@ -338,11 +345,11 @@ export default function SubscriptionPage() {
                 <div className="security-info">
                   <div className="security-item">
                     <Shield className="security-icon" />
-                    <span>Secure payment processing</span>
+                    <span>{tx("auto.securePaymentProcessing_2896")}</span>
                   </div>
                   <div className="security-item">
                     <Clock className="security-icon" />
-                    <span>Cancel anytime</span>
+                    <span>{tx("auto.cancelAnytime_ceec")}</span>
                   </div>
                 </div>
               </div>
@@ -356,10 +363,10 @@ export default function SubscriptionPage() {
                 <div className="payment-loading-content">
                   <div className="payment-loading-spinner"></div>
                   <h3 className="payment-loading-title">
-                    Processing Payment...
+                    {tx("auto.processingPayment_d29b")}
                   </h3>
                   <p className="payment-loading-message">
-                    Please wait while we redirect you to the payment gateway.
+                    {tx("auto.pleaseWaitWhileWeRedirect_2c85")}
                   </p>
                 </div>
               </div>
@@ -368,9 +375,9 @@ export default function SubscriptionPage() {
             {step === 1 && (
               <div className="form-card">
                 <div className="form-header">
-                  <h2 className="form-title">Account Information</h2>
+                  <h2 className="form-title">{tx("auto.accountInformation_0cbd")}</h2>
                   <p className="form-description">
-                    Please provide your details to set up your subscription
+                    {tx("auto.pleaseProvideYourDetailsTo_34aa")}
                   </p>
                 </div>
                 <div className="form-content">
@@ -378,7 +385,7 @@ export default function SubscriptionPage() {
                     <div className="form-group">
                       <label htmlFor="firstName" className="form-label">
                         <User className="label-icon" />
-                        First Name
+                        {tx("auto.firstName_b6ea")}
                       </label>
                       <Input
                         id="firstName"
@@ -392,12 +399,12 @@ export default function SubscriptionPage() {
                         className={errors.firstName ? "error" : ""}
                       />
                       {errors.firstName && (
-                        <p className="error-message">{errors.firstName}</p>
+                        <p className="error-message">{tl(errors.firstName)}</p>
                       )}
                     </div>
                     <div className="form-group">
                       <label htmlFor="lastName" className="form-label">
-                        Last Name
+                        {tx("auto.lastName_863c")}
                       </label>
                       <Input
                         id="lastName"
@@ -411,7 +418,7 @@ export default function SubscriptionPage() {
                         className={errors.lastName ? "error" : ""}
                       />
                       {errors.lastName && (
-                        <p className="error-message">{errors.lastName}</p>
+                        <p className="error-message">{tl(errors.lastName)}</p>
                       )}
                     </div>
                   </div>
@@ -419,7 +426,7 @@ export default function SubscriptionPage() {
                   <div className="form-group">
                     <label htmlFor="email" className="form-label">
                       <Mail className="label-icon" />
-                      Email Address
+                      {tx("auto.emailAddress_09ba")}
                     </label>
                     <Input
                       id="email"
@@ -435,18 +442,18 @@ export default function SubscriptionPage() {
                       className={errors.email ? "error" : ""}
                     />
                     {errors.email && (
-                      <p className="error-message">{errors.email}</p>
+                      <p className="error-message">{tl(errors.email)}</p>
                     )}
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="phoneNumber" className="form-label">
                       <Phone className="label-icon" />
-                      Phone Number
+                      {tx("auto.phoneNumber_ab25")}
                     </label>
                     <Input
                       id="phoneNumber"
-                      placeholder="e.g., 08069354904"
+                      placeholder={tx("auto.eG08069354904_1fc1")}
                       value={paymentForm.phoneNumber}
                       onChange={(e) =>
                         setPaymentForm({
@@ -457,14 +464,14 @@ export default function SubscriptionPage() {
                       className={errors.phoneNumber ? "error" : ""}
                     />
                     {errors.phoneNumber && (
-                      <p className="error-message">{errors.phoneNumber}</p>
+                      <p className="error-message">{tl(errors.phoneNumber)}</p>
                     )}
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="businessName" className="form-label">
                       <Building className="label-icon" />
-                      Business Name
+                      {tx("auto.businessName_4fee")}
                     </label>
                     <Input
                       id="businessName"
@@ -478,14 +485,14 @@ export default function SubscriptionPage() {
                       className={errors.businessName ? "error" : ""}
                     />
                     {errors.businessName && (
-                      <p className="error-message">{errors.businessName}</p>
+                      <p className="error-message">{tl(errors.businessName)}</p>
                     )}
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="address" className="form-label">
                       <MapPin className="label-icon" />
-                      Business Address
+                      {tx("auto.businessAddress_6a24")}
                     </label>
                     <textarea
                       id="address"
@@ -502,13 +509,13 @@ export default function SubscriptionPage() {
                       }
                     />
                     {errors.address && (
-                      <p className="error-message">{errors.address}</p>
+                      <p className="error-message">{tl(errors.address)}</p>
                     )}
                   </div>
 
                   {showPaystack && (
                     <div className="form-group">
-                      <span className="form-label">Pay with</span>
+                      <span className="form-label">{tx("auto.payWith_86b6")}</span>
                       <div className="gateway-options" role="radiogroup" aria-label="Payment provider">
                         {[
                           { key: "flutterwave", name: "Flutterwave", hint: "Card, bank transfer or USSD" },
@@ -524,8 +531,8 @@ export default function SubscriptionPage() {
                           >
                             <span className="gateway-dot" aria-hidden="true" />
                             <span>
-                              <strong>{g.name}</strong>
-                              <small>{g.hint}</small>
+                              <strong>{tl(g.name)}</strong>
+                              <small>{tl(g.hint)}</small>
                             </span>
                           </button>
                         ))}
@@ -542,11 +549,11 @@ export default function SubscriptionPage() {
                       {loading ? (
                         <>
                           <div className="loading-spinner"></div>
-                          Initiating Payment...
+                          {tx("auto.initiatingPayment_7482")}
                         </>
                       ) : (
                         <>
-                          Continue to Payment
+                          {tx("auto.continueToPayment_cfc5")}
                           <ArrowRight className="button-icon" />
                         </>
                       )}

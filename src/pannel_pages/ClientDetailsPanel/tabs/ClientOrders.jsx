@@ -3,7 +3,15 @@ import { Plus, Package } from "lucide-react";
 import NewAuthContext from "../../../contexts/NewAuthContext";
 import "./ClientOrders.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+
+import { dateLocale } from "../../../i18n";
+
 const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
+  const { t: tx } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useContext(NewAuthContext);
@@ -25,7 +33,7 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
             .map((o) => ({
               ...o,
               title: o.garmentDescription || o.garmentType || "Untitled Order",
-              date: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "",
+              date: o.createdAt ? new Date(o.createdAt).toLocaleDateString(dateLocale()) : "",
               amount: `₦${(o.price || 0).toLocaleString()}`,
               status: o.status === "in-progress" ? "In Progress" : o.status === "Completed" ? "Completed" : "Pending",
               createdAt: o.createdAt ? new Date(o.createdAt) : new Date(),
@@ -58,7 +66,7 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
     return (
       <div className="client_details_orders">
         <div className="client_orders_header">
-          <h3 className="client_orders_count">Loading orders...</h3>
+          <h3 className="client_orders_count">{tx("auto.loadingOrders_34d5")}</h3>
         </div>
       </div>
     );
@@ -68,10 +76,10 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
     <div className="client_details_orders">
       {/* Orders Header */}
       <div className="client_orders_header">
-        <h3 className="client_orders_count">{orders.length} Total Orders</h3>
+        <h3 className="client_orders_count">{tl(orders.length)}{" "}{tx("auto.totalOrders_408f")}</h3>
         <button className="client_orders_new_btn" onClick={handleCreateOrder}>
           <Plus size={18} />
-          New Order
+          {tx("auto.newOrder_c59c")}
         </button>
       </div>
 
@@ -79,7 +87,7 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
       <div className="client_orders_list">
         {orders.length === 0 ? (
           <div className="client_orders_empty">
-            <p>No orders found for this client</p>
+            <p>{tx("auto.noOrdersFoundForThis_bbec")}</p>
           </div>
         ) : (
           orders.map((order) => (
@@ -95,17 +103,17 @@ const ClientOrders = ({ client, onCreateOrder, onViewOrder }) => {
 
               <div className="client_order_details">
                 <div className="client_order_main_info">
-                  <h4 className="client_order_title">{order.title}</h4>
-                  <span className="client_order_amount">{order.amount}</span>
+                  <h4 className="client_order_title">{tl(order.title)}</h4>
+                  <span className="client_order_amount">{tl(order.amount)}</span>
                 </div>
                 <div className="client_order_sub_info">
-                  <span className="client_order_date">{order.date}</span>
+                  <span className="client_order_date">{tl(order.date)}</span>
                   <div
                     className={`client_order_status_badge ${order.status
                       .toLowerCase()
                       .replace(" ", "-")}`}
                   >
-                    {order.status}
+                    {tl(order.status)}
                   </div>
                 </div>
               </div>

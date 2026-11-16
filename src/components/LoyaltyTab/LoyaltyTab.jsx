@@ -19,7 +19,15 @@ import SlideInMenu from "../SlideInMenu/SlideInMenu";
 import AddLoyaltyMemberPanel from "../../pannel_pages/AddLoyaltyMemberPanel";
 import "./LoyaltyTab.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+import { dateLocale } from "../../i18n";
+
+
 const LoyaltyTab = () => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
@@ -72,7 +80,7 @@ const LoyaltyTab = () => {
       setEditingMember(null);
     } catch (error) {
       console.error("Error saving loyalty member:", error);
-      alert("Error saving member. Please try again.");
+      alert(tx("auto.errorSavingMemberPleaseTry_64e8"));
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +88,7 @@ const LoyaltyTab = () => {
 
   // Handle delete member
   const handleDeleteMember = async (memberId) => {
-    if (!confirm("Are you sure you want to delete this loyalty member?")) {
+    if (!confirm(tx("auto.areYouSureYouWant_d263"))) {
       return;
     }
 
@@ -90,7 +98,7 @@ const LoyaltyTab = () => {
       setDropdownOpen(null);
     } catch (error) {
       console.error("Error deleting loyalty member:", error);
-      alert("Error deleting member. Please try again.");
+      alert(tx("auto.errorDeletingMemberPleaseTry_4a3a"));
     }
   };
 
@@ -186,7 +194,7 @@ const LoyaltyTab = () => {
       date = new Date(timestamp);
     }
 
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -202,7 +210,7 @@ const LoyaltyTab = () => {
     return (
       <div className="loyalty_tab">
         <div className="loyalty_loading">
-          <p>Loading loyalty members...</p>
+          <p>{tx("auto.loadingLoyaltyMembers_e338")}</p>
         </div>
       </div>
     );
@@ -218,7 +226,7 @@ const LoyaltyTab = () => {
             <Search className="loyalty_search_icon" size={20} />
             <input
               type="text"
-              placeholder="Search clients by name, phone, or email"
+              placeholder={tx("auto.searchClientsByNamePhone_9984")}
               className="loyalty_search_input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -260,7 +268,7 @@ const LoyaltyTab = () => {
           className="loyalty_add_customer_btn"
           onClick={() => setIsAddPanelOpen(true)}
         >
-          Add Member
+          {tx("auto.addMember_fbe4")}
         </Button>
       </div>
 
@@ -273,14 +281,14 @@ const LoyaltyTab = () => {
                 className="loyalty_customer_avatar"
                 style={{ backgroundColor: getLevelBgColor(member.level) }}
               >
-                {renderAvatarIcon(member.level)}
+                {tl(renderAvatarIcon(member.level))}
               </div>
               <div className="loyalty_card_actions">
                 <div
                   className="loyalty_badge"
                   style={{ backgroundColor: getLevelColor(member.level) }}
                 >
-                  {member.level || "Bronze"}
+                  {tl(member.level || tx("auto.bronze_af31"))}
                 </div>
                 <div className="loyalty_dropdown">
                   <button
@@ -300,14 +308,14 @@ const LoyaltyTab = () => {
                         className="loyalty_dropdown_item"
                       >
                         <Edit size={14} />
-                        Edit
+                        {tx("auto.edit_5301")}
                       </button>
                       <button
                         onClick={() => handleDeleteMember(member.id)}
                         className="loyalty_dropdown_item delete"
                       >
                         <Trash2 size={14} />
-                        Delete
+                        {tx("auto.delete_f6fd")}
                       </button>
                     </div>
                   )}
@@ -316,33 +324,33 @@ const LoyaltyTab = () => {
             </div>
 
             <div className="loyalty_customer_info">
-              <h3 className="loyalty_customer_name">{member.name}</h3>
-              <p className="loyalty_customer_email">{member.email}</p>
+              <h3 className="loyalty_customer_name">{tl(member.name)}</h3>
+              <p className="loyalty_customer_email">{tl(member.email)}</p>
 
               {/* Horizontal Stats */}
               <div className="loyalty_customer_stats">
                 <span className="loyalty_points">
                   <Star size={16} color="#f59e0b" fill="#f59e0b" />
-                  {member.points || 0} pts
+                  {tl(member.points || 0)}{" "}{tx("auto.pts_4abd")}
                 </span>
                 <span className="loyalty_separator">•</span>
                 <span className="loyalty_spent">
-                  {formatCurrency(member.totalSpent)}
+                  {tl(formatCurrency(member.totalSpent))}
                 </span>
               </div>
             </div>
 
             <div className="loyalty_customer_dates">
               <div className="loyalty_date_item">
-                <span className="loyalty_date_label">Member Since</span>
+                <span className="loyalty_date_label">{tx("auto.memberSince_c664")}</span>
                 <span className="loyalty_date_value">
-                  {formatDate(member.createdAt)}
+                  {tl(formatDate(member.createdAt))}
                 </span>
               </div>
               <div className="loyalty_date_item">
-                <span className="loyalty_date_label">Last Activity</span>
+                <span className="loyalty_date_label">{tx("auto.lastActivity_d14e")}</span>
                 <span className="loyalty_date_value">
-                  {formatDate(member.lastActivity)}
+                  {tl(formatDate(member.lastActivity))}
                 </span>
               </div>
             </div>
@@ -351,7 +359,7 @@ const LoyaltyTab = () => {
               <div className="loyalty_member_tags">
                 {member.tags.slice(0, 2).map((tag, index) => (
                   <span key={index} className="loyalty_tag">
-                    {tag}
+                    {tl(tag)}
                   </span>
                 ))}
                 {member.tags.length > 2 && (
@@ -368,9 +376,9 @@ const LoyaltyTab = () => {
       {filteredMembers.length === 0 && !loading && (
         <div className="loyalty_no_customers">
           <p>
-            {members.length === 0
-              ? "No loyalty members yet. Add your first member to get started!"
-              : "No members found matching your search criteria."}
+            {tl(members.length === 0
+              ? tx("auto.noLoyaltyMembersYetAdd_43fd")
+              : tx("auto.noMembersFoundMatchingYour_968d"))}
           </p>
         </div>
       )}

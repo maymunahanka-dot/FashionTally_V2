@@ -8,7 +8,16 @@ import { getPlanPricing } from "../../lib/payment";
 import "./SubscriptionPanel.css";
 import { SUBSCRIPTION_PRICING, TRIAL_DAYS } from "../../config/subscriptionPricing.js";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 const SubscriptionPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const subscription = useSubscription();
   const { user } = useNewAuth();
   const { actualTheme } = useTheme();
@@ -119,7 +128,7 @@ const SubscriptionPanel = ({ onClose }) => {
 
   const handleUpgrade = async (plan) => {
     if (!user?.email) {
-      alert("Please log in to upgrade your subscription");
+      alert(tx("auto.pleaseLogInToUpgrade_3b86"));
       return;
     }
 
@@ -134,7 +143,7 @@ const SubscriptionPanel = ({ onClose }) => {
     if (!user?.email) return;
 
     if (!cancelReason.trim()) {
-      alert("Please provide a reason for cancellation");
+      alert(tx("auto.pleaseProvideAReasonFor_5323"));
       return;
     }
 
@@ -167,15 +176,15 @@ const SubscriptionPanel = ({ onClose }) => {
       const data = await res.json();
 
       if (data.success) {
-        alert("Subscription cancelled successfully. No refunds will be processed.");
+        alert(tx("auto.subscriptionCancelledSuccessfull_4d03"));
         setShowCancelModal(false);
         setTimeout(() => window.location.reload(), 1000);
       } else {
-        alert("Failed to cancel subscription. Please contact support.");
+        alert(tx("auto.failedToCancelSubscriptionPlease_4216"));
       }
     } catch (error) {
       console.error("Cancel subscription error:", error);
-      alert("An error occurred while cancelling. Please try again.");
+      alert(tx("auto.anErrorOccurredWhileCancelling_13f3"));
     } finally {
       setLoading(false);
     }
@@ -194,7 +203,7 @@ const SubscriptionPanel = ({ onClose }) => {
   // The backend's summary is the source of truth (the mobile app shows the same one).
   const summary = subscription.summary;
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    new Date(iso).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "short", year: "numeric" });
 
   const getTrialDaysRemaining = () => {
     if (summary) return summary.daysLeft;
@@ -288,7 +297,7 @@ const SubscriptionPanel = ({ onClose }) => {
         <div className="sub_loading_overlay">
           <div className="sub_loading_content">
             <div className="sub_loading_spinner"></div>
-            <p className="sub_loading_text">Loading your subscription...</p>
+            <p className="sub_loading_text">{tx("auto.loadingYourSubscription_11c4")}</p>
           </div>
         </div>
       )}
@@ -299,8 +308,8 @@ const SubscriptionPanel = ({ onClose }) => {
           <ArrowLeft size={20} />
         </button>
         <div className="sub_header_content">
-          <h2 className="sub_title">Subscription</h2>
-          <p className="sub_subtitle">Plan & billing</p>
+          <h2 className="sub_title">{tx("auto.subscription_8fde")}</h2>
+          <p className="sub_subtitle">{tx("auto.planBilling_1e4e")}</p>
         </div>
       </div>
 
@@ -311,14 +320,14 @@ const SubscriptionPanel = ({ onClose }) => {
           onClick={() => setActiveTab("plan")}
         >
           <Crown size={16} />
-          Plan
+          {tx("auto.plan_ae2f")}
         </button>
         <button
           className={`sub_tab_btn ${activeTab === "payments" ? "active" : ""}`}
           onClick={() => setActiveTab("payments")}
         >
           <CreditCard size={16} />
-          Payments
+          {tx("auto.payments_4435")}
         </button>
       </div>
 
@@ -332,13 +341,13 @@ const SubscriptionPanel = ({ onClose }) => {
             <div className="status_header">
               <div className="status_header_left">
                 <Crown size={20} className="crown_icon" />
-                <h3>Current Subscription</h3>
+                <h3>{tx("auto.currentSubscription_2304")}</h3>
               </div>
               <button
                 className="cancel_subscription_icon"
                 onClick={openCancelModal}
                 disabled={loading}
-                title="Cancel Subscription"
+                title={tx("auto.cancelSubscription_58b2")}
               >
                 <XCircle size={20} />
               </button>
@@ -347,17 +356,17 @@ const SubscriptionPanel = ({ onClose }) => {
             <div className="status_details">
               <div className="plan_info">
                 <span className="current_plan_name">
-                  {summary?.plan ?? subscription.planType} Plan
+                  {tl(summary?.plan ?? subscription.planType)}{" "}{tx("auto.plan_ae2f")}
                   {summary?.billingCycle && (
                     <span className="sub_cycle_note">
-                      {" "}· {summary.billingCycle === "yearly" ? "Yearly" : "Monthly"}
+                      {" "}· {tl(summary.billingCycle === "yearly" ? tx("auto.yearly_7622") : tx("auto.monthly_d31e"))}
                     </span>
                   )}
                 </span>
                 {subscription.isTrialActive && (
                   <span className="trial_badge">
                     <Clock size={14} />
-                    Trial · {getTrialDaysRemaining()} days left
+                    {tx("auto.trial_2b3e")}{" "}{tl(getTrialDaysRemaining())}{" "}{tx("auto.daysLeft_0575")}
                   </span>
                 )}
               </div>
@@ -366,10 +375,10 @@ const SubscriptionPanel = ({ onClose }) => {
                 <>
                   <div className="subscription_progress">
                     <div className="progress_info">
-                      <span className="progress_label">Days remaining</span>
+                      <span className="progress_label">{tx("auto.daysRemaining_cf27")}</span>
                       <span className="progress_days">
-                        {getSubscriptionProgress().daysRemaining} of{" "}
-                        {getSubscriptionProgress().totalDays} days
+                        {tl(getSubscriptionProgress().daysRemaining)}{" "}{tx("auto.of_de04")}{" "}
+                        {tl(getSubscriptionProgress().totalDays)}{" "}{tx("auto.days_5548")}
                       </span>
                     </div>
                     <div className="progress_bar">
@@ -383,9 +392,9 @@ const SubscriptionPanel = ({ onClose }) => {
                   </div>
 
                   <p className="expiry_date">
-                    {subscription.isTrialActive ? "Trial ends on" : "Ends on"}{" "}
-                    {formatDate(summary?.endDate ?? subscription.subscriptionEndDate)}
-                    {!subscription.isTrialActive && " · doesn't renew automatically"}
+                    {tl(subscription.isTrialActive ? tx("auto.trialEndsOn_8196") : tx("auto.endsOn_5c26"))}{" "}
+                    {tl(formatDate(summary?.endDate ?? subscription.subscriptionEndDate))}
+                    {!subscription.isTrialActive && tx("auto.doesnTRenewAutomatically_f2c6")}
                   </p>
                 </>
               )}
@@ -399,22 +408,22 @@ const SubscriptionPanel = ({ onClose }) => {
             <div className="trial_content">
               <h3>
                 {summary?.status === "trial_ended"
-                  ? "Your free trial has ended"
+                  ? tx("auto.yourFreeTrialHasEnded_d030")
                   : summary?.status === "expired"
-                  ? `Your ${summary.plan} plan has expired`
-                  : "You don't have an active plan"}
+                  ? tx("tpl.yourPlanHasExpired_5c5b", { v0: summary.plan })
+                  : tx("auto.youDonTHaveAn_82d7")}
               </h3>
               <p>
-                {summary?.endDate && summary.status !== "cancelled"
-                  ? `It ended on ${formatDate(summary.endDate)}. Choose a plan below to keep using FashionTally.`
-                  : "Choose a plan below to keep using FashionTally."}
+                {tl(summary?.endDate && summary.status !== "cancelled"
+                  ? tx("tpl.itEndedOnChooseA_932a", { v0: formatDate(summary.endDate) })
+                  : tx("auto.chooseAPlanBelowTo_eeb1"))}
               </p>
             </div>
           </div>
         )}
 
         <h3 className="sub_section_title">
-          {subscription.isSubscribed ? "Upgrade Your Plan" : "Choose Your Plan"}
+          {tl(subscription.isSubscribed ? tx("auto.upgradeYourPlan_d6c6") : tx("auto.chooseYourPlan_c197"))}
         </h3>
 
         <div className="sub_plans_container">
@@ -429,25 +438,25 @@ const SubscriptionPanel = ({ onClose }) => {
               {/* Plan Header */}
               <div className="sub_plan_header">
                 <div className="sub_plan_title_section">
-                  <h4 className="sub_plan_name">{plan.name}</h4>
+                  <h4 className="sub_plan_name">{tl(plan.name)}</h4>
                   {plan.badge && (
                     <span
                       className="sub_plan_badge"
                       style={{ backgroundColor: plan.badgeColor }}
                     >
-                      {plan.badge}
+                      {tl(plan.badge)}
                     </span>
                   )}
                 </div>
 
                 {plan.price && (
                   <div className="sub_plan_pricing">
-                    <span className="sub_plan_price">{plan.price}</span>
-                    <span className="sub_plan_period">{plan.period}</span>
+                    <span className="sub_plan_price">{tl(plan.price)}</span>
+                    <span className="sub_plan_period">{tl(plan.period)}</span>
                   </div>
                 )}
 
-                <p className="sub_plan_description">{plan.description}</p>
+                <p className="sub_plan_description">{tl(plan.description)}</p>
               </div>
 
               {/* Plan Features */}
@@ -457,7 +466,7 @@ const SubscriptionPanel = ({ onClose }) => {
                     <div className="sub_feature_icon">
                       <Check size={14} />
                     </div>
-                    <span className="sub_feature_text">{feature}</span>
+                    <span className="sub_feature_text">{tl(feature)}</span>
                   </div>
                 ))}
               </div>
@@ -470,7 +479,7 @@ const SubscriptionPanel = ({ onClose }) => {
                   disabled={plan.buttonDisabled || loading}
                   className="sub_plan_button"
                 >
-                  {loading ? "Processing..." : plan.buttonText}
+                  {tl(loading ? tx("auto.processing_272b") : plan.buttonText)}
                 </Button>
               </div>
             </div>
@@ -479,13 +488,13 @@ const SubscriptionPanel = ({ onClose }) => {
 
         {/* Subscription Info */}
         <div className="subscription_info">
-          <h4>Subscription Details</h4>
+          <h4>{tx("auto.subscriptionDetails_fe11")}</h4>
           <ul>
-            <li>• Pay monthly, or yearly and get 2 months free</li>
-            <li>• Plans don't renew automatically; we remind you before yours ends</li>
-            <li>• Cancel anytime</li>
-            <li>• Secure payment processing with Flutterwave</li>
-            <li>• Support by email, phone and in-app tickets</li>
+            <li>{tx("auto.payMonthlyOrYearlyAnd_191b")}</li>
+            <li>{tx("auto.plansDonTRenewAutomatically_0d66")}</li>
+            <li>{tx("auto.cancelAnytime_f8f7")}</li>
+            <li>{tx("auto.securePaymentProcessingWithFlutt_cd09")}</li>
+            <li>{tx("auto.supportByEmailPhoneAnd_ba1a")}</li>
           </ul>
         </div>
         </>
@@ -495,13 +504,13 @@ const SubscriptionPanel = ({ onClose }) => {
           {paymentsLoading ? (
             <div className="sub_payments_loading">
               <div className="sub_loading_spinner"></div>
-              <p>Loading payment history...</p>
+              <p>{tx("auto.loadingPaymentHistory_f6a9")}</p>
             </div>
           ) : payments.length === 0 ? (
             <div className="sub_no_payments">
               <Receipt size={48} className="sub_no_payments_icon" />
-              <h3>No payments yet</h3>
-              <p>Your payment history will appear here after your first subscription payment.</p>
+              <h3>{tx("auto.noPaymentsYet_d48f")}</h3>
+              <p>{tx("auto.yourPaymentHistoryWillAppear_beb2")}</p>
             </div>
           ) : (
             <div className="sub_payments_list">
@@ -515,18 +524,18 @@ const SubscriptionPanel = ({ onClose }) => {
                     )}
                   </div>
                   <div className="sub_payment_info">
-                    <p className="sub_payment_plan">{payment.plantype || "Subscription"} Plan</p>
+                    <p className="sub_payment_plan">{tl(payment.plantype || tx("auto.subscription_8fde"))}{" "}{tx("auto.plan_ae2f")}</p>
                     <p className="sub_payment_date">
-                      {payment.paidAt ? new Date(payment.paidAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+                      {tl(payment.paidAt ? new Date(payment.paidAt).toLocaleDateString(dateLocale("en-US"), { day: "numeric", month: "short", year: "numeric" }) : tx("auto.nA_08d2"))}
                     </p>
                     {payment.transactionId && (
-                      <p className="sub_payment_ref">Ref: {payment.transactionId}</p>
+                      <p className="sub_payment_ref">{tx("auto.ref_e7c5")}{" "}{tl(payment.transactionId)}</p>
                     )}
                   </div>
                   <div className="sub_payment_right">
                     <p className="sub_payment_amount">₦{(payment.planPrice || 0).toLocaleString()}</p>
                     <span className={`sub_payment_status ${payment.status === "successful" ? "success" : "failed"}`}>
-                      {payment.status === "successful" ? "Paid" : payment.status}
+                      {tl(payment.status === "successful" ? tx("auto.paid_dc9d") : payment.status)}
                     </span>
                   </div>
                 </div>
@@ -542,7 +551,7 @@ const SubscriptionPanel = ({ onClose }) => {
         <div className="cancel_modal_overlay">
           <div className="cancel_modal" data-theme={actualTheme}>
             <div className="cancel_modal_header">
-              <h3>Cancel Subscription</h3>
+              <h3>{tx("auto.cancelSubscription_58b2")}</h3>
               <button className="cancel_modal_close" onClick={closeCancelModal}>
                 <X size={20} />
               </button>
@@ -550,21 +559,20 @@ const SubscriptionPanel = ({ onClose }) => {
 
             <div className="cancel_modal_content">
               <p className="cancel_warning">
-                ⚠️ <strong>Important:</strong> Cancelling your subscription will
-                immediately revoke access to premium features.{" "}
-                <strong>No refunds will be processed.</strong>
+                ⚠️ <strong>{tx("auto.important_18dd")}</strong>{" "}{tx("auto.cancellingYourSubscriptionWillIm_f868")}{" "}
+                <strong>{tx("auto.noRefundsWillBeProcessed_f732")}</strong>
               </p>
 
               <div className="cancel_form">
                 <div className="cancel_form_group">
                   <label htmlFor="cancelReason">
-                    Why do you want to cancel your subscription? *
+                    {tx("auto.whyDoYouWantTo_64e9")}
                   </label>
                   <textarea
                     id="cancelReason"
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="Please tell us why you're cancelling your subscription..."
+                    placeholder={tx("auto.pleaseTellUsWhyYou_c125")}
                     className="cancel_textarea"
                     rows={4}
                   />
@@ -578,7 +586,7 @@ const SubscriptionPanel = ({ onClose }) => {
                   disabled={loading}
                   className="cancel_confirm_btnn"
                 >
-                  Keep Subscription
+                  {tx("auto.keepSubscription_c897")}
                 </Button>
                 <Button
                   variant="danger"
@@ -586,14 +594,12 @@ const SubscriptionPanel = ({ onClose }) => {
                   disabled={loading || !cancelReason.trim()}
                   className="cancel_confirm_btn"
                 >
-                  {loading ? "Cancelling..." : "Cancel Subscription"}
+                  {tl(loading ? tx("auto.cancelling_f498") : tx("auto.cancelSubscription_58b2"))}
                 </Button>
               </div>
 
               <p className="cancel_disclaimer">
-                By clicking "Cancel Subscription", you acknowledge that no
-                refunds will be provided and your access will be revoked
-                immediately.
+                {tx("auto.byClickingCancelSubscriptionYou_bfd1")}
               </p>
             </div>
           </div>

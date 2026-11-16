@@ -14,7 +14,16 @@ import Button from "../../../../components/button/Button";
 import { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import "./ClientsManagement.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
+
 const ClientsManagement = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -227,7 +236,7 @@ const ClientsManagement = () => {
 
   const formatDate = (date) => {
     if (!date) return "No orders yet";
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -239,7 +248,7 @@ const ClientsManagement = () => {
     return (
       <div className="clients-management">
         <div className="clients-header">
-          <h1 className="clients-title">Your Client Information Hub</h1>
+          <h1 className="clients-title">{tx("auto.yourClientInformationHub_4bd0")}</h1>
         </div>
         <div className="clients-controls">
           <div className="search-section">
@@ -247,7 +256,7 @@ const ClientsManagement = () => {
               <Search className="search-icon" size={20} />
               <input
                 type="text"
-                placeholder="Search clients by name, phone, or email"
+                placeholder={tx("auto.searchClientsByNamePhone_9984")}
                 className="search-input"
                 disabled
               />
@@ -261,12 +270,12 @@ const ClientsManagement = () => {
             disabled
             className="add-client-btn"
           >
-            <span className="add-client-text">Add Client</span>
+            <span className="add-client-text">{tx("auto.addClient_d2ba")}</span>
           </Button>
         </div>
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading clients...</p>
+          <p>{tx("auto.loadingClients_48a2")}</p>
         </div>
       </div>
     );
@@ -277,10 +286,10 @@ const ClientsManagement = () => {
     return (
       <div className="clients-management">
         <div className="clients-header">
-          <h1 className="clients-title">Your Client Information Hub</h1>
+          <h1 className="clients-title">{tx("auto.yourClientInformationHub_4bd0")}</h1>
         </div>
         <div className="no-clients">
-          <p>Please log in to view your clients.</p>
+          <p>{tx("auto.pleaseLogInToView_929c")}</p>
         </div>
       </div>
     );
@@ -290,7 +299,7 @@ const ClientsManagement = () => {
     <div className="clients-management">
       {/* Header */}
       <div className="clients-header">
-        <h1 className="clients-title">Your Client Information Hub</h1>
+        <h1 className="clients-title">{tx("auto.yourClientInformationHub_4bd0")}</h1>
       </div>
 
       {/* Search and Add Client Section */}
@@ -301,7 +310,7 @@ const ClientsManagement = () => {
             <Search className="search-icon" size={20} />
             <input
               type="text"
-              placeholder="Search clients by name, phone, or email"
+              placeholder={tx("auto.searchClientsByNamePhone_9984")}
               className="search-input"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -329,7 +338,7 @@ const ClientsManagement = () => {
                     setShowFilter(false);
                   }}
                 />
-                <label htmlFor="all">All Clients</label>
+                <label htmlFor="all">{tx("auto.allClients_6318")}</label>
               </div>
               <div className="ffilter-option">
                 <input
@@ -343,7 +352,7 @@ const ClientsManagement = () => {
                     setShowFilter(false);
                   }}
                 />
-                <label htmlFor="active">Active</label>
+                <label htmlFor="active">{tx("auto.active_a733")}</label>
               </div>
               <div className="ffilter-option">
                 <input
@@ -357,7 +366,7 @@ const ClientsManagement = () => {
                     setShowFilter(false);
                   }}
                 />
-                <label htmlFor="inactive">Inactive</label>
+                <label htmlFor="inactive">{tx("auto.inactive_09af")}</label>
               </div>
             </div>
           )}
@@ -377,7 +386,7 @@ const ClientsManagement = () => {
             className="sort-by-btn"
             aria-label="Sort by"
           >
-            Sort by
+            {tx("auto.sortBy_a2a5")}
           </Button>
           {showSort && (
             <div className="sort-dropdown" role="menu">
@@ -399,7 +408,7 @@ const ClientsManagement = () => {
                     setShowSort(false);
                   }}
                 >
-                  {option.label}
+                  {tl(option.label)}
                 </button>
               ))}
             </div>
@@ -415,7 +424,7 @@ const ClientsManagement = () => {
           onClick={() => setShowAddClient(true)}
           className="add-client-btn"
         >
-          <span className="add-client-text">Add Client</span>
+          <span className="add-client-text">{tx("auto.addClient_d2ba")}</span>
         </Button>
 
         {/* Mobile Floating Button */}
@@ -578,26 +587,26 @@ const ClientsManagement = () => {
                     client.status === "Active" ? "active" : "inactive"
                   }`}
                 ></div>
-                <h3 className="client-name">{client.name}</h3>
+                <h3 className="client-name">{tl(client.name)}</h3>
               </div>
 
               <div className="client-contact">
                 <div className="contact-item">
                   <Phone className="contact-icon" size={16} />
-                  <span className="contact-text">{client.phone}</span>
+                  <span className="contact-text">{tl(client.phone)}</span>
                 </div>
                 <div className="contact-item">
                   <Mail className="contact-icon" size={16} />
-                  <span className="contact-text">{client.email}</span>
+                  <span className="contact-text">{tl(client.email)}</span>
                 </div>
               </div>
             </div>
 
             <div className="client-sidebar">
               <div className="last-order">
-                <span className="last-order-label">Last order:</span>
+                <span className="last-order-label">{tx("auto.lastOrder_cc82")}</span>
                 <span className="last-order-date">
-                  {formatDate(client.lastOrder)}
+                  {tl(formatDate(client.lastOrder))}
                 </span>
               </div>
               <button
@@ -617,9 +626,9 @@ const ClientsManagement = () => {
       {filteredClients.length === 0 && !loading && (
         <div className="no-clients">
           <p>
-            {searchTerm || filterStatus !== "all"
-              ? "No clients found matching your search criteria."
-              : "No clients yet. Add your first client to get started!"}
+            {tl(searchTerm || filterStatus !== "all"
+              ? tx("auto.noClientsFoundMatchingYour_0373")
+              : tx("auto.noClientsYetAddYour_2931"))}
           </p>
         </div>
       )}

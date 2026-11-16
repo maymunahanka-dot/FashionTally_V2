@@ -17,12 +17,18 @@ import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import "./AddLoyaltyMemberPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const AddLoyaltyMemberPanel = ({
   onSubmit,
   editingMember = null,
   isLoading = false,
   onClose,
 }) => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const [formData, setFormData] = useState({
     name: "",
@@ -145,21 +151,21 @@ const AddLoyaltyMemberPanel = ({
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = tx("auto.nameIsRequired_222c");
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = tx("auto.emailIsRequired_4da1");
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
+      newErrors.email = tx("auto.pleaseEnterAValidEmail_2cf1");
     }
 
     if (formData.points < 0) {
-      newErrors.points = "Points cannot be negative";
+      newErrors.points = tx("auto.pointsCannotBeNegative_8d87");
     }
 
     if (formData.totalSpent < 0) {
-      newErrors.totalSpent = "Total spent cannot be negative";
+      newErrors.totalSpent = tx("auto.totalSpentCannotBeNegative_f8db");
     }
 
     setErrors(newErrors);
@@ -221,7 +227,7 @@ const AddLoyaltyMemberPanel = ({
   return (
     <div className="add_loyalty_member_panel">
       <div className="add_loyalty_member_header">
-        <h2>{editingMember ? "Edit Loyalty Member" : "Add Loyalty Member"}</h2>
+        <h2>{tl(editingMember ? tx("auto.editLoyaltyMember_ce3d") : tx("auto.addLoyaltyMember_99b2"))}</h2>
         <button className="add_loyalty_member_close" onClick={handleClose}>
           <X size={24} />
         </button>
@@ -230,11 +236,11 @@ const AddLoyaltyMemberPanel = ({
       <form onSubmit={handleSubmit} className="add_loyalty_member_form">
         {/* Basic Information */}
         <div className="add_loyalty_member_section">
-          <h3>Basic Information</h3>
+          <h3>{tx("auto.basicInformation_b0d5")}</h3>
 
           {/* Fill Mode Selection */}
           <div className="add_loyalty_member_field">
-            <label>Information Source</label>
+            <label>{tx("auto.informationSource_ee1b")}</label>
             <div className="fill_mode_options">
               <button
                 type="button"
@@ -244,7 +250,7 @@ const AddLoyaltyMemberPanel = ({
                 onClick={() => setFillMode("manual")}
               >
                 <User size={16} />
-                Manual Entry
+                {tx("auto.manualEntry_a116")}
               </button>
               <button
                 type="button"
@@ -254,7 +260,7 @@ const AddLoyaltyMemberPanel = ({
                 onClick={() => setShowClientSelector(true)}
               >
                 <Users size={16} />
-                Select from Clients
+                {tx("auto.selectFromClients_44d3")}
               </button>
             </div>
           </div>
@@ -266,13 +272,13 @@ const AddLoyaltyMemberPanel = ({
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <User size={16} />
-                Full Name *
+                {tx("auto.fullName_0756")}
               </span>
             }
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            placeholder="Enter member's full name"
+            placeholder={tx("auto.enterMemberSFullName_ae1a")}
             error={errors.name}
             variant="rounded"
           />
@@ -284,13 +290,13 @@ const AddLoyaltyMemberPanel = ({
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <Mail size={16} />
-                Email Address *
+                {tx("auto.emailAddress_ff92")}
               </span>
             }
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            placeholder="Enter email address"
+            placeholder={tx("auto.enterEmailAddress_122a")}
             error={errors.email}
             variant="rounded"
           />
@@ -302,7 +308,7 @@ const AddLoyaltyMemberPanel = ({
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <Star size={16} />
-                Loyalty Level
+                {tx("auto.loyaltyLevel_f0a9")}
               </span>
             }
             name="level"
@@ -320,7 +326,7 @@ const AddLoyaltyMemberPanel = ({
 
         {/* Points & Spending */}
         <div className="add_loyalty_member_section">
-          <h3>Points & Spending</h3>
+          <h3>{tx("auto.pointsSpending_84be")}</h3>
 
           <div className="add_loyalty_member_row">
             <Input
@@ -330,7 +336,7 @@ const AddLoyaltyMemberPanel = ({
                   style={{ display: "flex", alignItems: "center", gap: "8px" }}
                 >
                   <Star size={16} />
-                  Current Points
+                  {tx("auto.currentPoints_6653")}
                 </span>
               }
               name="points"
@@ -349,7 +355,7 @@ const AddLoyaltyMemberPanel = ({
                   style={{ display: "flex", alignItems: "center", gap: "8px" }}
                 >
                   <DollarSign size={16} />
-                  Total Spent (₦)
+                  {tx("auto.totalSpent_0d4c")}
                 </span>
               }
               name="totalSpent"
@@ -366,7 +372,7 @@ const AddLoyaltyMemberPanel = ({
 
         {/* Additional Information */}
         <div className="add_loyalty_member_section">
-          <h3>Additional Information</h3>
+          <h3>{tx("auto.additionalInformation_ecfe")}</h3>
 
           <Input
             type="date"
@@ -375,7 +381,7 @@ const AddLoyaltyMemberPanel = ({
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <Calendar size={16} />
-                Birthday (Optional)
+                {tx("auto.birthdayOptional_9d4b")}
               </span>
             }
             name="birthday"
@@ -391,23 +397,23 @@ const AddLoyaltyMemberPanel = ({
                 style={{ display: "flex", alignItems: "center", gap: "8px" }}
               >
                 <Tag size={16} />
-                Tags (Optional)
+                {tx("auto.tagsOptional_24d2")}
               </span>
             }
             name="tags"
             value={formData.tags}
             onChange={handleInputChange}
-            placeholder="VIP, Regular, New Customer (comma separated)"
+            placeholder={tx("auto.vipRegularNewCustomerComma_ba47")}
             variant="rounded"
           />
 
           <Input
             type="textarea"
-            label="Notes (Optional)"
+            label={tx("auto.notesOptional_2fd5")}
             name="notes"
             value={formData.notes}
             onChange={handleInputChange}
-            placeholder="Any additional notes about this member..."
+            placeholder={tx("auto.anyAdditionalNotesAboutThis_b6e0")}
             rows="3"
             variant="rounded"
           />
@@ -421,7 +427,7 @@ const AddLoyaltyMemberPanel = ({
             onClick={handleClose}
             disabled={isLoading}
           >
-            Cancel
+            {tx("auto.cancel_77df")}
           </Button>
           <Button
             type="submit"
@@ -430,10 +436,10 @@ const AddLoyaltyMemberPanel = ({
             disabled={isLoading}
           >
             {isLoading
-              ? "Saving..."
+              ? tx("auto.saving_ae7e")
               : editingMember
-              ? "Update Member"
-              : "Add Member"}
+              ? tx("auto.updateMember_1ba7")
+              : tx("auto.addMember_fbe4")}
           </Button>
         </div>
       </form>
@@ -443,7 +449,7 @@ const AddLoyaltyMemberPanel = ({
         <div className="client_selector_overlay">
           <div className="client_selector_panel">
             <div className="client_selector_header">
-              <h3>Select Client</h3>
+              <h3>{tx("auto.selectClient_bed9")}</h3>
               <button
                 className="client_selector_close"
                 onClick={() => {
@@ -459,7 +465,7 @@ const AddLoyaltyMemberPanel = ({
               <Search size={16} />
               <input
                 type="text"
-                placeholder="Search clients by name, email, or phone"
+                placeholder={tx("auto.searchClientsByNameEmail_872d")}
                 value={clientSearchTerm}
                 onChange={(e) => setClientSearchTerm(e.target.value)}
                 className="client_search_input"
@@ -469,7 +475,7 @@ const AddLoyaltyMemberPanel = ({
             <div className="client_selector_list">
               {clientsLoading ? (
                 <div className="client_selector_loading">
-                  <p>Loading clients...</p>
+                  <p>{tx("auto.loadingClients_48a2")}</p>
                 </div>
               ) : filteredClients.length > 0 ? (
                 filteredClients.map((client) => (
@@ -479,10 +485,10 @@ const AddLoyaltyMemberPanel = ({
                     onClick={() => handleClientSelect(client)}
                   >
                     <div className="client_info">
-                      <h4>{client.name}</h4>
-                      <p>{client.email}</p>
+                      <h4>{tl(client.name)}</h4>
+                      <p>{tl(client.email)}</p>
                       {client.phone && (
-                        <span className="client_phone">{client.phone}</span>
+                        <span className="client_phone">{tl(client.phone)}</span>
                       )}
                     </div>
                   </div>
@@ -490,9 +496,9 @@ const AddLoyaltyMemberPanel = ({
               ) : (
                 <div className="client_selector_empty">
                   <p>
-                    {clientSearchTerm
-                      ? "No clients found matching your search"
-                      : "No clients available"}
+                    {tl(clientSearchTerm
+                      ? tx("auto.noClientsFoundMatchingYour_4323")
+                      : tx("auto.noClientsAvailable_58aa"))}
                   </p>
                 </div>
               )}

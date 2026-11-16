@@ -1,18 +1,21 @@
-import { ArrowLeft, Sun, Moon } from "lucide-react";
+import { ArrowLeft, Sun, Moon, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import Button from "../../components/button/Button";
 import { useTheme } from "../../contexts/ThemeContext";
+import { LANGUAGES, setAppLanguage } from "../../i18n";
 import "./AppearancePanel.css";
 
+import { tl } from "../../i18n";
 const AppearancePanel = ({ onClose }) => {
   const { theme, changeTheme, getCurrentTheme } = useTheme();
+  const { t, i18n } = useTranslation();
 
   const handleThemeChange = (newTheme) => {
     changeTheme(newTheme);
   };
 
   const handleSaveSettings = () => {
-    // Theme settings are already saved automatically
-    console.log("Settings saved - Theme:", theme);
+    // Theme and language are already saved when picked
     onClose();
   };
 
@@ -24,8 +27,8 @@ const AppearancePanel = ({ onClose }) => {
           <ArrowLeft size={20} />
         </button>
         <div className="app_header_content">
-          <h2 className="app_title">Appearance</h2>
-          <p className="app_subtitle">Customize your experience</p>
+          <h2 className="app_title">{t("appearance.title")}</h2>
+          <p className="app_subtitle">{t("appearance.subtitle")}</p>
         </div>
       </div>
 
@@ -33,7 +36,7 @@ const AppearancePanel = ({ onClose }) => {
       <div className="app_content">
         {/* Theme Section */}
         <div className="app_section">
-          <h3 className="app_section_title">Theme</h3>
+          <h3 className="app_section_title">{t("appearance.theme")}</h3>
 
           <div className="app_theme_options">
             <div
@@ -45,7 +48,7 @@ const AppearancePanel = ({ onClose }) => {
               <div className="app_theme_icon">
                 <Sun size={24} />
               </div>
-              <span className="app_theme_label">Light Mode</span>
+              <span className="app_theme_label">{t("appearance.light")}</span>
             </div>
 
             <div
@@ -57,7 +60,7 @@ const AppearancePanel = ({ onClose }) => {
               <div className="app_theme_icon">
                 <Moon size={24} />
               </div>
-              <span className="app_theme_label">Dark Mode</span>
+              <span className="app_theme_label">{t("appearance.dark")}</span>
             </div>
 
             <div
@@ -80,21 +83,41 @@ const AppearancePanel = ({ onClose }) => {
                   <line x1="12" y1="17" x2="12" y2="21" />
                 </svg>
               </div>
-              <span className="app_theme_label">System</span>
+              <span className="app_theme_label">{t("appearance.system")}</span>
             </div>
           </div>
 
           <div className="app_theme_info">
             <p className="app_theme_description">
-              Theme changes are saved automatically and will persist across
-              sessions.
+              {t("appearance.themeInfo")}
               {theme === "system" && (
-                <span>
-                  {" "}
-                  Currently following system preference: {getCurrentTheme()}.
-                </span>
+                <span> {t("appearance.followingSystem", { theme: getCurrentTheme() })}</span>
               )}
             </p>
+          </div>
+        </div>
+
+        {/* Language Section */}
+        <div className="app_section">
+          <h3 className="app_section_title">{t("appearance.language")}</h3>
+          <div className="app_theme_options app_language_options">
+            {LANGUAGES.map((lang) => (
+              <div
+                key={lang.code}
+                className={`app_theme_card ${i18n.language === lang.code ? "app_theme_selected" : ""}`}
+                onClick={() => setAppLanguage(lang.code, { saveToAccount: true })}
+                role="radio"
+                aria-checked={i18n.language === lang.code}
+              >
+                <div className="app_theme_icon">
+                  {i18n.language === lang.code ? <Check size={22} /> : <span>{lang.code.toUpperCase()}</span>}
+                </div>
+                <span className="app_theme_label">{tl(lang.label)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="app_theme_info">
+            <p className="app_theme_description">{t("appearance.languageInfo")}</p>
           </div>
         </div>
       </div>
@@ -106,7 +129,7 @@ const AppearancePanel = ({ onClose }) => {
           onClick={handleSaveSettings}
           className="app_save_btn"
         >
-          Save Settings
+          {t("appearance.save")}
         </Button>
       </div>
     </div>

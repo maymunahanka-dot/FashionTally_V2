@@ -10,6 +10,8 @@ import {
   getSalesChartData,
 } from "../../../../backend/services/crmService";
 import SalesChart from "../../../../components/SalesChart";
+import { useDisplayCurrency } from "../../../../utils/useDisplayCurrency";
+import { formatCompactMoney } from "../../../../utils/exchangeRate";
 import CircularStat from "../../../../components/CircularStat";
 import DashboardNotification from "../../../../pannel_pages/DashboardNotification";
 import AddInventoryPanel from "../../../../pannel_pages/AddInventoryPanel";
@@ -18,10 +20,20 @@ import AddClientPanel from "../../../../pannel_pages/AddClientPanel";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
 import "./DashboardOverview.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
+
 const DashboardOverview = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const subscription = useSubscription();
   const { user } = useNewAuth();
+  const displayCurrency = useDisplayCurrency();
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount]             = useState(0);
 
@@ -183,39 +195,9 @@ const DashboardOverview = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    console.log("💰 formatCurrency called with:", amount, typeof amount);
-    if (!amount || isNaN(amount)) {
-      console.log("💰 formatCurrency returning ₦0 for invalid amount");
-      return "₦0";
-    }
-
-    const num = Number(amount);
-    let formatted;
-
-    if (num >= 1000000000) {
-      // Billions
-      formatted = `₦${(num / 1000000000).toFixed(1)}B`;
-    } else if (num >= 1000000) {
-      // Millions
-      formatted = `₦${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      // Thousands
-      formatted = `₦${(num / 1000).toFixed(1)}K`;
-    } else {
-      // Less than 1000
-      formatted = `₦${num.toLocaleString()}`;
-    }
-
-    console.log("💰 formatCurrency returning:", formatted);
-
-    // Show formatting examples in console
-    if (num > 1000) {
-      console.log(`💰 Formatted ${num.toLocaleString()} as ${formatted}`);
-    }
-
-    return formatted;
-  };
+  // Totals are saved in Naira; show them in the business's display currency
+  const formatCurrency = (amount) =>
+    formatCompactMoney(amount, displayCurrency.currency, displayCurrency.ngnPerUnit);
 
   const formatPercentage = (value) => {
     console.log("📊 formatPercentage called with:", value, typeof value);
@@ -231,7 +213,7 @@ const DashboardOverview = () => {
 
   const getCurrentDate = () => {
     const now = new Date();
-    return now.toLocaleDateString("en-US", {
+    return now.toLocaleDateString(dateLocale("en-US"), {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
@@ -245,10 +227,10 @@ const DashboardOverview = () => {
     const updated = new Date(dashboardStats.lastUpdated);
     const diffInSeconds = Math.floor((now - updated) / 1000);
 
-    if (diffInSeconds < 60) return `${diffInSeconds}secs ago`;
+    if (diffInSeconds < 60) return tx("tpl.secsAgo_e73c", { v0: diffInSeconds });
     if (diffInSeconds < 3600)
-      return `${Math.floor(diffInSeconds / 60)}mins ago`;
-    return `${Math.floor(diffInSeconds / 3600)}hrs ago`;
+      return tx("tpl.minsAgo_173d", { v0: Math.floor(diffInSeconds / 60) });
+    return tx("tpl.hrsAgo_bac5", { v0: Math.floor(diffInSeconds / 3600) });
   };
 
 
@@ -286,22 +268,22 @@ const DashboardOverview = () => {
               </div>
               <div className="welcome-text">
                 <h1 className="welcome-title">
-                  Welcome back, {currentUser?.name || "User"}!
+                  {tx("auto.welcomeBack_8c8b")}{" "}{tl(currentUser?.name || tx("auto.user_9f8a"))}!
                 </h1>
               </div>
             </div>
             <p className="welcome-subtitle">
-              Here's an overview of your fashion business
+              {tx("auto.hereSAnOverviewOf_3f5f")}
             </p>
           </div>
           <div className="welcome-banner-actions">
-            <button className="notif-bell-btn" onClick={() => setShowNotifications(true)} title="Notifications">
+            <button className="notif-bell-btn" onClick={() => setShowNotifications(true)} title={tx("auto.notifications_753a")}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
               {unreadCount > 0 && (
-                <span className="notif-bell-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                <span className="notif-bell-badge">{tl(unreadCount > 99 ? "99+" : unreadCount)}</span>
               )}
             </button>
           </div>
@@ -352,29 +334,29 @@ const DashboardOverview = () => {
         {/* Schedule Section */}
         <div className="schedule-section">
           <div className="section-header">
-            <h2 className="section-title">Today's Schedule</h2>
+            <h2 className="section-title">{tx("auto.todaySSchedule_7ed2")}</h2>
             <button
               className="see-more-btn"
               onClick={handleSeeMoreAppointments}
             >
-              See more
+              {tx("auto.seeMore_c510")}
             </button>
           </div>
 
           {appointmentsLoading ? (
             <div className="schedule-loading">
-              <p>Loading appointments...</p>
+              <p>{tx("auto.loadingAppointments_f447")}</p>
             </div>
           ) : todaysAppointments.length === 0 ? (
             <div className="no-appointments">
               <div className="no-appointments-content">
-                <h3>No appointments scheduled for today</h3>
-                <p>Your schedule is clear for today</p>
+                <h3>{tx("auto.noAppointmentsScheduledForToday_cce9")}</h3>
+                <p>{tx("auto.yourScheduleIsClearFor_13e3")}</p>
                 <button
                   className="schedule-appointment-btn"
                   onClick={handleSeeMoreAppointments}
                 >
-                  Schedule Appointment
+                  {tx("auto.scheduleAppointment_7a56")}
                 </button>
               </div>
             </div>
@@ -395,28 +377,28 @@ const DashboardOverview = () => {
               <div className="main-schedule-card">
                 <div className="schedule-info">
                   <span className="schedule-time">
-                    {todaysAppointments[0].time}
+                    {tl(todaysAppointments[0].time)}
                   </span>
                   <div className="client-info">
                     <Users size={18} className="client-icon" />
                     <span className="client-name">
-                      {todaysAppointments[0].clientName}
+                      {tl(todaysAppointments[0].clientName)}
                     </span>
                   </div>
                   <span className="service-description">
-                    {todaysAppointments[0].title}
+                    {tl(todaysAppointments[0].title)}
                   </span>
                 </div>
                 <span className="status-badgee">
-                  {formatAppointmentStatus(todaysAppointments[0].status)}
+                  {tl(formatAppointmentStatus(todaysAppointments[0].status))}
                 </span>
               </div>
 
               {/* Show count if more appointments */}
               {todaysAppointments.length > 1 && (
                 <div className="more-appointments-indicator">
-                  +{todaysAppointments.length - 1} more appointment
-                  {todaysAppointments.length > 2 ? "s" : ""}
+                  +{todaysAppointments.length - 1}{" "}{tx("auto.moreAppointment_70c2")}
+                  {tl(todaysAppointments.length > 2 ? "s" : "")}
                 </div>
               )}
             </div>
@@ -425,21 +407,21 @@ const DashboardOverview = () => {
 
         {/* Quick Actions */}
         <div className="quick-actions-section">
-          <h2 className="section-title">Quick Actions</h2>
+          <h2 className="section-title">{tx("auto.quickActions_c408")}</h2>
           <div className="quick-actions-grid">
             <QuickActionButton
               icon={FileText}
-              label="New Order"
+              label={tx("auto.newOrder_c59c")}
               onClick={toggleNewOrder}
             />
             <QuickActionButton
               icon={UserPlus}
-              label="New Client"
+              label={tx("auto.newClient_9029")}
               onClick={toggleAddClient}
             />
             <QuickActionButton
               icon={Plus}
-              label="Add Inventory"
+              label={tx("auto.addInventory_224f")}
               onClick={toggleAddInventory}
             />
             <QuickActionButton
@@ -453,8 +435,8 @@ const DashboardOverview = () => {
 
       {/* Date Header */}
       <div className="date-header">
-        <h2 className="date-title">{getCurrentDate()}</h2>
-        <span className="update-time">Updated {getLastUpdatedTime()}</span>
+        <h2 className="date-title">{tl(getCurrentDate())}</h2>
+        <span className="update-time">{tx("auto.updated_f2f8")}{" "}{tl(getLastUpdatedTime())}</span>
       </div>
 
       {/* Stats Grid */}
@@ -490,7 +472,7 @@ const DashboardOverview = () => {
               })()}
             </div>
           </div>
-          <div className="stat-label">Total Revenue </div>
+          <div className="stat-label">{tx("auto.totalRevenue_f3a8")}{" "}</div>
           <div
             className={`stat-trend ${
               !dashboardStats || (dashboardStats.revenueGrowth || 0) >= 0
@@ -502,9 +484,9 @@ const DashboardOverview = () => {
               const value =
                 statsLoading || !dashboardStats
                   ? "..."
-                  : `${formatPercentage(
+                  : tx("tpl.fromLastMonth_d42b", { v0: formatPercentage(
                       dashboardStats.revenueGrowth || 0
-                    )} from last month`;
+                    ) });
               console.log("📈 Revenue growth display value:", value);
               return value;
             })()}
@@ -517,17 +499,17 @@ const DashboardOverview = () => {
               <Users size={24} color="#a03f3fff" />
             </div>
             <div className="stat-main-value">
-              {statsLoading || !dashboardStats
+              {tl(statsLoading || !dashboardStats
                 ? "..."
-                : dashboardStats.activeClients || 0}{" "}
-              <span className="stat-unitt">clients</span>
+                : dashboardStats.activeClients || 0)}{" "}
+              <span className="stat-unitt">{tx("auto.clients_93df")}</span>
             </div>
           </div>
-          <div className="stat-label">Active Clients</div>
+          <div className="stat-label">{tx("auto.activeClients_c182")}</div>
           <div className="stat-trend positive">
-            {statsLoading || !dashboardStats
+            {tl(statsLoading || !dashboardStats
               ? "..."
-              : `${dashboardStats.newClientsThisMonth || 0} new this month`}
+              : tx("tpl.newThisMonth_107d", { v0: dashboardStats.newClientsThisMonth || 0 }))}
           </div>
         </div>
 
@@ -537,15 +519,15 @@ const DashboardOverview = () => {
               <Users size={24} color="#a0963fff" />
             </div>
             <div className="stat-main-value">
-              {statsLoading ? "..." : dashboardStats?.pendingOrders || 0}{" "}
-              <span className="stat-unitt">orders</span>
+              {tl(statsLoading ? "..." : dashboardStats?.pendingOrders || 0)}{" "}
+              <span className="stat-unitt">{tx("auto.orders_9658")}</span>
             </div>
           </div>
-          <div className="stat-label">Pending Orders</div>
+          <div className="stat-label">{tx("auto.pendingOrders_2a94")}</div>
           <div className="stat-trend warning">
-            {statsLoading
+            {tl(statsLoading
               ? "..."
-              : `${dashboardStats?.ordersThisWeek || 0} due this week`}
+              : tx("tpl.dueThisWeek_4d0d", { v0: dashboardStats?.ordersThisWeek || 0 }))}
           </div>
         </div>
 
@@ -564,12 +546,12 @@ const DashboardOverview = () => {
               })()}
             </div>
           </div>
-          <div className="stat-label">Inventory Value</div>
+          <div className="stat-label">{tx("auto.inventoryValue_d96f")}</div>
           <div className="stat-trend neutral">
             {(() => {
               const value = statsLoading
                 ? "..."
-                : `${dashboardStats?.totalInventoryItems || 0} items in stock`;
+                : tx("tpl.itemsInStock_af6d", { v0: dashboardStats?.totalInventoryItems || 0 });
               console.log("📋 Inventory items display value:", value);
               return value;
             })()}
@@ -583,7 +565,7 @@ const DashboardOverview = () => {
         <div className="bar-chart-container">
           <div className="chart-header">
             <div className="chart-title-section">
-              <h3 className="chart-title">Overall Sales</h3>
+              <h3 className="chart-title">{tx("auto.overallSales_11b6")}</h3>
               <div className="chart-subtitle">
                 <span className="trend-indicator">
                   {(() => {
@@ -604,16 +586,15 @@ const DashboardOverview = () => {
                   })()}
                   %
                 </span>
-                <span className="trend-text">vs Last Year</span>
+                <span className="trend-text">{tx("auto.vsLastYear_b517")}</span>
               </div>
             </div>
             <div className="chart-legend">
               <span className="legend-item">
-                <div className="legend-dot legend-last-year"></div> Last Year
+                <div className="legend-dot legend-last-year"></div>{" "}{tx("auto.lastYear_ab9f")}
               </span>
               <span className="legend-item">
-                <div className="legend-dot legend-current-year"></div> Running
-                Year
+                <div className="legend-dot legend-current-year"></div>{" "}{tx("auto.runningYear_d3d2")}
               </span>
             </div>
           </div>
@@ -660,7 +641,7 @@ const DashboardOverview = () => {
                 });
                 return value;
               })()}
-              label="Order Completion Rate"
+              label={tx("auto.orderCompletionRate_dfb5")}
               color="#0d9488"
               size={140}
             />
@@ -688,7 +669,7 @@ const DashboardOverview = () => {
                 });
                 return value;
               })()}
-              label="Client Satisfaction"
+              label={tx("auto.clientSatisfaction_864f")}
               color="#0d9488"
               size={140}
             />
@@ -696,7 +677,7 @@ const DashboardOverview = () => {
           <div className="circular-stat-card">
             <CircularStat
               percentage={100}
-              label="Ave. Order Value"
+              label={tx("auto.aveOrderValue_a25e")}
               subLabel={(() => {
                 const value =
                   statsLoading || !dashboardStats
@@ -722,7 +703,7 @@ const QuickActionButton = ({ icon: Icon, label, onClick }) => (
     <div className="action-icon-container">
       <Icon size={24} />
     </div>
-    <span className="action-label">{label}</span>
+    <span className="action-label">{tl(label)}</span>
   </button>
 );
 

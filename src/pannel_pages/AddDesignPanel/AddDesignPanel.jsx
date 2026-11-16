@@ -8,7 +8,13 @@ import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./AddDesignPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = null }) => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const { isDark } = useTheme();
   const fileInputRef = useRef(null);
@@ -109,7 +115,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
 
   useEffect(() => {
     if (priceTouched.current || !editMode || !initialData) return;
-    if (currency === "USD" && !usdToNgn) return;
+    if (currency !== "NGN" && !usdToNgn) return;
     setFormData((prev) => ({ ...prev, price: fromNaira(initialData.price) }));
   }, [currency, usdToNgn, editMode, initialData]);
 
@@ -141,12 +147,12 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Design name is required";
-    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.name.trim()) newErrors.name = tx("auto.designNameIsRequired_b254");
+    if (!formData.category) newErrors.category = tx("auto.categoryIsRequired_eb1a");
     if (formData.category === "Others" && !formData.customCategory.trim())
-      newErrors.customCategory = "Custom category is required";
+      newErrors.customCategory = tx("auto.customCategoryIsRequired_403f");
     if (formData.price && (isNaN(formData.price) || parseFloat(formData.price) < 0))
-      newErrors.price = "Please enter a valid price";
+      newErrors.price = tx("auto.pleaseEnterAValidPrice_5fe2");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -188,7 +194,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
       handleClose();
     } catch (error) {
       console.error("Error saving design:", error);
-      alert(error.message || "Error saving design. Please try again.");
+      alert(error.message || tx("auto.errorSavingDesignPleaseTry_d417"));
     } finally {
       setIsSubmitting(false);
     }
@@ -213,28 +219,28 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <button className="adp_close_btn" onClick={handleClose} type="button">
           <X size={20} />
         </button>
-        <h2 className="adp_title">{editMode ? "Edit Design" : "Add New Design"}</h2>
+        <h2 className="adp_title">{tl(editMode ? tx("auto.editDesign_1317") : tx("auto.addNewDesign_a51d"))}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="adp_form">
 
         {/* Client Section */}
         <div className="adp_section">
-          <p className="adp_section_label">Client (Optional)</p>
+          <p className="adp_section_label">{tx("auto.clientOptional_4042")}</p>
           <div className="adp_mode_btns">
             <button
               type="button"
               className={`adp_mode_btn ${fillMode === "manual" ? "active" : ""}`}
               onClick={handleManualEntry}
             >
-              <User size={15} /> Manual Entry
+              <User size={15} />{" "}{tx("auto.manualEntry_a116")}
             </button>
             <button
               type="button"
               className={`adp_mode_btn ${fillMode === "client" ? "active" : ""}`}
               onClick={() => setShowClientSelector(true)}
             >
-              <Users size={15} /> Select Client
+              <Users size={15} />{" "}{tx("auto.selectClient_bed9")}
             </button>
           </div>
 
@@ -243,8 +249,8 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
               <div className="adp_selected_client_info">
                 <div className="adp_client_avatar">{formData.clientName.charAt(0).toUpperCase()}</div>
                 <div>
-                  <p className="adp_client_name">{formData.clientName}</p>
-                  {formData.clientPhone && <p className="adp_client_phone"><Phone size={12} /> {formData.clientPhone}</p>}
+                  <p className="adp_client_name">{tl(formData.clientName)}</p>
+                  {formData.clientPhone && <p className="adp_client_phone"><Phone size={12} /> {tl(formData.clientPhone)}</p>}
                 </div>
               </div>
               <button type="button" className="adp_clear_client" onClick={handleManualEntry}>
@@ -255,16 +261,16 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
             <div className="adp_row">
               <Input
                 type="text"
-                label="Client Name"
-                placeholder="Enter client name"
+                label={tx("auto.clientName_130c")}
+                placeholder={tx("auto.enterClientName_9691")}
                 value={formData.clientName}
                 onChange={handleInputChange("clientName")}
                 variant="rounded"
               />
               <Input
                 type="tel"
-                label="Client Phone"
-                placeholder="e.g., 08034567890"
+                label={tx("auto.clientPhone_93d9")}
+                placeholder={tx("auto.eG08034567890_5ce3")}
                 value={formData.clientPhone}
                 onChange={handleInputChange("clientPhone")}
                 variant="rounded"
@@ -277,8 +283,8 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <div className="adp_section">
           <Input
             type="text"
-            label="Design Name *"
-            placeholder="e.g., Ankara Maxi Dress"
+            label={tx("auto.designName_e668")}
+            placeholder={tx("auto.eGAnkaraMaxiDress_dc17")}
             value={formData.name}
             onChange={handleInputChange("name")}
             error={errors.name}
@@ -290,7 +296,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <div className="adp_section">
           <Input
             type="select"
-            label="Category *"
+            label={tx("auto.category_b1e9")}
             value={formData.category}
             onChange={handleInputChange("category")}
             error={errors.category}
@@ -303,8 +309,8 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
           <div className="adp_section">
             <Input
               type="text"
-              label="Custom Category *"
-              placeholder="Enter custom category"
+              label={tx("auto.customCategory_3b14")}
+              placeholder={tx("auto.enterCustomCategory_f47a")}
               value={formData.customCategory}
               onChange={handleInputChange("customCategory")}
               error={errors.customCategory}
@@ -317,8 +323,8 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <div className="adp_section">
           <Input
             type="number"
-            label={`Price (${symbol})`}
-            placeholder={currency === "USD" ? "e.g., 50" : "e.g., 85000"}
+            label={tx("tpl.price_dc72", { v0: symbol })}
+            placeholder={currency !== "NGN" ? tx("auto.eG50_d0c3") : tx("auto.eG85000_f1bb")}
             value={formData.price}
             onChange={handleInputChange("price")}
             error={errors.price}
@@ -332,8 +338,8 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <div className="adp_section">
           <Input
             type="textarea"
-            label="Description"
-            placeholder="Brief description of the design..."
+            label={tx("auto.description_55f8")}
+            placeholder={tx("auto.briefDescriptionOfTheDesign_7ce0")}
             value={formData.description}
             onChange={handleInputChange("description")}
             variant="rounded"
@@ -343,7 +349,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
 
         {/* Image Upload */}
         <div className="adp_section">
-          <p className="adp_section_label">Design Image (Optional)</p>
+          <p className="adp_section_label">{tx("auto.designImageOptional_95de")}</p>
           <div
             className={`adp_upload_area ${dragOver ? "drag_over" : ""} ${imagePreview ? "has_image" : ""}`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -363,21 +369,21 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
                   <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="adp_remove_img_btn">
                     <X size={16} />
                   </button>
-                  <span>Click to change</span>
+                  <span>{tx("auto.clickToChange_31d9")}</span>
                 </div>
               </div>
             ) : (
               <div className="adp_upload_placeholder">
                 <div className="adp_upload_icon_wrap"><Upload size={28} /></div>
-                <p>Click or drag to upload</p>
-                <span>PNG, JPG up to 10MB</span>
+                <p>{tx("auto.clickOrDragToUpload_ef5c")}</p>
+                <span>{tx("auto.pngJpgUpTo10mb_951d")}</span>
               </div>
             )}
           </div>
         </div>
 
         <Button type="submit" variant="primary"  fullWidth disabled={isSubmitting} className="adp_submit_btn">
-          {isSubmitting ? "Saving..." : editMode ? "Update Design" : "Create Design"}
+          {isSubmitting ? tx("auto.saving_ae7e") : editMode ? tx("auto.updateDesign_21e7") : tx("auto.createDesign_d641")}
         </Button>
       </form>
 
@@ -386,7 +392,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         <div className="adp_client_modal_overlay" onClick={() => setShowClientSelector(false)}>
           <div className="adp_client_modal" onClick={(e) => e.stopPropagation()}>
             <div className="adp_client_modal_header">
-              <h3>Select Client</h3>
+              <h3>{tx("auto.selectClient_bed9")}</h3>
               <button type="button" onClick={() => { setShowClientSelector(false); setClientSearchTerm(""); }}>
                 <X size={20} />
               </button>
@@ -395,7 +401,7 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
               <Search size={16} />
               <input
                 type="text"
-                placeholder="Search by name, email or phone"
+                placeholder={tx("auto.searchByNameEmailOr_e1b2")}
                 value={clientSearchTerm}
                 onChange={(e) => setClientSearchTerm(e.target.value)}
                 autoFocus
@@ -403,23 +409,23 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
             </div>
             <div className="adp_client_modal_list">
               {clientsLoading ? (
-                <p className="adp_client_modal_empty">Loading clients...</p>
+                <p className="adp_client_modal_empty">{tx("auto.loadingClients_48a2")}</p>
               ) : filteredClients.length > 0 ? (
                 filteredClients.map((client) => (
                   <div key={client.id} className="adp_client_modal_item" onClick={() => handleClientSelect(client)}>
                     <div className="adp_client_modal_avatar">{client.name?.charAt(0).toUpperCase()}</div>
                     <div className="adp_client_modal_info">
-                      <p className="adp_client_modal_name">{client.name}</p>
+                      <p className="adp_client_modal_name">{tl(client.name)}</p>
                       <div className="adp_client_modal_meta">
-                        {client.email && <span><Mail size={11} /> {client.email}</span>}
-                        {client.phone && <span><Phone size={11} /> {client.phone}</span>}
+                        {client.email && <span><Mail size={11} /> {tl(client.email)}</span>}
+                        {client.phone && <span><Phone size={11} /> {tl(client.phone)}</span>}
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <p className="adp_client_modal_empty">
-                  {clientSearchTerm ? "No clients found" : "No clients available"}
+                  {tl(clientSearchTerm ? tx("auto.noClientsFound_b875") : tx("auto.noClientsAvailable_58aa"))}
                 </p>
               )}
             </div>

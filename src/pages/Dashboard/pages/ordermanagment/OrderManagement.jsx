@@ -10,7 +10,16 @@ import "./OrderManagement.css";
 import Loading from "../../../../components/Loading/Loading";
 import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
+
 const OrderManagement = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -50,7 +59,7 @@ const OrderManagement = () => {
           ...o,
           id: o.id || o._id,
           title: o.name || o.garmentDescription || o.garmentType || "Untitled Order",
-          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "",
+          date: o.createdAt ? new Date(o.createdAt).toLocaleDateString(dateLocale()) : "",
           status: mapStatusToUI(o.status),
           icon: getCategoryIcon(o.garmentType),
           client: { name: o.clientName || "No Client", phone: o.clientPhone || "", email: o.clientEmail || "" },
@@ -181,15 +190,15 @@ const OrderManagement = () => {
     <div className="o_m_order_management">
       {/* Header */}
       <div className="o_m_order_header">
-        <h1 className="o_m_order_title">Manage Your Orders</h1>
+        <h1 className="o_m_order_title">{tx("auto.manageYourOrders_e6fc")}</h1>
       </div>
 
       {/* Stats Section */}
       <div className="o_m_order_stats_section">
         <div className="o_m_ipo">
           <div className="o_m_ipols">
-            <h1>Orders</h1>
-            <p>Manage your orders</p>
+            <h1>{tx("auto.orders_cded")}</h1>
+            <p>{tx("auto.manageYourOrders_79ae")}</p>
           </div>
           <Button
             variant="primary"
@@ -206,31 +215,31 @@ const OrderManagement = () => {
          <div className="o_m_order_stats">
           <div className="o_m_stat_card">
             <div className="o_m_stat_content">
-              <h3 className="o_m_stat_title">Total Orders</h3>
-              <p className="o_m_stat_value">{totalOrders}</p>
-              <p className="o_m_stat_subtitle">+12% from last month</p>
+              <h3 className="o_m_stat_title">{tx("auto.totalOrders_408f")}</h3>
+              <p className="o_m_stat_value">{tl(totalOrders)}</p>
+              <p className="o_m_stat_subtitle">{tx("auto.12FromLastMonth_97f8")}</p>
             </div>
           </div>
 
           <div className="o_m_stat_card">
             <div className="o_m_stat_content">
-              <h3 className="o_m_stat_title">Completed Orders</h3>
-              <p className="o_m_stat_value">{completedOrders}</p>
-              <p className="o_m_stat_subtitle">+8% from last month</p>
+              <h3 className="o_m_stat_title">{tx("auto.completedOrders_1d9b")}</h3>
+              <p className="o_m_stat_value">{tl(completedOrders)}</p>
+              <p className="o_m_stat_subtitle">{tx("auto.8FromLastMonth_54fc")}</p>
             </div>
           </div>
 
           <div className="o_m_stat_card">
             <div className="o_m_stat_content">
-              <h3 className="o_m_stat_title">In Progress</h3>
-              <p className="o_m_stat_value">{inProgress}</p>
+              <h3 className="o_m_stat_title">{tx("auto.inProgress_f61e")}</h3>
+              <p className="o_m_stat_value">{tl(inProgress)}</p>
             </div>
           </div>
 
           <div className="o_m_stat_card">
             <div className="o_m_stat_content">
-              <h3 className="o_m_stat_title">Pending Payment</h3>
-              <p className="o_m_stat_value">{pendingPayment}</p>
+              <h3 className="o_m_stat_title">{tx("auto.pendingPayment_c8ac")}</h3>
+              <p className="o_m_stat_value">{tl(pendingPayment)}</p>
             </div>
           </div>
         </div>
@@ -245,7 +254,7 @@ const OrderManagement = () => {
               <Search className="o_m_search_icon" size={20} />
               <input
                 type="text"
-                placeholder="Search clients by name, phone, or email"
+                placeholder={tx("auto.searchClientsByNamePhone_9984")}
                 className="o_m_search_input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -262,14 +271,14 @@ const OrderManagement = () => {
               {showFilter && (
                 <div className="o_m_filter_dropdown">
                   <div className="o_m_filter_section">
-                    <h4 className="o_m_filter_section_title">Status</h4>
+                    <h4 className="o_m_filter_section_title">{tx("auto.status_bae7")}</h4>
                     <button
                       className={`o_m_filter_option ${
                         filterStatus === "all" ? "active" : ""
                       }`}
                       onClick={() => handleFilterSelect("all")}
                     >
-                      All Orders
+                      {tx("auto.allOrders_8393")}
                     </button>
                     <button
                       className={`o_m_filter_option ${
@@ -277,7 +286,7 @@ const OrderManagement = () => {
                       }`}
                       onClick={() => handleFilterSelect("completed")}
                     >
-                      Completed
+                      {tx("auto.completed_1798")}
                     </button>
                     <button
                       className={`o_m_filter_option ${
@@ -285,7 +294,7 @@ const OrderManagement = () => {
                       }`}
                       onClick={() => handleFilterSelect("in-progress")}
                     >
-                      In Progress
+                      {tx("auto.inProgress_f61e")}
                     </button>
                     <button
                       className={`o_m_filter_option ${
@@ -293,7 +302,7 @@ const OrderManagement = () => {
                       }`}
                       onClick={() => handleFilterSelect("pending-payment")}
                     >
-                      Pending Payment
+                      {tx("auto.pendingPayment_c8ac")}
                     </button>
                     <button
                       className={`o_m_filter_option ${
@@ -301,7 +310,7 @@ const OrderManagement = () => {
                       }`}
                       onClick={() => handleFilterSelect("cancelled")}
                     >
-                      Cancelled
+                      {tx("auto.cancelled_a1bf")}
                     </button>
                   </div>
                 </div>
@@ -335,7 +344,7 @@ const OrderManagement = () => {
             }}
           >
             <Plus size={20} />
-            Add Order
+            {tx("auto.addOrder_29c1")}
           </button>
         </div>
 
@@ -345,11 +354,11 @@ const OrderManagement = () => {
         ) : filteredOrders.length === 0 ? (
           <div className="o_m_no_orders">
             <Package size={48} />
-            <h3>No orders found</h3>
+            <h3>{tx("auto.noOrdersFound_8134")}</h3>
             <p>
-              {searchTerm || filterStatus !== "all"
-                ? "Try adjusting your search or filter"
-                : "Create your first order to get started"}
+              {tl(searchTerm || filterStatus !== "all"
+                ? tx("auto.tryAdjustingYourSearchOr_e210")
+                : tx("auto.createYourFirstOrderTo_6b98"))}
             </p>
           </div>
         ) : (
@@ -374,7 +383,7 @@ const OrderManagement = () => {
                     <div className="o_m_order_icon">
                       <Package size={24} />
                     </div>
-                    <h3 className="o_m_order_title_text">{order.title}</h3>
+                    <h3 className="o_m_order_title_text">{tl(order.title)}</h3>
                   </div>
                   <div className="o_m_order_price">
                     <MoneyAmount amount={order.price} align="end" />
@@ -382,13 +391,13 @@ const OrderManagement = () => {
                 </div>
 
                 <div className="o_m_order_bottom_row">
-                  <div className="o_m_order_date">{order.date}</div>
+                  <div className="o_m_order_date">{tl(order.date)}</div>
                   <div
                     className={`o_m_status_badge ${order.status
                       .toLowerCase()
                       .replace(" ", "-")}`}
                   >
-                    {order.status}
+                    {tl(order.status)}
                   </div>
                 </div>
               </div>

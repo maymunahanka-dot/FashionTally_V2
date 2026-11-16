@@ -9,7 +9,14 @@ import {
   Legend,
 } from "recharts";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../i18n";
+
+import { tl } from "../i18n";
+import { dateLocale } from "../i18n";
+
 const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
+  const { t: tx } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
   const [isSmallMobile, setIsSmallMobile] = useState(false);
 
@@ -85,12 +92,12 @@ const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
   // Helper function to format date for display
   const formatDateForDisplay = (date, isSmall = false) => {
     if (isSmall) {
-      return date.toLocaleDateString("en-US", {
+      return date.toLocaleDateString(dateLocale("en-US"), {
         month: "short",
         day: "numeric",
       });
     }
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       month: "short",
       day: "numeric",
     });
@@ -320,10 +327,11 @@ const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
+  useTranslation(); // re-render when the language changes
     if (active && payload && payload.length) {
       return (
         <div className="finance-chart-tooltip">
-          <p className="tooltip-label">{label}</p>
+          <p className="tooltip-label">{tl(label)}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color, margin: "2px 0" }}>
               {`${entry.name}: ${formatCurrency(entry.value)}`}
@@ -431,7 +439,7 @@ const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
               bottom: isSmallMobile ? 60 : 40,
             }}
           >
-            <XAxis
+            <XAxis tickFormatter={(v) => tl(v)}
               dataKey="period"
               axisLine={false}
               tickLine={false}
@@ -479,7 +487,7 @@ const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
                 r: isSmallMobile ? 5 : 6,
                 fill: "#16a34a",
               }}
-              name="Income"
+              name={tl("Income")}
             />
             <Line
               type="monotone"
@@ -495,7 +503,7 @@ const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
                 r: isSmallMobile ? 5 : 6,
                 fill: "#ef4444",
               }}
-              name="Expenses"
+              name={tl("Expenses")}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -510,7 +518,7 @@ const FinanceChart = ({ transactions = [], dateFilter = "all" }) => {
             fontSize: isSmallMobile ? "12px" : "14px",
           }}
         >
-          Loading chart data...
+          {tx("auto.loadingChartData_8bde")}
         </div>
       )}
     </div>

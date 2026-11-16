@@ -17,6 +17,14 @@ import { initiatePaystackPayment, paystackEnabled } from "../../lib/paystack";
 import { PLANS } from "../Home/plans.js";
 import "../Home/Landing.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 const API = import.meta.env.VITE_BACKEND_URL;
 const APP_RETURN_URL = "fashiontally://payment-complete";
 const PAY_PLANS = PLANS.filter((p) => SUBSCRIPTION_PRICING[p.key]);
@@ -40,19 +48,20 @@ const POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fmtDate = (d) =>
-  d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+  d ? new Date(d).toLocaleDateString(dateLocale("en-GB"), { day: "numeric", month: "short", year: "numeric" }) : "";
 const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || "there";
 
 function statusLine(sub) {
   if (!sub) return "";
   const plan = sub.plan ? `${sub.plan[0]}${sub.plan.slice(1).toLowerCase()}` : "";
-  if (sub.status === "active") return `Your ${plan} plan is active until ${fmtDate(sub.endDate)}.`;
-  if (sub.status === "trial") return `You're on the free trial (${sub.daysLeft} day${sub.daysLeft === 1 ? "" : "s"} left).`;
+  if (sub.status === "active") return tx("tpl.yourPlanIsActiveUntil_2be4", { v0: plan, v1: fmtDate(sub.endDate) });
+  if (sub.status === "trial") return tx("tpl.youReOnTheFree_8333", { v0: sub.daysLeft, v1: sub.daysLeft === 1 ? "" : "s" });
   if (sub.status === "trial_ended") return "Your free trial has ended.";
   return "Your plan has ended.";
 }
 
 export default function Pay() {
+  const { t: tx } = useTranslation();
   const [params] = useSearchParams();
   const token = params.get("t") || "";
   const txRef = params.get("tx_ref") || "";
@@ -86,7 +95,7 @@ export default function Pay() {
     const loadUser = async () => {
       if (!token) {
         setStage("expired");
-        setMessage("This page needs a payment link from the FashionTally app.");
+        setMessage(tx("auto.thisPageNeedsAPayment_a3c2"));
         return null;
       }
       try {
@@ -94,7 +103,7 @@ export default function Pay() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) {
           setStage("expired");
-          setMessage(data.error || "This payment link has expired. Go back to the app and tap “Choose a plan & pay” again.");
+          setMessage(data.error || tx("auto.thisPaymentLinkHasExpired_867d"));
           return null;
         }
         setUser(data.data);
@@ -104,7 +113,7 @@ export default function Pay() {
         return data.data;
       } catch {
         setStage("failed");
-        setMessage("We couldn't reach FashionTally. Check your connection and try again.");
+        setMessage(tx("auto.weCouldnTReachFashiontally_431a"));
         return null;
       }
     };
@@ -115,11 +124,11 @@ export default function Pay() {
         const u = await loadUser();
         if (u) {
           setStage("choose");
-          setMessage("The payment was cancelled. You can choose a plan and try again.");
+          setMessage(tx("auto.thePaymentWasCancelledYou_c954"));
         }
         return;
       }
-      setMessage("Confirming your payment…");
+      setMessage(tx("auto.confirmingYourPayment_572e"));
       try {
         const planType = String(localStorage.getItem("pending_plan") || "GROWTH").toUpperCase();
         const billingCycle = localStorage.getItem("pending_cycle") === "yearly" ? "yearly" : "monthly";
@@ -137,7 +146,7 @@ export default function Pay() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.success) {
           setStage("failed");
-          setMessage(data.error || data.message || "We couldn't confirm this payment yet. Contact support with your receipt.");
+          setMessage(data.error || data.message || tx("auto.weCouldnTConfirmThis_d838"));
           return;
         }
         PENDING_KEYS.forEach((k) => localStorage.removeItem(k));
@@ -163,7 +172,7 @@ export default function Pay() {
         setStage("pending");
       } catch {
         setStage("failed");
-        setMessage("We couldn't confirm this payment. If you were charged, your plan will activate automatically.");
+        setMessage(tx("auto.weCouldnTConfirmThis_aff4"));
       }
     };
 
@@ -206,7 +215,7 @@ export default function Pay() {
         <img src={logo} alt="" />
         <span>FashionTally</span>
         <small>
-          <Lock size={13} /> Secure checkout
+          <Lock size={13} />{" "}{tx("auto.secureCheckout_4559")}
         </small>
       </header>
 
@@ -214,17 +223,17 @@ export default function Pay() {
         {(stage === "loading" || stage === "confirming") && (
           <div className="lx-pay-state">
             <LoaderCircle size={34} className="lx-spin" />
-            <p>{stage === "loading" ? "Getting your account ready…" : message}</p>
+            <p>{tl(stage === "loading" ? tx("auto.gettingYourAccountReady_73d0") : message)}</p>
           </div>
         )}
 
         {stage === "expired" && (
           <div className="lx-pay-state">
             <Clock3 size={34} />
-            <h1>Link expired</h1>
-            <p>{message}</p>
+            <h1>{tx("auto.linkExpired_0bc7")}</h1>
+            <p>{tl(message)}</p>
             <a className="lx-btn lx-btn-light" href={APP_RETURN_URL}>
-              <Smartphone size={16} /> Back to the app
+              <Smartphone size={16} />{" "}{tx("auto.backToTheApp_bcb8")}
             </a>
           </div>
         )}
@@ -232,10 +241,10 @@ export default function Pay() {
         {stage === "success" && (
           <div className="lx-pay-state is-ok">
             <CircleCheck size={40} />
-            <h1>You're all set!</h1>
-            <p>Your payment was successful and your plan is now active. We've emailed your receipt.</p>
+            <h1>{tx("auto.youReAllSet_058a")}</h1>
+            <p>{tx("auto.yourPaymentWasSuccessfulAnd_80b0")}</p>
             <a className="lx-btn lx-btn-accent" href={APP_RETURN_URL}>
-              <Smartphone size={16} /> Back to the app
+              <Smartphone size={16} />{" "}{tx("auto.backToTheApp_bcb8")}
             </a>
           </div>
         )}
@@ -243,13 +252,12 @@ export default function Pay() {
         {stage === "pending" && (
           <div className="lx-pay-state">
             <Clock3 size={36} />
-            <h1>Almost there</h1>
+            <h1>{tx("auto.almostThere_0052")}</h1>
             <p>
-              Your payment is still being confirmed. Bank transfers can take a few minutes. Your plan will activate
-              automatically and we'll email your receipt.
+              {tx("auto.yourPaymentIsStillBeing_1798")}
             </p>
             <a className="lx-btn lx-btn-light" href={APP_RETURN_URL}>
-              <Smartphone size={16} /> Back to the app
+              <Smartphone size={16} />{" "}{tx("auto.backToTheApp_bcb8")}
             </a>
           </div>
         )}
@@ -257,10 +265,10 @@ export default function Pay() {
         {stage === "failed" && (
           <div className="lx-pay-state is-error">
             <CircleAlert size={36} />
-            <h1>Something went wrong</h1>
-            <p>{message}</p>
+            <h1>{tx("auto.somethingWentWrong_8d88")}</h1>
+            <p>{tl(message)}</p>
             <a className="lx-btn lx-btn-light" href={APP_RETURN_URL}>
-              <Smartphone size={16} /> Back to the app
+              <Smartphone size={16} />{" "}{tx("auto.backToTheApp_bcb8")}
             </a>
           </div>
         )}
@@ -268,12 +276,12 @@ export default function Pay() {
         {(stage === "choose" || stage === "paying") && user && (
           <>
             <section className="lx-pay-head">
-              <p className="lx-tag">CHOOSE YOUR PLAN</p>
-              <h1>Hi {firstName(user.name)}, pick a plan.</h1>
+              <p className="lx-tag">{tx("auto.chooseYourPlan_e4b8")}</p>
+              <h1>{tx("auto.hi_94dd")}{" "}{tl(firstName(user.name))}{tx("auto.pickAPlan_b24a")}</h1>
               <p className="lx-pay-who">
-                Paying for <b>{user.businessName || user.name}</b> · {user.email}
+                {tx("auto.payingFor_84f4")}{" "}<b>{tl(user.businessName || user.name)}</b> · {tl(user.email)}
               </p>
-              <p className="lx-pay-current">{statusLine(user.subscription)}</p>
+              <p className="lx-pay-current">{tl(statusLine(user.subscription))}</p>
             </section>
 
             <div className="lx-toggle lx-pay-toggle" role="tablist" aria-label="Billing cycle">
@@ -285,7 +293,7 @@ export default function Pay() {
                 className={cycle === "monthly" ? "is-active" : ""}
                 onClick={() => setCycle("monthly")}
               >
-                Monthly
+                {tx("auto.monthly_d31e")}
               </button>
               <button
                 type="button"
@@ -294,7 +302,7 @@ export default function Pay() {
                 className={cycle === "yearly" ? "is-active" : ""}
                 onClick={() => setCycle("yearly")}
               >
-                Yearly <em>Save {yearlySaving}%</em>
+                {tx("auto.yearly_7622")}{" "}<em>{tx("auto.save_efc0")}{" "}{tl(yearlySaving)}%</em>
               </button>
             </div>
 
@@ -316,15 +324,15 @@ export default function Pay() {
                     </span>
                     <span className="lx-pay-plan-body">
                       <span className="lx-pay-plan-name">
-                        {p.name}
-                        {p.popular && <em>Most popular</em>}
+                        {tl(p.name)}
+                        {p.popular && <em>{tx("auto.mostPopular_5adb")}</em>}
                       </span>
-                      <span className="lx-pay-plan-blurb">{p.blurb}</span>
+                      <span className="lx-pay-plan-blurb">{tl(p.blurb)}</span>
                       {selected && (
                         <span className="lx-pay-plan-features">
                           {p.features.map((f) => (
                             <span key={f}>
-                              <Check size={13} /> {f}
+                              <Check size={13} /> {tl(f)}
                             </span>
                           ))}
                         </span>
@@ -332,7 +340,7 @@ export default function Pay() {
                     </span>
                     <span className="lx-pay-plan-price">
                       <b>₦{amount.toLocaleString()}</b>
-                      <small>/{cycle === "monthly" ? "month" : "year"}</small>
+                      <small>/{tl(cycle === "monthly" ? "month" : "year")}</small>
                     </span>
                   </button>
                 );
@@ -341,13 +349,13 @@ export default function Pay() {
 
             {message && (
               <p className="lx-form-status is-error" role="status">
-                <CircleAlert size={18} /> {message}
+                <CircleAlert size={18} /> {tl(message)}
               </p>
             )}
 
             {GATEWAYS.length > 1 && (
               <div className="lx-pay-gateways">
-                <p>Pay with</p>
+                <p>{tx("auto.payWith_86b6")}</p>
                 <div role="radiogroup" aria-label="Payment provider">
                   {GATEWAYS.map((g) => (
                     <button
@@ -362,8 +370,8 @@ export default function Pay() {
                         {gateway === g.key && <Check size={14} />}
                       </span>
                       <span>
-                        <b>{g.name}</b>
-                        <small>{g.hint}</small>
+                        <b>{tl(g.name)}</b>
+                        <small>{tl(g.hint)}</small>
                       </span>
                     </button>
                   ))}
@@ -373,22 +381,21 @@ export default function Pay() {
 
             <div className="lx-pay-bar">
               <div>
-                <small>{plan?.name} · {cycle === "monthly" ? "Monthly" : "Yearly"}</small>
+                <small>{plan?.name} · {tl(cycle === "monthly" ? tx("auto.monthly_d31e") : tx("auto.yearly_7622"))}</small>
                 <b>₦{price?.toLocaleString()}</b>
               </div>
               <button type="button" className="lx-btn lx-btn-accent" onClick={pay} disabled={stage === "paying"}>
                 {stage === "paying" ? (
                   <>
-                    <LoaderCircle size={17} className="lx-spin" /> Opening checkout…
+                    <LoaderCircle size={17} className="lx-spin" />{" "}{tx("auto.openingCheckout_4b14")}
                   </>
                 ) : (
-                  <>Pay ₦{price?.toLocaleString()}</>
+                  <>{tx("auto.pay_6101")}{price?.toLocaleString()}</>
                 )}
               </button>
             </div>
             <p className="lx-pay-note">
-              <Lock size={12} /> Paid securely with {GATEWAYS.find((g) => g.key === gateway)?.name}. Your plan doesn't
-              renew automatically.
+              <Lock size={12} />{" "}{tx("auto.paidSecurelyWith_e3f9")}{" "}{GATEWAYS.find((g) => g.key === gateway)?.name}{tx("auto.yourPlanDoesnTRenew_0879")}
             </p>
           </>
         )}

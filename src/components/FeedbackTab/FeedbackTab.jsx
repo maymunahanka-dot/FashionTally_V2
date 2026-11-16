@@ -19,7 +19,15 @@ import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import { getFeedback, replyToFeedback, updateFeedbackReply, deleteFeedback, calculateFeedbackStats } from "../../backend/services/crmService";
 import "./FeedbackTab.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+import { dateLocale } from "../../i18n";
+
+
 const FeedbackTab = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useSavedSort("ft.sort.feedback");
   const [showSort, setShowSort] = useState(false);
@@ -88,7 +96,7 @@ const FeedbackTab = () => {
   // Handle deleting feedback
   const handleDeleteFeedback = async (feedbackId, clientName) => {
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete the feedback from "${clientName}"? This action cannot be undone.`
+      tx("tpl.areYouSureYouWant_ae18", { v0: clientName })
     );
 
     if (!confirmDelete) return;
@@ -101,7 +109,7 @@ const FeedbackTab = () => {
       setShowDropdown(null);
     } catch (error) {
       console.error("Error deleting feedback:", error);
-      alert("Failed to delete feedback. Please try again.");
+      alert(tx("auto.failedToDeleteFeedbackPlease_9b57"));
     }
   };
 
@@ -126,7 +134,7 @@ const FeedbackTab = () => {
       setReplyText("");
     } catch (error) {
       console.error("Error replying to feedback:", error);
-      alert("Failed to send reply. Please try again.");
+      alert(tx("auto.failedToSendReplyPlease_7708"));
     }
   };
 
@@ -144,7 +152,7 @@ const FeedbackTab = () => {
       setReplyText("");
     } catch (error) {
       console.error("Error updating reply:", error);
-      alert("Failed to update reply. Please try again.");
+      alert(tx("auto.failedToUpdateReplyPlease_bf45"));
     }
   };
 
@@ -210,7 +218,7 @@ const FeedbackTab = () => {
       date = new Date(timestamp);
     }
 
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       month: "short",
       day: "numeric",
     });
@@ -240,7 +248,7 @@ const FeedbackTab = () => {
     return (
       <div className="feedback_tabb">
         <div className="feedback_loading">
-          <p>Loading feedback...</p>
+          <p>{tx("auto.loadingFeedback_32dc")}</p>
         </div>
       </div>
     );
@@ -255,7 +263,7 @@ const FeedbackTab = () => {
           <Search className="feedback_search_icon" size={20} />
           <input
             type="text"
-            placeholder="Search feedback..."
+            placeholder={tx("auto.searchFeedback_e63e")}
             className="feedback_search_input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -285,13 +293,13 @@ const FeedbackTab = () => {
           onClick={() => setShowFeedbackForm(true)}
           className="feedback_add_btn"
         >
-          Add Feedback
+          {tx("auto.addFeedback_5981")}
         </Button>
       </div>
 
       {/* Header */}
       <div className="feedback_header">
-        <h2 className="feedback_count">{filteredFeedback.length} Reviews</h2>
+        <h2 className="feedback_count">{tl(filteredFeedback.length)}{" "}{tx("auto.reviews_b83c")}</h2>
         <div className="feedback_rating">
           <Star size={20} fill="#f59e0b" color="#f59e0b" />
           <span className="feedback_rating_value">
@@ -305,9 +313,9 @@ const FeedbackTab = () => {
         {filteredFeedback.length === 0 ? (
           <div className="feedback_no_results">
             <p>
-              {searchTerm
-                ? "No feedback found matching your search criteria."
-                : "No feedback yet. Add some client reviews to get started!"}
+              {tl(searchTerm
+                ? tx("auto.noFeedbackFoundMatchingYour_3f76")
+                : tx("auto.noFeedbackYetAddSome_9bce"))}
             </p>
           </div>
         ) : (
@@ -328,20 +336,20 @@ const FeedbackTab = () => {
                     className="feedback_customer_avatar"
                     style={{ backgroundColor: "#10b981" }}
                   >
-                    {getCustomerInitial(feedback.clientName)}
+                    {tl(getCustomerInitial(feedback.clientName))}
                   </div>
                   <div className="feedback_customer_info">
                     <h3 className="feedback_customer_name">
-                      {feedback.clientName || "Anonymous"}
+                      {tl(feedback.clientName || tx("auto.anonymous_9bed"))}
                     </h3>
                     <div className="feedback_rating_stars">
-                      {renderStars(feedback.rating || 0)}
+                      {tl(renderStars(feedback.rating || 0))}
                     </div>
                   </div>
                 </div>
                 <div className="feedback_card_right">
                   <div className="feedback_date">
-                    {formatDate(feedback.createdAt)}
+                    {tl(formatDate(feedback.createdAt))}
                   </div>
                   <div className="feedback_actions_dropdown">
                     <button
@@ -361,7 +369,7 @@ const FeedbackTab = () => {
                           onClick={() => handleEditFeedback(feedback)}
                         >
                           <Edit size={14} />
-                          Edit Feedback
+                          {tx("auto.editFeedback_0772")}
                         </button>
                         <button
                           className="feedback_dropdown_item delete"
@@ -373,7 +381,7 @@ const FeedbackTab = () => {
                           }
                         >
                           <Trash2 size={14} />
-                          Delete Feedback
+                          {tx("auto.deleteFeedback_ed34")}
                         </button>
                       </div>
                     )}
@@ -384,12 +392,12 @@ const FeedbackTab = () => {
               {/* Review Content */}
               <div className="feedback_review_content">
                 <p className="feedback_review_text">
-                  {feedback.comment || "No comment provided"}
+                  {tl(feedback.comment || tx("auto.noCommentProvided_ac44"))}
                 </p>
                 <div className="feedback_meta">
-                  <span>{feedback.productName || "General Service"}</span>
-                  {feedback.orderNumber && <span>Order {feedback.orderNumber}</span>}
-                  {feedback.invoiceNumber && <span>Invoice {feedback.invoiceNumber}</span>}
+                  <span>{tl(feedback.productName || tx("auto.generalService_92f3"))}</span>
+                  {feedback.orderNumber && <span>{tx("auto.order_1d75")}{" "}{tl(feedback.orderNumber)}</span>}
+                  {feedback.invoiceNumber && <span>{tx("auto.invoice_f9f3")}{" "}{tl(feedback.invoiceNumber)}</span>}
                 </div>
               </div>
 
@@ -398,7 +406,7 @@ const FeedbackTab = () => {
                 <div className="feedback_response_section">
                   <div className="feedback_response_header">
                     <span className="feedback_response_label">
-                      Your Response:
+                      {tx("auto.yourResponse_24ec")}
                     </span>
                     <Button
                       variant="ghost"
@@ -408,10 +416,10 @@ const FeedbackTab = () => {
                       className="feedback_edit_btn"
                       onClick={() => startEditingReply(feedback)}
                     >
-                      Edit
+                      {tx("auto.edit_5301")}
                     </Button>
                   </div>
-                  <p className="feedback_response_text">{feedback.reply}</p>
+                  <p className="feedback_response_text">{tl(feedback.reply)}</p>
                 </div>
               ) : null}
 
@@ -421,7 +429,7 @@ const FeedbackTab = () => {
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Type your reply..."
+                    placeholder={tx("auto.typeYourReply_4f09")}
                     className="feedback_reply_textarea"
                     rows={3}
                   />
@@ -431,7 +439,7 @@ const FeedbackTab = () => {
                       size="small"
                       onClick={cancelReplyEdit}
                     >
-                      Cancel
+                      {tx("auto.cancel_77df")}
                     </Button>
                     <Button
                       variant="primary"
@@ -443,7 +451,7 @@ const FeedbackTab = () => {
                       }
                       disabled={!replyText.trim()}
                     >
-                      {editingReply === feedback.id ? "Update" : "Send"}
+                      {tl(editingReply === feedback.id ? tx("auto.update_fb91") : tx("auto.send_9bc2"))}
                     </Button>
                   </div>
                 </div>
@@ -462,7 +470,7 @@ const FeedbackTab = () => {
                       className="feedback_reply_btn"
                       onClick={() => startReplying(feedback.id)}
                     >
-                      Reply
+                      {tx("auto.reply_6c2b")}
                     </Button>
                   </div>
                 )}

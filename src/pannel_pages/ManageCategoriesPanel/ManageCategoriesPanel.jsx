@@ -2,7 +2,13 @@ import { useState } from "react";
 import { X, Edit, Trash2 } from "lucide-react";
 import "./ManageCategoriesPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const ManageCategoriesPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const [categories, setCategories] = useState([
     { id: 1, name: "Fabric", icon: "🧵", color: "#10b981" },
     { id: 2, name: "Notions", icon: "📌", color: "#10b981" },
@@ -66,7 +72,7 @@ const ManageCategoriesPanel = ({ onClose }) => {
     <div className="manage_cat_panel">
       {/* Header */}
       <div className="manage_cat_header">
-        <h2 className="manage_cat_title">Manage Categories</h2>
+        <h2 className="manage_cat_title">{tx("auto.manageCategories_9a34")}</h2>
         <button className="manage_cat_close_btn" onClick={onClose}>
           <X size={24} />
         </button>
@@ -77,12 +83,12 @@ const ManageCategoriesPanel = ({ onClose }) => {
         {/* Custom Categories Section */}
         <div className="manage_cat_section">
           <div className="manage_cat_section_header">
-            <h3 className="manage_cat_section_title">Custom Categories</h3>
+            <h3 className="manage_cat_section_title">{tx("auto.customCategories_47eb")}</h3>
             <button
               className="manage_cat_add_btn"
               onClick={() => setShowAddCategory(true)}
             >
-              Add Category
+              {tx("auto.addCategory_9c4e")}
             </button>
           </div>
 
@@ -91,7 +97,7 @@ const ManageCategoriesPanel = ({ onClose }) => {
             <div className="manage_cat_add_form">
               <input
                 type="text"
-                placeholder="Category name"
+                placeholder={tx("auto.categoryName_ed3d")}
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 className="manage_cat_input"
@@ -104,13 +110,13 @@ const ManageCategoriesPanel = ({ onClose }) => {
                     editingCategory ? handleUpdateCategory : handleAddCategory
                   }
                 >
-                  {editingCategory ? "Update" : "Add"}
+                  {tl(editingCategory ? tx("auto.update_fb91") : tx("auto.add_61cc"))}
                 </button>
                 <button
                   className="manage_cat_cancel_btn"
                   onClick={handleCancelEdit}
                 >
-                  Cancel
+                  {tx("auto.cancel_77df")}
                 </button>
               </div>
             </div>
@@ -125,9 +131,9 @@ const ManageCategoriesPanel = ({ onClose }) => {
                     className="manage_cat_icon"
                     style={{ backgroundColor: category.color }}
                   >
-                    {category.icon}
+                    {tl(category.icon)}
                   </div>
-                  <span className="manage_cat_name">{category.name}</span>
+                  <span className="manage_cat_name">{tl(category.name)}</span>
                 </div>
                 <div className="manage_cat_item_actions">
                   <button

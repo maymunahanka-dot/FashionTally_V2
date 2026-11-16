@@ -10,7 +10,16 @@ import FinanceChart from "../../../../components/FinanceChart";
 import { MoneyAmount } from "../../../../components/MoneyAmount/MoneyAmount";
 import "./Finances.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
+
 const Finances = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterType, setFilterType] = useState("all");
@@ -51,7 +60,7 @@ const Finances = () => {
           status: "completed",
           createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
           updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
-          date: t.date ? new Date(t.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          date: t.date ? new Date(t.date).toLocaleDateString(dateLocale("en-US"), { month: "short", day: "numeric" }) : new Date().toLocaleDateString(dateLocale("en-US"), { month: "short", day: "numeric" }),
           };
         }).sort((a, b) => b.createdAt - a.createdAt));
       }
@@ -116,7 +125,7 @@ const Finances = () => {
   const stats = calculateStats();
 
   const financeData = {
-    month: new Date().toLocaleDateString("en-US", {
+    month: new Date().toLocaleDateString(dateLocale("en-US"), {
       month: "long",
       year: "numeric",
     }),
@@ -158,7 +167,7 @@ const Finances = () => {
 
   const handleDeleteTransaction = async (transactionId, transactionTitle) => {
     if (!user?.email) return;
-    if (!window.confirm(`Are you sure you want to delete "${transactionTitle}"?`)) return;
+    if (!window.confirm(tx("tpl.areYouSureYouWant_1beb", { v0: transactionTitle }))) return;
     try {
       const token = localStorage.getItem("authToken");
       const res = await fetch(
@@ -167,10 +176,10 @@ const Finances = () => {
       );
       const data = await res.json();
       if (data.success) fetchTransactions();
-      else alert("Failed to delete transaction. Please try again.");
+      else alert(tx("auto.failedToDeleteTransactionPlease_6ddd"));
     } catch (error) {
       console.error("Error deleting transaction:", error);
-      alert("Failed to delete transaction. Please try again.");
+      alert(tx("auto.failedToDeleteTransactionPlease_6ddd"));
     }
   };
 
@@ -243,15 +252,15 @@ const Finances = () => {
     <div className="finn_finance_management">
       {/* Header */}
       <div className="finn_finance_header">
-        <h1 className="finn_finance_title">Your Finance Management</h1>
+        <h1 className="finn_finance_title">{tx("auto.yourFinanceManagement_478b")}</h1>
       </div>
 
       {/* Stats Section */}
       <div className="finn_finance_stats_section">
         <div className="finn_ipo">
           <div className="finn_ipols">
-            <h1>Finances</h1>
-            <p>Manage your finances</p>
+            <h1>{tx("auto.finances_4f05")}</h1>
+            <p>{tx("auto.manageYourFinances_47f0")}</p>
           </div>
           <Button
             variant="primary"
@@ -262,17 +271,17 @@ const Finances = () => {
           />
         </div>
         <div className="finn_stats_header">
-          <h2 className="finn_stats_period">{financeData.month}</h2>
+          <h2 className="finn_stats_period">{tl(financeData.month)}</h2>
           <div className="finn_stats_actions">
             <select
               className="finn_date_filter"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
             >
-              <option value="all">All time</option>
-              <option value="last30">Last 30 days</option>
-              <option value="last90">Last 90 days</option>
-              <option value="thisMonth">This month</option>
+              <option value="all">{tx("auto.allTime_dbad")}</option>
+              <option value="last30">{tx("auto.last30Days_6b32")}</option>
+              <option value="last90">{tx("auto.last90Days_c328")}</option>
+              <option value="thisMonth">{tx("auto.thisMonth_1b47")}</option>
             </select>
           </div>
         </div>
@@ -280,7 +289,7 @@ const Finances = () => {
           {financeData.stats.map((stat, index) => (
             <div key={index} className="finn_stat_card">
               <div className="finn_stat_content">
-                <h3 className="finn_stat_title">{stat.label}</h3>
+                <h3 className="finn_stat_title">{tl(stat.label)}</h3>
                 <p className="finn_stat_value"><MoneyAmount amount={stat.value} /></p>
               </div>
             </div>
@@ -297,7 +306,7 @@ const Finances = () => {
               <Search className="finn_search_icon" size={20} />
               <input
                 type="text"
-                placeholder="Search clients by name, phone, or email"
+                placeholder={tx("auto.searchClientsByNamePhone_9984")}
                 className="finn_search_input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -325,7 +334,7 @@ const Finances = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="all-transactions">All Transactions</label>
+                    <label htmlFor="all-transactions">{tx("auto.allTransactions_f46e")}</label>
                   </div>
                   <div className="finn_filter_option">
                     <input
@@ -339,7 +348,7 @@ const Finances = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="income-transactions">Income</label>
+                    <label htmlFor="income-transactions">{tx("auto.income_1c89")}</label>
                   </div>
                   <div className="finn_filter_option">
                     <input
@@ -353,7 +362,7 @@ const Finances = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="expense-transactions">Expenses</label>
+                    <label htmlFor="expense-transactions">{tx("auto.expenses_8d43")}</label>
                   </div>
                 </div>
               )}
@@ -382,19 +391,19 @@ const Finances = () => {
             onClick={handleAddTransactionClick}
           >
             <Plus size={20} />
-            Add Transaction
+            {tx("auto.addTransaction_ea77")}
           </button>
         </div>
 
         {/* Chart Section */}
         <div className="finn_chart_section">
           <div className="finn_chart_header">
-            <h3 className="finn_chart_title">Income vs Expenses</h3>
+            <h3 className="finn_chart_title">{tx("auto.incomeVsExpenses_800c")}</h3>
             <div className="finn_chart_period">
-              {dateFilter === "all" && "All Time"}
-              {dateFilter === "last30" && "Last 30 Days"}
-              {dateFilter === "last90" && "Last 90 Days"}
-              {dateFilter === "thisMonth" && "This Month"}
+              {dateFilter === "all" && tx("auto.allTime_4745")}
+              {dateFilter === "last30" && tx("auto.last30Days_6118")}
+              {dateFilter === "last90" && tx("auto.last90Days_ce96")}
+              {dateFilter === "thisMonth" && tx("auto.thisMonth_0f6c")}
             </div>
           </div>
 
@@ -408,8 +417,8 @@ const Finances = () => {
               <div
                 style={{ fontSize: "12px", color: "#666", marginTop: "10px" }}
               >
-                Debug: {transactions.length} total,{" "}
-                {filteredTransactions.length} filtered transactions
+                {tx("auto.debug_4a08")}{" "}{tl(transactions.length)}{" "}{tx("auto.total_195f")}{" "}
+                {tl(filteredTransactions.length)}{" "}{tx("auto.filteredTransactions_611a")}
               </div>
             )}
           </div>
@@ -417,11 +426,11 @@ const Finances = () => {
           <div className="finn_chart_legend">
             <div className="finn_legend_item">
               <div className="finn_legend_dot income"></div>
-              <span>Income</span>
+              <span>{tx("auto.income_1c89")}</span>
             </div>
             <div className="finn_legend_item">
               <div className="finn_legend_dot expenses"></div>
-              <span>Expenses</span>
+              <span>{tx("auto.expenses_8d43")}</span>
             </div>
           </div>
         </div>
@@ -429,23 +438,23 @@ const Finances = () => {
         {/* Recent Transactions */}
         <div className="finn_transactions_section">
           <div className="finn_transactions_header">
-            <h3 className="finn_transactions_title">Recent Transactions</h3>
-            <button className="finn_view_all_btn">View All</button>
+            <h3 className="finn_transactions_title">{tx("auto.recentTransactions_f28b")}</h3>
+            <button className="finn_view_all_btn">{tx("auto.viewAll_efd8")}</button>
           </div>
 
           <div className="finn_transactions_list">
             {loading ? (
               <div className="finn_loading">
-                <p>Loading transactions...</p>
+                <p>{tx("auto.loadingTransactions_3665")}</p>
               </div>
             ) : filteredTransactions.length === 0 ? (
               <div className="finn_no_transactions">
                 <Wallet size={48} />
-                <h3>No transactions found</h3>
+                <h3>{tx("auto.noTransactionsFound_d60c")}</h3>
                 <p>
-                  {searchTerm || filterType !== "all"
-                    ? "Try adjusting your search or filter"
-                    : "Add your first transaction to get started"}
+                  {tl(searchTerm || filterType !== "all"
+                    ? tx("auto.tryAdjustingYourSearchOr_e210")
+                    : tx("auto.addYourFirstTransactionTo_2017"))}
                 </p>
                 <Button
                   variant="primary"
@@ -453,7 +462,7 @@ const Finances = () => {
                   icon={<Plus size={16} />}
                   onClick={handleAddTransactionClick}
                 >
-                  Add Transaction
+                  {tx("auto.addTransaction_ea77")}
                 </Button>
               </div>
             ) : (
@@ -481,7 +490,7 @@ const Finances = () => {
                   <div className="finn_transaction_content">
                     <div className="finn_transaction_details">
                       <h4 className="finn_transaction_title">
-                        {transaction.title}
+                        {tl(transaction.title)}
                       </h4>
                       <div className="finn_transaction_meta">
                         <span
@@ -489,7 +498,7 @@ const Finances = () => {
                             transaction.isIncome ? "income" : "expense"
                           }`}
                         >
-                          {transaction.type}
+                          {tl(transaction.type)}
                         </span>
                         <span className="finn_transaction_separator">•</span>
                         <div className="finn_transaction_date_wrapper">
@@ -539,12 +548,12 @@ const Finances = () => {
                             />
                           </svg>
                           <span className="finn_transaction_date">
-                            {transaction.date}
+                            {tl(transaction.date)}
                           </span>
                         </div>
                       </div>
                       <p className="finn_transaction_category">
-                        {transaction.category}
+                        {tl(transaction.category)}
                       </p>
                     </div>
 

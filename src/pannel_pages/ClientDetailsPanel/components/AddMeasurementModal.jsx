@@ -5,6 +5,10 @@ import Input from "../../../components/Input/Input";
 import { useTheme } from "../../../contexts/ThemeContext";
 import "./AddMeasurementModal.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
 /**
  * AddMeasurementModal
  *
@@ -12,6 +16,7 @@ import "./AddMeasurementModal.css";
  * Edit mode (editMode=true):  onSave receives a single { name, value, unit }
  */
 const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initialData = null }) => {
+  const { t: tx } = useTranslation();
   const { isDark } = useTheme();
   const [measurements, setMeasurements] = useState([{ id: 1, name: "", value: "", unit: "inches" }]);
   const [isSaving, setIsSaving] = useState(false);
@@ -58,7 +63,7 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
       handleClose();
     } catch (err) {
       console.error("❌ Error saving measurements:", err);
-      alert("Failed to save measurements. Please try again.");
+      alert(tx("auto.failedToSaveMeasurementsPlease_9a36"));
     } finally {
       setIsSaving(false);
     }
@@ -90,7 +95,7 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
         {/* Header */}
         <div className="add_measurement_modal_header">
           <h3 className="add_measurement_modal_title">
-            {editMode ? "Edit Measurement" : "Add Measurements"}
+            {tl(editMode ? tx("auto.editMeasurement_b489") : tx("auto.addMeasurements_07ef"))}
           </h3>
           <button className="add_measurement_modal_close" onClick={handleClose}>
             <X size={20} />
@@ -104,7 +109,7 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
             <div className="add_measurement_quick_fill">
               <button className="add_measurement_quick_fill_btn" onClick={handleQuickFill}>
                 <Lightbulb size={16} />
-                Quick Fill Common Measurements
+                {tx("auto.quickFillCommonMeasurements_1ab8")}
               </button>
             </div>
           )}
@@ -128,8 +133,8 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
                     <div className="add_measurement_form_group add_measurement_name_field">
                       <Input
                         type="text"
-                        label="Name"
-                        placeholder="e.g., Chest"
+                        label={tx("auto.name_709a")}
+                        placeholder={tx("auto.eGChest_d7b9")}
                         value={m.name}
                         onChange={(e) => handleInputChange(m.id, "name", e.target.value)}
                         variant="rounded"
@@ -138,13 +143,13 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
                     <div className="add_measurement_form_group add_measurement_value_field">
                       <Input
                         type="text"
-                        label="Value"
+                        label={tx("auto.value_8dce")}
                         placeholder="36"
                         value={m.value}
                         onChange={(e) => handleInputChange(m.id, "value", e.target.value)}
                         variant="rounded"
                       />
-                      <span className="add_measurement_unit_label">inches</span>
+                      <span className="add_measurement_unit_label">{tx("auto.inches_4576")}</span>
                     </div>
                   </div>
                 </div>
@@ -156,7 +161,7 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
           {!editMode && (
             <button className="add_measurement_add_more_btn" onClick={handleAddRow}>
               <Plus size={18} />
-              Add Another Measurement
+              {tx("auto.addAnotherMeasurement_fea9")}
             </button>
           )}
 
@@ -165,10 +170,10 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
             <div className="add_measurement_tip_section">
               <div className="add_measurement_tip_header">
                 <Lightbulb size={16} className="add_measurement_tip_icon" />
-                <span className="add_measurement_tip_title">Tip</span>
+                <span className="add_measurement_tip_title">{tx("auto.tip_d19c")}</span>
               </div>
               <p className="add_measurement_tip_text">
-                Common measurements: Chest, Waist, Hip, Shoulder Width, Sleeve Length, Inseam, Neck, Bust, Dress Length.
+                {tx("auto.commonMeasurementsChestWaistHip_f89f")}
               </p>
             </div>
           )}
@@ -183,7 +188,7 @@ const AddMeasurementModal = ({ isOpen, onClose, onSave, editMode = false, initia
               className="add_measurement_save_btn"
               disabled={!hasValid || isSaving}
             >
-              {isSaving ? "Saving..." : editMode ? "Update Measurement" : "Save All Measurements"}
+              {isSaving ? tx("auto.saving_ae7e") : editMode ? tx("auto.updateMeasurement_3da2") : tx("auto.saveAllMeasurements_e2a3")}
             </Button>
           </div>
         </div>

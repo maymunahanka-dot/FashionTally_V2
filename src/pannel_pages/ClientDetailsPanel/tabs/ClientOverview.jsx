@@ -4,7 +4,16 @@ import NewAuthContext from "../../../contexts/NewAuthContext";
 import EditNotesModal from "../components/EditNotesModal";
 import "./ClientOverview.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+
+import { dateLocale } from "../../../i18n";
+
+
 const ClientOverview = ({ client }) => {
+  const { t: tx } = useTranslation();
   const { user } = useContext(NewAuthContext);
   const [showEditNotesModal, setShowEditNotesModal] = useState(false);
   const [clientNotes, setClientNotes] = useState(client?.notes || "");
@@ -35,7 +44,7 @@ const ClientOverview = ({ client }) => {
           setRecentActivity(clientOrders.slice(0, 3).map((o) => ({
             id: o.id,
             title: o.garmentDescription || o.garmentType || "Order",
-            date: o.createdAt.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+            date: o.createdAt.toLocaleDateString(dateLocale("en-US"), { year: "numeric", month: "short", day: "numeric" }),
             amount: `₦${(o.price || 0).toLocaleString()}`,
             status: o.status === "in-progress" ? "In Progress" : o.status || "Pending",
           })));
@@ -108,8 +117,8 @@ const ClientOverview = ({ client }) => {
       <div className="client_overview_stats">
         {clientOverviewData.stats.map((stat, index) => (
           <div key={index} className="client_overview_stat_card">
-            <div className="client_overview_stat_value">{stat.value}</div>
-            <div className="client_overview_stat_label">{stat.label}</div>
+            <div className="client_overview_stat_value">{tl(stat.value)}</div>
+            <div className="client_overview_stat_label">{tl(stat.label)}</div>
           </div>
         ))}
       </div>
@@ -119,23 +128,23 @@ const ClientOverview = ({ client }) => {
         <div className="client_overview_section_header">
           <div className="client_overview_section_title_group">
             <FileText size={20} className="client_overview_section_icon" />
-            <h3 className="client_overview_section_title">Notes</h3>
+            <h3 className="client_overview_section_title">{tx("auto.notes_7044")}</h3>
           </div>
           <button
             className="client_overview_edit_notes_btn"
             onClick={handleEditNotes}
-            title="Edit Notes"
+            title={tx("auto.editNotes_2d5f")}
             disabled={loading}
           >
             <Edit3 size={16} />
           </button>
         </div>
         {loading ? (
-          <p className="client_overview_notes">Loading notes...</p>
+          <p className="client_overview_notes">{tx("auto.loadingNotes_0a44")}</p>
         ) : (
           <p className="client_overview_notes">
-            {clientOverviewData.notes ||
-              "No notes added yet. Click the edit icon to add notes."}
+            {tl(clientOverviewData.notes ||
+              tx("auto.noNotesAddedYetClick_e333"))}
           </p>
         )}
       </div>
@@ -143,12 +152,12 @@ const ClientOverview = ({ client }) => {
       {/* Recent Activity */}
       <div className="client_overview_section">
         <div className="client_overview_section_header">
-          <h3 className="client_overview_section_title">Recent Activity</h3>
+          <h3 className="client_overview_section_title">{tx("auto.recentActivity_8aeb")}</h3>
         </div>
 
         {loading ? (
           <div className="client_overview_activity_list">
-            <p className="client_overview_empty">Loading activity...</p>
+            <p className="client_overview_empty">{tx("auto.loadingActivity_f8fd")}</p>
           </div>
         ) : clientOverviewData.recentActivity.length > 0 ? (
           <div className="client_overview_activity_list">
@@ -159,22 +168,22 @@ const ClientOverview = ({ client }) => {
                 </div>
                 <div className="client_overview_activity_details">
                   <h4 className="client_overview_activity_title">
-                    {activity.title}
+                    {tl(activity.title)}
                   </h4>
                   <p className="client_overview_activity_date">
-                    {activity.date}
+                    {tl(activity.date)}
                   </p>
                 </div>
                 <div className="client_overview_activity_right">
                   <div className="client_overview_activity_amount">
-                    {activity.amount}
+                    {tl(activity.amount)}
                   </div>
                   <div
                     className={`client_overview_activity_status ${activity.status
                       .toLowerCase()
                       .replace(" ", "-")}`}
                   >
-                    {activity.status}
+                    {tl(activity.status)}
                   </div>
                 </div>
               </div>
@@ -182,7 +191,7 @@ const ClientOverview = ({ client }) => {
           </div>
         ) : (
           <div className="client_overview_activity_list">
-            <p className="client_overview_empty">No recent orders</p>
+            <p className="client_overview_empty">{tx("auto.noRecentOrders_ace8")}</p>
           </div>
         )}
       </div>

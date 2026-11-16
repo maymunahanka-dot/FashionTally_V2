@@ -3,7 +3,13 @@ import { ArrowLeft, Bell, BellOff, Smartphone } from "lucide-react";
 import { requestAndRegisterToken, toggleDeviceNotification } from "../../backend/services/notification.service";
 import "./NotificationPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const NotificationPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const [permissionState, setPermissionState] = useState(
     "Notification" in window ? Notification.permission : "unsupported"
   );
@@ -116,8 +122,8 @@ const NotificationPanel = ({ onClose }) => {
           <ArrowLeft size={20} />
         </button>
         <div className="notif_header_content">
-          <h2 className="notif_title">Notifications</h2>
-          <p className="notif_subtitle">Manage push notifications</p>
+          <h2 className="notif_title">{tx("auto.notifications_753a")}</h2>
+          <p className="notif_subtitle">{tx("auto.managePushNotifications_2f6f")}</p>
         </div>
       </div>
 
@@ -132,8 +138,8 @@ const NotificationPanel = ({ onClose }) => {
                 {isOn ? <Bell size={20} /> : <BellOff size={20} />}
               </div>
               <div className="notif_item_info">
-                <h4 className="notif_item_title">Push Notifications</h4>
-                <p className="notif_item_description">{getStatusLabel()}</p>
+                <h4 className="notif_item_title">{tx("auto.pushNotifications_b8fe")}</h4>
+                <p className="notif_item_description">{tl(getStatusLabel())}</p>
               </div>
             </div>
             {loading
@@ -146,20 +152,20 @@ const NotificationPanel = ({ onClose }) => {
           {isOn && (
             <div className="notif_device_row">
               <Smartphone size={14} />
-              <span>Notifications active on this browser</span>
+              <span>{tx("auto.notificationsActiveOnThisBrowser_0be2")}</span>
             </div>
           )}
 
           {/* Status / hint message */}
           {statusMsg && (
             <p className={`notif_status_msg ${isBlocked ? "notif_status_warn" : "notif_status_info"}`}>
-              {statusMsg}
+              {tl(statusMsg)}
             </p>
           )}
 
           {permissionState === "default" && !statusMsg && (
             <p className="notif_status_msg notif_status_info">
-              Toggle on to allow FashionTally to send you push notifications.
+              {tx("auto.toggleOnToAllowFashiontally_a6a0")}
             </p>
           )}
         </div>

@@ -26,6 +26,12 @@ import {
 } from "../Home/landingKit.jsx";
 import { useRevealOnScroll, useScrollToTopOnMount } from "../Home/landingUtils.js";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+
 const METHODS = [
   {
     icon: Mail,
@@ -105,6 +111,7 @@ const FAQS = [
 const EMPTY_FORM = { name: "", email: "", company: "", phone: "", subject: "", message: "", priority: "medium" };
 
 const Contact = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const rootRef = useRef(null);
   useRevealOnScroll(rootRef);
@@ -154,21 +161,20 @@ const Contact = () => {
       <section className="lx-hero lx-page-hero">
         <div className="lx-hero-glow" aria-hidden="true" />
         <p className="lx-eyebrow lx-fade" style={{ animationDelay: "0.1s" }}>
-          CONTACT US
+          {tx("auto.contactUs_0384")}
         </p>
         <IntroTitle lines={["We're here to help", "you succeed."]} />
         <p className="lx-hero-sub lx-fade" style={{ animationDelay: "0.75s" }}>
-          Questions about FashionTally? Want a demo, or help getting started? Our team is ready to support you on
-          your fashion business journey.
+          {tx("auto.questionsAboutFashiontallyWantA_10b1")}
         </p>
         <div className="lx-hero-ctas lx-fade" style={{ animationDelay: "0.9s" }}>
           <a href="#message" className="lx-btn lx-btn-dark">
             <span className="lx-btn-roll" data-text="Send a message">
-              Send a message
+              {tx("auto.sendAMessage_dc26")}
             </span>
           </a>
           <button type="button" className="lx-btn lx-btn-ghost" onClick={() => navigate("/schedule-demo")}>
-            Book a demo <ArrowUpRight size={16} />
+            {tx("auto.bookADemo_a83d")}{" "}<ArrowUpRight size={16} />
           </button>
         </div>
       </section>
@@ -176,8 +182,8 @@ const Contact = () => {
       {/* ── 01 Ways to reach us ── */}
       <section className="lx-section lx-light">
         <div className="lx-wrap">
-          <SectionTag>01 / WAYS TO REACH US</SectionTag>
-          <SplitWords text="Pick whatever is easiest for you." className="lx-h2" />
+          <SectionTag>{tx("auto.01WaysToReachUs_ac8b")}</SectionTag>
+          <SplitWords text={tx("auto.pickWhateverIsEasiestFor_b4ae")} className="lx-h2" />
           <div className="lx-methods">
             {METHODS.map((m, i) => (
               <a
@@ -189,11 +195,11 @@ const Contact = () => {
                 data-reveal
                 style={{ transitionDelay: `${(i % 3) * 0.08}s` }}
               >
-                <div className="lx-flow-icon">{createElement(m.icon, { size: 22, strokeWidth: 1.6 })}</div>
-                <h3>{m.title}</h3>
-                <p>{m.text}</p>
-                <strong className="lx-method-contact">{m.contact}</strong>
-                <small className="lx-method-meta">{m.meta}</small>
+                <div className="lx-flow-icon">{tl(createElement(m.icon, { size: 22, strokeWidth: 1.6 }))}</div>
+                <h3>{tl(m.title)}</h3>
+                <p>{tl(m.text)}</p>
+                <strong className="lx-method-contact">{tl(m.contact)}</strong>
+                <small className="lx-method-meta">{tl(m.meta)}</small>
                 <span className="lx-flow-arrow">
                   <ArrowUpRight size={18} />
                 </span>
@@ -206,17 +212,17 @@ const Contact = () => {
       {/* ── 02 Form + office ── */}
       <section className="lx-section lx-dark" id="message">
         <div className="lx-wrap">
-          <SectionTag>02 / SEND US A MESSAGE</SectionTag>
-          <SplitWords text="Tell us what you need." className="lx-h2" />
+          <SectionTag>{tx("auto.02SendUsAMessage_b3a4")}</SectionTag>
+          <SplitWords text={tx("auto.tellUsWhatYouNeed_90ea")} className="lx-h2" />
           <div className="lx-contact-grid">
             <form className="lx-form" onSubmit={handleSubmit} data-reveal>
               <div className="lx-form-row">
                 <label>
-                  <span>Full name *</span>
-                  <input name="name" value={form.name} onChange={onChange} placeholder="Your full name" required />
+                  <span>{tx("auto.fullName_ca27")}</span>
+                  <input name="name" value={form.name} onChange={onChange} placeholder={tx("auto.yourFullName_d904")} required />
                 </label>
                 <label>
-                  <span>Email *</span>
+                  <span>{tx("auto.email_604e")}</span>
                   <input
                     name="email"
                     type="email"
@@ -229,101 +235,101 @@ const Contact = () => {
               </div>
               <div className="lx-form-row">
                 <label>
-                  <span>Brand / company</span>
-                  <input name="company" value={form.company} onChange={onChange} placeholder="Your fashion brand" />
+                  <span>{tx("auto.brandCompany_356e")}</span>
+                  <input name="company" value={form.company} onChange={onChange} placeholder={tx("auto.yourFashionBrand_3e80")} />
                 </label>
                 <label>
-                  <span>Phone</span>
-                  <input name="phone" type="tel" value={form.phone} onChange={onChange} placeholder="+234 xxx xxx xxxx" />
+                  <span>{tx("auto.phone_7706")}</span>
+                  <input name="phone" type="tel" value={form.phone} onChange={onChange} placeholder={tx("auto.234XxxXxxXxxx_61ff")} />
                 </label>
               </div>
               <div className="lx-form-row">
                 <label>
-                  <span>Subject</span>
-                  <input name="subject" value={form.subject} onChange={onChange} placeholder="What can we help with?" />
+                  <span>{tx("auto.subject_8d18")}</span>
+                  <input name="subject" value={form.subject} onChange={onChange} placeholder={tx("auto.whatCanWeHelpWith_d3c4")} />
                 </label>
                 <label>
-                  <span>Priority</span>
+                  <span>{tx("auto.priority_886c")}</span>
                   <select name="priority" value={form.priority} onChange={onChange}>
-                    <option value="low">Low – general question</option>
-                    <option value="medium">Medium – need assistance</option>
-                    <option value="high">High – urgent issue</option>
+                    <option value="low">{tx("auto.lowGeneralQuestion_adc3")}</option>
+                    <option value="medium">{tx("auto.mediumNeedAssistance_77cc")}</option>
+                    <option value="high">{tx("auto.highUrgentIssue_2a14")}</option>
                   </select>
                 </label>
               </div>
               <label>
-                <span>Message *</span>
+                <span>{tx("auto.message_8add")}</span>
                 <textarea
                   name="message"
                   rows={6}
                   value={form.message}
                   onChange={onChange}
-                  placeholder="Tell us how we can help. Include any details about your fashion business."
+                  placeholder={tx("auto.tellUsHowWeCan_beb6")}
                   required
                 />
               </label>
               {status && (
                 <p className={`lx-form-status is-${status.type}`} role="status">
                   {status.type === "ok" ? <CircleCheck size={18} /> : <CircleAlert size={18} />}
-                  {status.text}
+                  {tl(status.text)}
                 </p>
               )}
               <button type="submit" className="lx-btn lx-btn-accent lx-btn-block" disabled={submitting}>
                 {submitting ? (
                   <>
-                    <LoaderCircle size={18} className="lx-spin" /> Sending…
+                    <LoaderCircle size={18} className="lx-spin" />{" "}{tx("auto.sending_cf76")}
                   </>
                 ) : (
                   <>
-                    Send message <Send size={16} />
+                    {tx("auto.sendMessage_c70a")}{" "}<Send size={16} />
                   </>
                 )}
               </button>
             </form>
 
             <aside className="lx-office" data-reveal style={{ transitionDelay: "0.1s" }}>
-              <h3>Visit our office</h3>
-              <p className="lx-office-lead">We'd love to meet you in person.</p>
+              <h3>{tx("auto.visitOurOffice_e41b")}</h3>
+              <p className="lx-office-lead">{tx("auto.weDLoveToMeet_4277")}</p>
               <div className="lx-office-item">
                 <Building2 size={18} />
                 <div>
-                  <b>FashionTally Headquarters</b>
-                  <span>No 1 Gidado Road, Kano, Kano State, Nigeria</span>
+                  <b>{tx("auto.fashiontallyHeadquarters_7c4f")}</b>
+                  <span>{tx("auto.no1GidadoRoadKano_5064")}</span>
                 </div>
               </div>
               <div className="lx-office-item">
                 <Clock3 size={18} />
                 <div>
-                  <b>Business hours</b>
-                  <span>Mon – Fri: 9:00 AM – 6:00 PM WAT</span>
-                  <span>Saturday: 10:00 AM – 2:00 PM WAT</span>
-                  <span>Sunday: Closed</span>
+                  <b>{tx("auto.businessHours_026d")}</b>
+                  <span>{tx("auto.monFri900Am_0a12")}</span>
+                  <span>{tx("auto.saturday1000Am2_861f")}</span>
+                  <span>{tx("auto.sundayClosed_ad59")}</span>
                 </div>
               </div>
               <div className="lx-office-item">
                 <Phone size={18} />
                 <div>
-                  <b>Direct line</b>
+                  <b>{tx("auto.directLine_01e4")}</b>
                   <a href="tel:+2349123124709">0912 312 4709</a>
                 </div>
               </div>
               <div className="lx-office-item">
                 <Mail size={18} />
                 <div>
-                  <b>Email</b>
-                  <a href="mailto:fashiontallyy@gmail.com">fashiontallyy@gmail.com</a>
+                  <b>{tx("auto.email_84ad")}</b>
+                  <a href="mailto:fashiontallyy@gmail.com">{tx("auto.fashiontallyyGmailCom_f97f")}</a>
                 </div>
               </div>
               <div className="lx-office-visit">
                 <CalendarCheck size={20} />
                 <div>
-                  <b>See FashionTally in action</b>
-                  <span>Book a personalised demo with our team.</span>
+                  <b>{tx("auto.seeFashiontallyInAction_590c")}</b>
+                  <span>{tx("auto.bookAPersonalisedDemoWith_57f1")}</span>
                 </div>
               </div>
               <button type="button" className="lx-btn lx-btn-light lx-btn-block" onClick={() => navigate("/schedule-demo")}>
                 <span className="lx-btn-roll" data-text="Book a demo">
-                  Book a demo
+                  {tx("auto.bookADemo_a83d")}
                 </span>
               </button>
             </aside>
@@ -335,8 +341,8 @@ const Contact = () => {
       <section className="lx-section lx-light">
         <div className="lx-wrap lx-faq">
           <div>
-            <SectionTag>03 / QUICK ANSWERS</SectionTag>
-            <SplitWords text="Questions we hear most." className="lx-h2" />
+            <SectionTag>{tx("auto.03QuickAnswers_88af")}</SectionTag>
+            <SplitWords text={tx("auto.questionsWeHearMost_9768")} className="lx-h2" />
             <div className="lx-faq-tabs" data-reveal>
               {categories.map((tab) => (
                 <button
@@ -348,7 +354,7 @@ const Contact = () => {
                     setOpenFaq(0);
                   }}
                 >
-                  {tab}
+                  {tl(tab)}
                 </button>
               ))}
             </div>
@@ -359,11 +365,11 @@ const Contact = () => {
               return (
                 <div key={q} className={`lx-faq-item ${open ? "is-open" : ""}`}>
                   <button type="button" aria-expanded={open} onClick={() => setOpenFaq(open ? -1 : i)}>
-                    <span>{q}</span>
+                    <span>{tl(q)}</span>
                     <Plus size={18} />
                   </button>
                   <div className="lx-faq-answer">
-                    <p>{a}</p>
+                    <p>{tl(a)}</p>
                   </div>
                 </div>
               );
@@ -372,7 +378,7 @@ const Contact = () => {
         </div>
       </section>
 
-      <LandingCta eyebrow="STILL DECIDING?" title="Try it free. See the difference." />
+      <LandingCta eyebrow="STILL DECIDING?" title={tx("auto.tryItFreeSeeThe_dd25")} />
       <LandingFooter />
     </div>
   );

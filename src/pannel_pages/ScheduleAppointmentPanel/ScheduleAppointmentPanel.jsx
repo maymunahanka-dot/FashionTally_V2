@@ -6,7 +6,11 @@ import Input from "../../components/Input/Input";
 import { useTheme } from "../../contexts/ThemeContext";
 import "./ScheduleAppointmentPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
 const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editMode, onSuccess }) => {
+  const { t: tx } = useTranslation();
   const { isDark } = useTheme();
   const { user } = useContext(NewAuthContext);
   const [loading, setLoading] = useState(false);
@@ -101,12 +105,12 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
     e.preventDefault();
 
     if (!user?.email) {
-      alert("User not authenticated");
+      alert(tx("auto.userNotAuthenticated_dc86"));
       return;
     }
 
     if (!formData.appointmentTitle || !formData.date || !formData.time) {
-      alert("Please fill in all required fields");
+      alert(tx("auto.pleaseFillInAllRequired_47aa"));
       return;
     }
 
@@ -174,7 +178,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
       }
     } catch (error) {
       console.error("Error saving appointment:", error);
-      alert(error.message || "Failed to save appointment. Please try again.");
+      alert(error.message || tx("auto.failedToSaveAppointmentPlease_7e7c"));
     } finally {
       setLoading(false);
     }
@@ -261,7 +265,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
         <button className="schedule_close_btn" onClick={onClose}>
           <X size={20} />
         </button>
-        <h2 className="schedule_panel_title">Add Schedule</h2>
+        <h2 className="schedule_panel_title">{tx("auto.addSchedule_6c15")}</h2>
       </div>
 
       {/* Form */}
@@ -270,8 +274,8 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
         <div className="schedule_form_group">
           <Input
             type="text"
-            label="Appointment Title *"
-            placeholder="e.g., Fitting Session, Design Consultation"
+            label={tx("auto.appointmentTitle_b4d3")}
+            placeholder={tx("auto.eGFittingSessionDesign_e8f2")}
             value={formData.appointmentTitle}
             onChange={(e) =>
               handleInputChange("appointmentTitle", e.target.value)
@@ -285,8 +289,8 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
         <div className="schedule_form_group">
           <Input
             type="text"
-            label="Client Name"
-            placeholder="Aisha Lawal"
+            label={tx("auto.clientName_130c")}
+            placeholder={tx("auto.aishaLawal_79c3")}
             value={formData.clientName}
             onChange={(e) => handleInputChange("clientName", e.target.value)}
             variant="rounded"
@@ -298,7 +302,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
           <div className="schedule_form_group">
             <Input
               type="date"
-              label="Date *"
+              label={tx("auto.date_d36f")}
               value={formData.date}
               onChange={(e) => {
                 handleInputChange("date", e.target.value);
@@ -313,7 +317,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
           <div className="schedule_form_group">
             <Input
               type="select"
-              label="Time *"
+              label={tx("auto.time_e29b")}
               value={formData.time}
               onChange={(e) => handleInputChange("time", e.target.value)}
               options={timeOptions}
@@ -328,7 +332,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
           <div className="schedule_form_group">
             <Input
               type="select"
-              label="Duration"
+              label={tx("auto.duration_1370")}
               value={formData.duration}
               onChange={(e) => handleInputChange("duration", e.target.value)}
               options={durationOptions}
@@ -339,7 +343,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
           <div className="schedule_form_group">
             <Input
               type="select"
-              label="Appointment Type"
+              label={tx("auto.appointmentType_d60f")}
               value={formData.appointmentType}
               onChange={(e) =>
                 handleInputChange("appointmentType", e.target.value)
@@ -354,7 +358,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
         <div className="schedule_form_group">
           <Input
             type="select"
-            label="Location"
+            label={tx("auto.location_d219")}
             value={formData.location}
             onChange={(e) => handleInputChange("location", e.target.value)}
             options={locationOptions}
@@ -367,7 +371,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
           <div className="schedule_form_group">
             <Input
               type="tel"
-              label="Phone (Optional)"
+              label={tx("auto.phoneOptional_93d2")}
               placeholder="+234 800 000 0000"
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
@@ -378,7 +382,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
           <div className="schedule_form_group">
             <Input
               type="email"
-              label="Email (Optional)"
+              label={tx("auto.emailOptional_96d4")}
               placeholder="aisha.lawal@example.com"
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
@@ -391,8 +395,8 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
         <div className="schedule_form_group">
           <Input
             type="textarea"
-            label="Notes (Optional)"
-            placeholder="Add any additional details about this appointment..."
+            label={tx("auto.notesOptional_2fd5")}
+            placeholder={tx("auto.addAnyAdditionalDetailsAbout_213f")}
             rows={4}
             value={formData.notes}
             onChange={(e) => handleInputChange("notes", e.target.value)}
@@ -407,10 +411,9 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
               <div className="schedule_reminder_dot"></div>
             </div>
             <div className="schedule_reminder_content">
-              <h4 className="schedule_reminder_title">Automatic Reminders</h4>
+              <h4 className="schedule_reminder_title">{tx("auto.automaticReminders_5d01")}</h4>
               <p className="schedule_reminder_description">
-                Reminders will be sent 24 hours and 1 hour before the
-                appointment time via SMS and email (if provided)
+                {tx("auto.remindersWillBeSent24_262b")}
               </p>
             </div>
           </div>
@@ -426,10 +429,10 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
             disabled={loading}
           >
             {loading
-              ? "Saving..."
+              ? tx("auto.saving_ae7e")
               : editMode
-              ? "Update Appointment"
-              : "Create Appointment"}
+              ? tx("auto.updateAppointment_fb7d")
+              : tx("auto.createAppointment_b786")}
           </Button>
 
           <Button
@@ -442,7 +445,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
               console.log("Create invoice clicked");
             }}
           >
-            Create Invoice
+            {tx("auto.createInvoice_3281")}
           </Button>
         </div>
       </form>
@@ -454,7 +457,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
             <div className="schedule_calendar_dialog_header">
               <div className="schedule_calendar_dialog_title">
                 <Calendar size={20} />
-                <h3>Update Google Calendar</h3>
+                <h3>{tx("auto.updateGoogleCalendar_b3e3")}</h3>
               </div>
               <button
                 className="schedule_calendar_close_btn"
@@ -465,9 +468,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
             </div>
             <div className="schedule_calendar_dialog_content">
               <p>
-                Would you like to add this appointment to your Google Calendar?
-                This will open Google Calendar in a new tab with the appointment
-                details pre-filled.
+                {tx("auto.wouldYouLikeToAdd_7485")}
               </p>
             </div>
             <div className="schedule_calendar_dialog_actions">
@@ -476,7 +477,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
                 size="medium"
                 onClick={handleCancelCalendarUpdate}
               >
-                Cancel
+                {tx("auto.cancel_77df")}
               </Button>
               <Button
                 variant="primary"
@@ -485,7 +486,7 @@ const ScheduleAppointmentPanel = ({ onClose, onSubmit, editingAppointment, editM
                 icon={<ExternalLink size={16} />}
                 iconPosition="left"
               >
-                Update Calendar
+                {tx("auto.updateCalendar_7401")}
               </Button>
             </div>
           </div>

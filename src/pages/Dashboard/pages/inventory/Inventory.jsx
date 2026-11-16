@@ -18,9 +18,18 @@ import "./Inventory.css";
 import Button from "../../../../components/button/Button";
 import { useSavedSort } from "../../../../components/SortByButton/SortByButton";
 import { getEffectiveUserEmail } from "../../../../utils/teamUtils";
-import { formatDollars, getUsdToNgnRate } from "../../../../utils/exchangeRate";
+import { formatForeign, getNgnPerUnit } from "../../../../utils/exchangeRate";
+
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+import { dateLocale } from "../../../../i18n";
+
 
 const Inventory = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [showFilter, setShowFilter] = useState(false);
@@ -36,7 +45,8 @@ const Inventory = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDollars, setShowDollars] = useState(false);
-  const [usdToNgn, setUsdToNgn] = useState(null);
+  const [usdToNgn, setUsdToNgn] = useState(null); // Naira per 1 unit of secCurrency
+  const [secCurrency, setSecCurrency] = useState("USD");
 
   const { user } = useContext(NewAuthContext);
 
@@ -87,10 +97,12 @@ const Inventory = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/brand-setting/get-by-email/${encodeURIComponent(email)}`
         );
         const data = await res.json();
-        const useDollars = data?.data?.inventoryCurrency === "USD";
+        const cur = String(data?.data?.inventoryCurrency || "NGN").toUpperCase();
+        const useDollars = cur !== "NGN"; // name kept: true for any non-Naira display currency
         if (cancelled) return;
         setShowDollars(useDollars);
-        setUsdToNgn(await getUsdToNgnRate());
+        setSecCurrency(useDollars ? cur : "USD");
+        setUsdToNgn(await getNgnPerUnit(useDollars ? cur : "USD"));
       } catch (error) {
         console.error("Error loading exchange rate:", error);
       }
@@ -190,6 +202,10 @@ const Inventory = () => {
     return `₦${amount.toLocaleString()}`;
   };
 
+  /** Saved Naira amount shown only in the Brand currency. */
+  const money = (naira) =>
+    showDollars && usdToNgn ? formatForeign(naira, usdToNgn, secCurrency) : formatCurrency(naira);
+
   const handleAddInventoryClick = () => {
     setSelectedItem(null);
     setIsEditMode(false);
@@ -210,7 +226,7 @@ const Inventory = () => {
 
   const handleDeleteItem = async (itemId) => {
     if (!user?.email) return;
-    if (window.confirm("Are you sure you want to delete this item?")) {
+    if (window.confirm(tx("auto.areYouSureYouWant_97a6"))) {
       try {
         const token = localStorage.getItem("authToken");
         const res = await fetch(
@@ -221,11 +237,11 @@ const Inventory = () => {
         if (data.success) {
           fetchInventory();
         } else {
-          alert("Failed to delete item. Please try again.");
+          alert(tx("auto.failedToDeleteItemPlease_7c9d"));
         }
       } catch (error) {
         console.error("Error deleting item:", error);
-        alert("Failed to delete item. Please try again.");
+        alert(tx("auto.failedToDeleteItemPlease_7c9d"));
       }
     }
   };
@@ -258,10 +274,10 @@ const Inventory = () => {
     return (
       <div className="inventory_management">
         <div className="inventory_header">
-          <h1 className="inventory_title">Manage your stock and supplies</h1>
+          <h1 className="inventory_title">{tx("auto.manageYourStockAndSupplies_6eee")}</h1>
         </div>
         <div className="inventory_no_items">
-          <p>Please log in to view your inventory.</p>
+          <p>{tx("auto.pleaseLogInToView_dcfb")}</p>
         </div>
       </div>
     );
@@ -271,15 +287,15 @@ const Inventory = () => {
     <div className="inventory_management">
       {/* Header */}
       <div className="inventory_header">
-        <h1 className="inventory_title">Manage your stock and supplies</h1>
+        <h1 className="inventory_title">{tx("auto.manageYourStockAndSupplies_6eee")}</h1>
       </div>
 
       {/* Stats Cards */}
       <div className="inventory_stats">
         <div className="ipo">
           <div className="ipols">
-            <h1>Inventory</h1>
-            <p>manage your stock and supply</p>
+            <h1>{tx("auto.inventory_300d")}</h1>
+            <p>{tx("auto.manageYourStockAndSupply_a8eb")}</p>
           </div>
           <Button
             variant="primary"
@@ -317,18 +333,13 @@ const Inventory = () => {
                   />
                 </svg>
               </div>
-              <h3 className="inventory_stat_title">Stock Value</h3>
+              <h3 className="inventory_stat_title">{tx("auto.stockValue_c226")}</h3>
             </div>
             <div className="inventory_stat_content">
               <p className="inventory_stat_value">
-                {showDollars && usdToNgn ? formatDollars(totalStockValue, usdToNgn) : formatCurrency(totalStockValue)}
-                {usdToNgn ? (
-                  <span className="inventory_stat_exchange">
-                    {showDollars ? formatCurrency(totalStockValue) : formatDollars(totalStockValue, usdToNgn)}
-                  </span>
-                ) : null}
+                {tl(showDollars && usdToNgn ? formatForeign(totalStockValue, usdToNgn, secCurrency) : formatCurrency(totalStockValue))}
               </p>
-              <p className="inventory_stat_subtitle">+10% from last month</p>
+              <p className="inventory_stat_subtitle">{tx("auto.10FromLastMonth_94d7")}</p>
             </div>
           </div>
 
@@ -365,10 +376,10 @@ const Inventory = () => {
                   />
                 </svg>
               </div>
-              <h3 className="inventory_stat_title">Low Stock</h3>
+              <h3 className="inventory_stat_title">{tx("auto.lowStock_023d")}</h3>
             </div>
             <div className="inventory_stat_content">
-              <p className="inventory_stat_value">{lowStockItems}</p>
+              <p className="inventory_stat_value">{tl(lowStockItems)}</p>
             </div>
           </div>
 
@@ -385,10 +396,10 @@ const Inventory = () => {
                   />
                 </svg>
               </div>
-              <h3 className="inventory_stat_title">Out of Stock</h3>
+              <h3 className="inventory_stat_title">{tx("auto.outOfStock_bc67")}</h3>
             </div>
             <div className="inventory_stat_content">
-              <p className="inventory_stat_value">{outOfStockItems}</p>
+              <p className="inventory_stat_value">{tl(outOfStockItems)}</p>
             </div>
           </div>
         </div>
@@ -403,7 +414,7 @@ const Inventory = () => {
               <Search className="inventory_search_icon" size={20} />
               <input
                 type="text"
-                placeholder="Search clients by name, phone, or email"
+                placeholder={tx("auto.searchClientsByNamePhone_9984")}
                 className="inventory_search_input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -431,7 +442,7 @@ const Inventory = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="inventory_all">All Items</label>
+                    <label htmlFor="inventory_all">{tx("auto.allItems_2f18")}</label>
                   </div>
                   <div className="inventory_filter_option">
                     <input
@@ -445,7 +456,7 @@ const Inventory = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="inventory_sufficient">Sufficient</label>
+                    <label htmlFor="inventory_sufficient">{tx("auto.sufficient_970c")}</label>
                   </div>
                   <div className="inventory_filter_option">
                     <input
@@ -459,7 +470,7 @@ const Inventory = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="inventory_low">Low Stock</label>
+                    <label htmlFor="inventory_low">{tx("auto.lowStock_023d")}</label>
                   </div>
                   <div className="inventory_filter_option">
                     <input
@@ -473,7 +484,7 @@ const Inventory = () => {
                         setShowFilter(false);
                       }}
                     />
-                    <label htmlFor="inventory_out">Out of Stock</label>
+                    <label htmlFor="inventory_out">{tx("auto.outOfStock_bc67")}</label>
                   </div>
                 </div>
               )}
@@ -494,7 +505,7 @@ const Inventory = () => {
               className="sort-by-btn"
               aria-label="Sort by"
             >
-              Sort by
+              {tx("auto.sortBy_a2a5")}
             </Button>
             {showSort && (
               <div className="sort-dropdown" role="menu">
@@ -517,7 +528,7 @@ const Inventory = () => {
                       setShowSort(false);
                     }}
                   >
-                    {option.label}
+                    {tl(option.label)}
                   </button>
                 ))}
               </div>
@@ -530,7 +541,7 @@ const Inventory = () => {
             onClick={handleAddInventoryClick}
           >
             <Plus size={20} />
-            Add Inventory
+            {tx("auto.addInventory_224f")}
           </button>
         </div>
 
@@ -539,11 +550,10 @@ const Inventory = () => {
           <div className="inventory_low_stock_alert">
             <AlertTriangle className="inventory_alert_icon" size={20} />
             <div className="pl">
-              <span className="inventory_alert_text">Low Stock Alert</span>
+              <span className="inventory_alert_text">{tx("auto.lowStockAlert_9d42")}</span>
               <span className="inventory_alert_description">
-                {lowStockItems}{" "}
-                {lowStockItems === 1 ? "item has" : "items have"} 3 or fewer
-                units remaining. Consider restocking soon to avoid shortages.
+                {tl(lowStockItems)}{" "}
+                {tl(lowStockItems === 1 ? tx("auto.itemHas_7d20") : tx("auto.itemsHave_71ed"))}{" "}{tx("auto.3OrFewerUnitsRemaining_0caf")}
               </span>
             </div>
           </div>
@@ -591,8 +601,8 @@ const Inventory = () => {
             }`}
             onClick={() => setActiveCategory(category.name)}
           >
-            <span className="inventory_category_icon">{category.icon}</span>
-            {category.name}
+            <span className="inventory_category_icon">{tl(category.icon)}</span>
+            {tl(category.name)}
           </button>
         ))}
       </div>
@@ -607,14 +617,14 @@ const Inventory = () => {
               style={{ cursor: "pointer" }}
             >
               <div className="inventory_image">
-                <span className="inventory_image_icon">{item.icon}</span>
+                <span className="inventory_image_icon">{tl(item.icon)}</span>
               </div>
               <div className="inventory_basic_info">
-                <h3 className="inventory_name">{item.name}</h3>
+                <h3 className="inventory_name">{tl(item.name)}</h3>
                 <p className="inventory_code">
-                  {item.category} • {item.code}
+                  {tl(item.category)} • {tl(item.code)}
                 </p>
-                <p className="inventory_description">{item.description}</p>
+                <p className="inventory_description">{tl(item.description)}</p>
               </div>
               <div
                 className="inventory_actions"
@@ -642,43 +652,25 @@ const Inventory = () => {
             >
               <div className="inventory_detail_row">
                 <div className="inventory_detail_item">
-                  <span className="inventory_detail_label">Quantity</span>
+                  <span className="inventory_detail_label">{tx("auto.quantity_44f6")}</span>
                   <span className="inventory_detail_value">
-                    {item.quantity} {item.unit}
+                    {tl(item.quantity)} {tl(item.unit)}
                   </span>
                 </div>
                 <div className="inventory_detail_item">
-                  <span className="inventory_detail_label">Price per Unit</span>
+                  <span className="inventory_detail_label">{tx("auto.pricePerUnit_cd21")}</span>
                   <span className="inventory_detail_value">
-                    {usdToNgn ? (
-                      showDollars ? (
-                        <>
-                          <span>{formatDollars(item.pricePerUnit, usdToNgn)}</span>
-                          <span className="inventory_exchange">
-                            {formatCurrency(item.pricePerUnit)}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <span>{formatCurrency(item.pricePerUnit)}</span>
-                          <span className="inventory_exchange">
-                            {formatDollars(item.pricePerUnit, usdToNgn)}
-                          </span>
-                        </>
-                      )
-                    ) : (
-                      formatCurrency(item.pricePerUnit)
-                    )}
+                    {tl(money(item.pricePerUnit))}
                   </span>
                 </div>
                 <div className="inventory_detail_item">
-                  <span className="inventory_detail_label">Alert</span>
+                  <span className="inventory_detail_label">{tx("auto.alert_b969")}</span>
                   <span
                     className={`inventory_status_badge ${
                       item.status?.toLowerCase() || "in-stock"
                     }`}
                   >
-                    {item.status || "In Stock"}
+                    {tl(item.status || tx("auto.inStock_97d8"))}
                   </span>
                 </div>
               </div>
@@ -686,47 +678,29 @@ const Inventory = () => {
               <div className="inventory_footer">
                 <div className="inventory_stock_info">
                   <div className="inventory_stock_value">
-                    <span className="inventory_stock_label">Stock Value</span>
+                    <span className="inventory_stock_label">{tx("auto.stockValue_c226")}</span>
                     <span className="inventory_stock_amount">
-                      {usdToNgn ? (
-                        showDollars ? (
-                          <>
-                            <span>{formatDollars(item.stockValue, usdToNgn)}</span>
-                            <span className="inventory_exchange">
-                              {formatCurrency(item.stockValue)}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span>{formatCurrency(item.stockValue)}</span>
-                            <span className="inventory_exchange">
-                              {formatDollars(item.stockValue, usdToNgn)}
-                            </span>
-                          </>
-                        )
-                      ) : (
-                        formatCurrency(item.stockValue)
-                      )}
+                      {tl(money(item.stockValue))}
                     </span>
                   </div>
                   <div className="inventory_supplier_info">
                     <span className="inventory_supplier_label">
-                      Supplier: {item.supplier}
+                      {tx("auto.supplier_1c8a")}{" "}{tl(item.supplier)}
                     </span>
                     <span className="inventory_min_stock">
-                      Min: {item.minStock} {item.unit}
+                      {tx("auto.min_21be")}{" "}{tl(item.minStock)} {tl(item.unit)}
                     </span>
                   </div>
                   <div className="inventory_created_date">
-                    <span className="inventory_date_label">Created:</span>
+                    <span className="inventory_date_label">{tx("auto.created_0c78")}</span>
                     <span className="inventory_date_value">
-                      {item.createdAt instanceof Date
-                        ? item.createdAt.toLocaleDateString("en-US", {
+                      {tl(item.createdAt instanceof Date
+                        ? item.createdAt.toLocaleDateString(dateLocale("en-US"), {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
                           })
-                        : "N/A"}
+                        : tx("auto.nA_08d2"))}
                     </span>
                   </div>
                 </div>
@@ -739,9 +713,9 @@ const Inventory = () => {
       {filteredInventory.length === 0 && !loading && (
         <div className="inventory_no_items">
           <p>
-            {searchTerm || activeCategory !== "All" || filterStatus !== "all"
-              ? "No inventory items found matching your criteria."
-              : "No inventory items yet. Add your first item to get started!"}
+            {tl(searchTerm || activeCategory !== "All" || filterStatus !== "all"
+              ? tx("auto.noInventoryItemsFoundMatching_66e7")
+              : tx("auto.noInventoryItemsYetAdd_5762"))}
           </p>
         </div>
       )}

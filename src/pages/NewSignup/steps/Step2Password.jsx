@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import Input from "../../../components/Input";
 import Button from "../../../components/button/Button";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
 const Step2Password = ({
   formData,
   errors,
@@ -11,6 +15,7 @@ const Step2Password = ({
   onNext,
   onBack,
 }) => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [showPassword] = useState(false);
   const [showConfirmPassword] = useState(false);
@@ -40,18 +45,18 @@ const Step2Password = ({
     const newErrors = {};
 
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = tx("auto.passwordIsRequired_6c56");
     } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters long";
+      newErrors.password = tx("auto.passwordMustBeAtLeast_47a7");
     } else if (passwordStrength.strength < 2) {
       newErrors.password =
-        "Password is too weak. Please include uppercase, lowercase, numbers, and special characters";
+        tx("auto.passwordIsTooWeakPlease_9202");
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = tx("auto.pleaseConfirmYourPassword_51d6");
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = tx("auto.passwordsDoNotMatch_d69c");
     }
 
     setErrors(newErrors);
@@ -93,9 +98,9 @@ const Step2Password = ({
       </div>
 
       <div className="n_s_u_s-s-title-con">
-        <h1 className="n_s_u_s-s-title">Create Password</h1>
+        <h1 className="n_s_u_s-s-title">{tx("auto.createPassword_710a")}</h1>
         <p className="n_s_u_s-s-subtitle">
-          Choose a strong password to secure your account
+          {tx("auto.chooseAStrongPasswordTo_a38e")}
         </p>
       </div>
 
@@ -110,7 +115,7 @@ const Step2Password = ({
           label=""
           value={formData.password}
           onChange={(e) => onInputChange("password", e.target.value)}
-          placeholder="Enter your password"
+          placeholder={tx("auto.enterYourPassword_1378")}
           required
           error={errors.password}
           active={!!formData.password}
@@ -126,7 +131,7 @@ const Step2Password = ({
             <div
               className={`n_s_u_strength-text n_s_u_strength-${passwordStrength.class}-text`}
             >
-              Password strength: {passwordStrength.text}
+              {tx("auto.passwordStrength_c10b")}{" "}{tl(passwordStrength.text)}
             </div>
           </div>
         )}
@@ -136,7 +141,7 @@ const Step2Password = ({
           label=""
           value={formData.confirmPassword}
           onChange={(e) => onInputChange("confirmPassword", e.target.value)}
-          placeholder="Confirm your password"
+          placeholder={tx("auto.confirmYourPassword_198b")}
           required
           error={errors.confirmPassword}
           active={!!formData.confirmPassword}
@@ -150,24 +155,24 @@ const Step2Password = ({
             disabled={!isFormValid}
             className={isFormValid ? "" : "n_s_u_s-s-btn-inactive"}
           >
-            Next
+            {tx("auto.next_bc98")}
           </Button>
         </div>
 
         <p className="n_s_u_s-s-term">
-          By signing up, you agree to the{" "}
+          {tx("auto.bySigningUpYouAgree_d580")}{" "}
           <span
             className="n_s_u_s-s-terml-link"
             onClick={() => navigate("/terms-of-service")}
           >
-            Terms of Service
+            {tx("auto.termsOfService_0c8a")}
           </span>{" "}
-          and{" "}
+          {tx("auto.and_cffa")}{" "}
           <span
             className="n_s_u_s-s-terml-link"
             onClick={() => navigate("/privacy-policy")}
           >
-            Data Processing Agreement
+            {tx("auto.dataProcessingAgreement_a061")}
           </span>
         </p>
       </form>

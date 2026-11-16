@@ -20,7 +20,11 @@ import Pay from "./pages/Pay/Pay";
 import ScheduleDemo from "./pages/ScheduleDemo/ScheduleDemo";
 import Loading from "./components/Loading/Loading";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "./i18n";
+
 function App() {
+  const { t: tx } = useTranslation();
   const { user, loading } = useNewAuth();
   console.log("Auth User:", user);
   const navigate = useNavigate();
@@ -43,7 +47,7 @@ function App() {
   }, [currentUser, isLoading, navigate]);
 
   if (isLoading) {
-    return <Loading message="Loading Fashion Tally..." />;
+    return <Loading message={tx("auto.loadingFashionTally_45e8")} />;
   }
 
   return (

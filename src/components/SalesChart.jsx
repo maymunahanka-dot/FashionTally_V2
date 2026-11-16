@@ -1,21 +1,16 @@
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useDisplayCurrency } from "../utils/useDisplayCurrency";
+import { formatCompactMoney } from "../utils/exchangeRate";
+
+import { tl } from "../i18n";
 
 const SalesChart = ({ data = [] }) => {
+  const displayCurrency = useDisplayCurrency();
   console.log("📊 SalesChart rendered with data:", data);
 
   // Helper function to format currency with abbreviations
-  const formatChartCurrency = (amount) => {
-    const num = Number(amount);
-    if (num >= 1000000000) {
-      return `₦${(num / 1000000000).toFixed(1)}B`;
-    } else if (num >= 1000000) {
-      return `₦${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `₦${(num / 1000).toFixed(1)}K`;
-    } else {
-      return `₦${num.toLocaleString()}`;
-    }
-  };
+  const formatChartCurrency = (amount) =>
+    formatCompactMoney(amount, displayCurrency.currency, displayCurrency.ngnPerUnit);
 
   // Use provided data or fallback to default
   const chartData =
@@ -50,7 +45,7 @@ const SalesChart = ({ data = [] }) => {
           bottom: 5,
         }}
       >
-        <XAxis
+        <XAxis tickFormatter={(v) => tl(v)}
           dataKey="name"
           axisLine={false}
           tickLine={false}

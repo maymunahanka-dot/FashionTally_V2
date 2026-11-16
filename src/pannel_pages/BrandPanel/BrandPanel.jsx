@@ -3,12 +3,24 @@ import { ChevronLeft, Upload, Link, Loader2 } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
+import { currencyOptions } from "../../utils/exchangeRate";
+import { clearCurrencyCache } from "../../utils/useDisplayCurrency";
+
+const CURRENCY_OPTIONS = currencyOptions();
+const CURRENCY_LABELS = CURRENCY_OPTIONS.map((c) => c.label);
+const toCurrencyCode = (value) => (/^[A-Z]{3}$/.test(String(value || "").toUpperCase()) ? String(value).toUpperCase() : "NGN");
 import Input from "../../components/Input";
+import SearchableSelect from "../../components/SearchableSelect";
 import "./BrandPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
 const API = import.meta.env.VITE_BACKEND_URL;
 
 const BrandPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
 
   const token = () => localStorage.getItem("authToken");
@@ -65,7 +77,7 @@ const BrandPanel = ({ onClose }) => {
         setSecondaryColor(d.secondaryColor || "#666666");
         setFooterText(d.footerText || "");
         setTermsAndConditions(d.termsAndConditions || "");
-        setInventoryCurrency(d.inventoryCurrency === "USD" ? "USD" : "NGN");
+        setInventoryCurrency(toCurrencyCode(d.inventoryCurrency));
       }
     } catch (error) {
       console.error("Error loading brand data:", error);
@@ -87,21 +99,21 @@ const BrandPanel = ({ onClose }) => {
     const newErrors = {};
 
     if (!brandName.trim()) {
-      newErrors.brandName = "Brand name is required";
+      newErrors.brandName = tx("auto.brandNameIsRequired_c0de");
     }
 
     if (!businessAddress.trim()) {
-      newErrors.businessAddress = "Business address is required";
+      newErrors.businessAddress = tx("auto.businessAddressIsRequired_f139");
     }
 
     if (!phoneNumber.trim()) {
-      newErrors.phoneNumber = "Phone number is required";
+      newErrors.phoneNumber = tx("auto.phoneNumberIsRequired_f845");
     }
 
     if (!email.trim()) {
-      newErrors.email = "Email address is required";
+      newErrors.email = tx("auto.emailAddressIsRequired_e7f0");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Email address is invalid";
+      newErrors.email = tx("auto.emailAddressIsInvalid_85f8");
     }
 
     setErrors(newErrors);
@@ -157,7 +169,7 @@ const BrandPanel = ({ onClose }) => {
         secondaryColor:    secondaryColor,
         footerText:        footerText,
         termsAndConditions: termsAndConditions,
-        inventoryCurrency: inventoryCurrency === "USD" ? "USD" : "NGN",
+        inventoryCurrency: toCurrencyCode(inventoryCurrency),
       };
 
       // Try edit first, fall back to create if not found
@@ -179,11 +191,12 @@ const BrandPanel = ({ onClose }) => {
         if (!createData.success) throw new Error(createData.error || "Failed to save brand settings");
       }
 
-      alert("Brand settings saved successfully!");
+      clearCurrencyCache(); // so money is shown in the new currency straight away
+      alert(tx("auto.brandSettingsSavedSuccessfully_f10b"));
       onClose();
     } catch (error) {
       console.error("Error saving brand settings:", error);
-      alert("Failed to save brand settings. Please try again.");
+      alert(tx("auto.failedToSaveBrandSettings_a3aa"));
     } finally {
       setSaving(false);
     }
@@ -194,13 +207,13 @@ const BrandPanel = ({ onClose }) => {
     if (file) {
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        alert("Logo file must be less than 5MB");
+        alert(tx("auto.logoFileMustBeLess_9c61"));
         return;
       }
 
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file");
+        alert(tx("auto.pleaseSelectAnImageFile_b1d1"));
         return;
       }
 
@@ -227,12 +240,12 @@ const BrandPanel = ({ onClose }) => {
         <div className="brand_header">
           <button className="brand_back_btn" onClick={onClose}>
             <ChevronLeft size={20} />
-            Brand
+            {tx("auto.brand_62b4")}
           </button>
         </div>
         <div className="brand_loading">
           <Loader2 className="animate-spin" size={24} />
-          <p>Loading brand settings...</p>
+          <p>{tx("auto.loadingBrandSettings_fb73")}</p>
         </div>
       </div>
     );
@@ -244,20 +257,20 @@ const BrandPanel = ({ onClose }) => {
       <div className="brand_header">
         <button className="brand_back_btn" onClick={onClose}>
           <ChevronLeft size={20} />
-          Brand
+          {tx("auto.brand_62b4")}
         </button>
       </div>
 
       {/* Subtitle */}
       <div className="brand_subtitle">
-        <p>Manage your business details</p>
+        <p>{tx("auto.manageYourBusinessDetails_3c5f")}</p>
       </div>
 
       {/* Form */}
       <form className="brand_form" onSubmit={handleSubmit}>
         {/* Brand Logo Section */}
         <div className="brand_logo_section">
-          <label className="brand_section_label">Brand Logo</label>
+          <label className="brand_section_label">{tx("auto.brandLogo_25dd")}</label>
           <div className="brand_logo_container">
             <div className="brand_logo_display">
               {logoUrl || brandLogo ? (
@@ -268,7 +281,7 @@ const BrandPanel = ({ onClose }) => {
                 />
               ) : (
                 <span className="brand_logo_initials">
-                  {getBrandInitials(brandName)}
+                  {tl(getBrandInitials(brandName))}
                 </span>
               )}
             </div>
@@ -283,12 +296,12 @@ const BrandPanel = ({ onClose }) => {
               {logoUploading ? (
                 <>
                   <Loader2 className="animate-spin" size={16} />
-                  Uploading...
+                  {tx("auto.uploading_070e")}
                 </>
               ) : (
                 <>
                   <Upload size={16} />
-                  Upload Logo
+                  {tx("auto.uploadLogo_8a04")}
                 </>
               )}
             </button>
@@ -305,9 +318,9 @@ const BrandPanel = ({ onClose }) => {
         {/* Brand Name */}
         <div className="brand_form_group">
           <Input
-            label="Brand Name"
+            label={tx("auto.brandName_45fb")}
             type="text"
-            placeholder="M&S Design"
+            placeholder={tx("auto.mSDesign_4759")}
             value={brandName}
             onChange={(e) => {
               setBrandName(e.target.value);
@@ -322,9 +335,9 @@ const BrandPanel = ({ onClose }) => {
         {/* Business Address */}
         <div className="brand_form_group">
           <Input
-            label="Business Address"
+            label={tx("auto.businessAddress_6a24")}
             type="textarea"
-            placeholder="12 Fashion Street, Victoria Island, Lagos"
+            placeholder={tx("auto.12FashionStreetVictoriaIsland_f97b")}
             value={businessAddress}
             onChange={(e) => {
               setBusinessAddress(e.target.value);
@@ -340,7 +353,7 @@ const BrandPanel = ({ onClose }) => {
         {/* Phone Number */}
         <div className="brand_form_group">
           <Input
-            label="Phone Number"
+            label={tx("auto.phoneNumber_ab25")}
             type="number"
             placeholder="+234 803 456 7890"
             value={phoneNumber}
@@ -357,7 +370,7 @@ const BrandPanel = ({ onClose }) => {
         {/* Email */}
         <div className="brand_form_group">
           <Input
-            label="Email"
+            label={tx("auto.email_84ad")}
             type="email"
             placeholder="hello@fashiontalfy.com"
             value={email}
@@ -374,7 +387,7 @@ const BrandPanel = ({ onClose }) => {
         {/* Website */}
         <div className="brand_form_group">
           <Input
-            label="Website"
+            label={tx("auto.website_2e8a")}
             type="text"
             placeholder="www.M&S.com"
             value={website}
@@ -386,7 +399,7 @@ const BrandPanel = ({ onClose }) => {
         {/* Instagram Handle */}
         <div className="brand_form_group">
           <Input
-            label="Instagram Handle"
+            label={tx("auto.instagramHandle_9925")}
             type="text"
             placeholder="@fashiontalfy"
             value={instagramHandle}
@@ -397,10 +410,10 @@ const BrandPanel = ({ onClose }) => {
 
         {/* Brand Colors Section */}
         <div className="brand_colors_section">
-          <label className="brand_section_label">Brand Colors</label>
+          <label className="brand_section_label">{tx("auto.brandColors_d071")}</label>
           <div className="brand_colors_container">
             <div className="brand_form_group">
-              <label className="brand_color_label">Primary Color</label>
+              <label className="brand_color_label">{tx("auto.primaryColor_d3dc")}</label>
               <div className="brand_color_input_container">
                 <input
                   type="color"
@@ -418,7 +431,7 @@ const BrandPanel = ({ onClose }) => {
               </div>
             </div>
             <div className="brand_form_group">
-              <label className="brand_color_label">Secondary Color</label>
+              <label className="brand_color_label">{tx("auto.secondaryColor_7a87")}</label>
               <div className="brand_color_input_container">
                 <input
                   type="color"
@@ -441,9 +454,9 @@ const BrandPanel = ({ onClose }) => {
         {/* Footer Text */}
         <div className="brand_form_group">
           <Input
-            label="Invoice Footer Text"
+            label={tx("auto.invoiceFooterText_ea73")}
             type="textarea"
-            placeholder="Thank you for your business! Payment terms: Net 30 days."
+            placeholder={tx("auto.thankYouForYourBusiness_80f9")}
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             variant="rounded"
@@ -454,9 +467,9 @@ const BrandPanel = ({ onClose }) => {
         {/* Terms and Conditions */}
         <div className="brand_form_group">
           <Input
-            label="Terms and Conditions"
+            label={tx("auto.termsAndConditions_8940")}
             type="textarea"
-            placeholder="Enter your terms and conditions here..."
+            placeholder={tx("auto.enterYourTermsAndConditions_88e6")}
             value={termsAndConditions}
             onChange={(e) => setTermsAndConditions(e.target.value)}
             variant="rounded"
@@ -465,27 +478,26 @@ const BrandPanel = ({ onClose }) => {
         </div>
 
         <div className="brand_form_group">
-          <label className="brand_section_label" htmlFor="inventoryCurrency">
-            Currency
-          </label>
-          <select
-            id="inventoryCurrency"
-            className="brand_currency_select"
-            value={inventoryCurrency}
-            onChange={(e) => setInventoryCurrency(e.target.value)}
-          >
-            <option value="NGN">Naira (₦)</option>
-            <option value="USD">Dollar ($)</option>
-          </select>
+          {/* Type to search, e.g. "yuan", "CNY" or "£" */}
+          <SearchableSelect
+            label={tx("auto.currency_e070")}
+            options={CURRENCY_LABELS}
+            value={CURRENCY_OPTIONS.find((c) => c.code === inventoryCurrency)?.label || ""}
+            onChange={(label) => {
+              const picked = CURRENCY_OPTIONS.find((c) => c.label === label);
+              if (picked) setInventoryCurrency(picked.code);
+            }}
+            placeholder={tx("auto.searchCurrencyEGYuan_ff91")}
+          />
           <p className="brand_currency_hint">
-            Used for inventory, designs, orders, invoices, and finances. Dollar amounts are converted to naira with the live exchange rate before they are saved.
+            {tx("auto.moneyIsShownInThis_220b")}
           </p>
         </div>
 
         {/* Bank Details Section */}
         <div className="brand_bank_section">
           <div className="brand_bank_header">
-            <label className="brand_section_label">Bank Details</label>
+            <label className="brand_section_label">{tx("auto.bankDetails_7bc4")}</label>
             <button type="button" className="brand_link_btn">
               <Link size={16} />
             </button>
@@ -493,9 +505,9 @@ const BrandPanel = ({ onClose }) => {
 
           <div className="brand_form_group">
             <Input
-              label="Bank Name"
+              label={tx("auto.bankName_3126")}
               type="text"
-              placeholder="GTBank"
+              placeholder={tx("auto.gtbank_169d")}
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}
               variant="rounded"
@@ -504,7 +516,7 @@ const BrandPanel = ({ onClose }) => {
 
           <div className="brand_form_group">
             <Input
-              label="Account Number"
+              label={tx("auto.accountNumber_0bd6")}
               type="text"
               placeholder="0123456789"
               value={accountNumber}
@@ -515,9 +527,9 @@ const BrandPanel = ({ onClose }) => {
 
           <div className="brand_form_group">
             <Input
-              label="Account Name"
+              label={tx("auto.accountName_db3b")}
               type="text"
-              placeholder="M&S Design"
+              placeholder={tx("auto.mSDesign_4759")}
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
               variant="rounded"
@@ -534,10 +546,10 @@ const BrandPanel = ({ onClose }) => {
           {saving ? (
             <>
               <Loader2 className="animate-spin" size={16} />
-              Saving Changes...
+              {tx("auto.savingChanges_e636")}
             </>
           ) : (
-            "Save Changes"
+            tx("auto.saveChanges_fa29")
           )}
         </button>
       </form>

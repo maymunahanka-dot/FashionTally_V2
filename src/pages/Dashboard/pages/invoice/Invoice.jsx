@@ -14,6 +14,21 @@ import InvoiceViewPanel from "../../../../pannel_pages/InvoiceViewPanel";
 import Loading from "../../../../components/Loading/Loading";
 import "./Invoice.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+
+/** Amount paid on an invoice (Naira). Older invoices marked Paid count as fully paid. */
+const paidOf = (inv) => {
+  const total = Number(inv?.amount ?? inv?.total) || 0;
+  if (inv?.status === "Paid") return total;
+  if (inv?.status === "Partially Paid") return Math.min(Number(inv?.amountPaid) || 0, total);
+  return 0;
+};
+const balanceOf = (inv) => Math.max(0, (Number(inv?.amount ?? inv?.total) || 0) - paidOf(inv));
+
 const toDate = (val) => {
   if (!val) return new Date();
   if (typeof val.toDate === "function") return val.toDate(); // live Firestore Timestamp
@@ -22,6 +37,7 @@ const toDate = (val) => {
 };
 
 const Invoice = () => {
+  const { t: tx } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -105,7 +121,7 @@ const Invoice = () => {
 
   const handleDeleteInvoice = async (invoiceId) => {
     if (!user?.email) return;
-    if (window.confirm("Are you sure you want to delete this invoice?")) {
+    if (window.confirm(tx("auto.areYouSureYouWant_2d34"))) {
       try {
         const token = localStorage.getItem("authToken");
         const res = await fetch(
@@ -116,11 +132,11 @@ const Invoice = () => {
         if (data.success) {
           fetchInvoices();
         } else {
-          alert("Failed to delete invoice. Please try again.");
+          alert(tx("auto.failedToDeleteInvoicePlease_77a2"));
         }
       } catch (error) {
         console.error("Error deleting invoice:", error);
-        alert("Failed to delete invoice. Please try again.");
+        alert(tx("auto.failedToDeleteInvoicePlease_77a2"));
       }
     }
   };
@@ -177,6 +193,7 @@ const Invoice = () => {
 
   // PDF Component for rendering (matches InvoiceViewPanel design)
   const InvoicePDFComponent = ({ data, company }) => {
+  const { t: tx } = useTranslation();
     const primaryColor = company.primaryColor || "#1f2937";
 
     return (
@@ -221,7 +238,7 @@ const Invoice = () => {
                   borderRadius: "8px",
                 }}
               >
-                {company.businessName?.charAt(0) || "FT"}
+                {tl(company.businessName?.charAt(0) || "FT")}
               </div>
             )}
           </div>
@@ -235,10 +252,10 @@ const Invoice = () => {
                 margin: 0,
               }}
             >
-              INVOICE
+              {tx("auto.invoice_fe1a")}
             </h1>
             <p style={{ fontSize: "18px", fontWeight: 600, margin: 0 }}>
-              #{data.invoiceNumber}
+              #{tl(data.invoiceNumber)}
             </p>
           </div>
         </div>
@@ -253,10 +270,10 @@ const Invoice = () => {
               margin: "0 0 4px 0",
             }}
           >
-            Balance Due
+            {tx("auto.balanceDue_5a6b")}
           </p>
           <p style={{ fontSize: "24px", fontWeight: "bold", margin: 0 }}>
-            ₦{data.amount?.toLocaleString()}
+            ₦{balanceOf(data).toLocaleString()}
           </p>
         </div>
 
@@ -270,7 +287,7 @@ const Invoice = () => {
               margin: "0 0 12px 0",
             }}
           >
-            {company.businessName}
+            {tl(company.businessName)}
           </h3>
           <p
             style={{
@@ -280,7 +297,7 @@ const Invoice = () => {
               margin: "0 0 4px 0",
             }}
           >
-            {company.address}
+            {tl(company.address)}
           </p>
           <p
             style={{
@@ -290,10 +307,10 @@ const Invoice = () => {
               margin: "0 0 4px 0",
             }}
           >
-            {company.phone}
+            {tl(company.phone)}
           </p>
           <p style={{ fontSize: "14px", color: "#333", margin: 0 }}>
-            {company.email}
+            {tl(company.email)}
           </p>
         </div>
 
@@ -315,10 +332,10 @@ const Invoice = () => {
                 margin: "0 0 8px 0",
               }}
             >
-              Bill To
+              {tx("auto.billTo_c0ac")}
             </p>
             <p style={{ fontWeight: 600, margin: "0 0 4px 0" }}>
-              {data.clientName}
+              {tl(data.clientName)}
             </p>
             <p
               style={{
@@ -327,10 +344,10 @@ const Invoice = () => {
                 margin: "0 0 4px 0",
               }}
             >
-              {data.clientPhone}
+              {tl(data.clientPhone)}
             </p>
             <p style={{ fontSize: "14px", color: "#666", margin: 0 }}>
-              {data.clientEmail}
+              {tl(data.clientEmail)}
             </p>
           </div>
 
@@ -342,9 +359,9 @@ const Invoice = () => {
                 marginBottom: "12px",
               }}
             >
-              <span style={{ color: "#666" }}>Invoice Date :</span>
+              <span style={{ color: "#666" }}>{tx("auto.invoiceDate_a437")}</span>
               <span style={{ fontWeight: 600 }}>
-                {data.createdDate?.toLocaleDateString() || "N/A"}
+                {tl(data.createdDate?.toLocaleDateString() || tx("auto.nA_08d2"))}
               </span>
             </div>
 
@@ -355,8 +372,8 @@ const Invoice = () => {
                 marginBottom: "12px",
               }}
             >
-              <span style={{ color: "#666" }}>Payment Method :</span>
-              <span style={{ fontWeight: 600 }}>{data.paymentMethod}</span>
+              <span style={{ color: "#666" }}>{tx("auto.paymentMethod_a1e6")}</span>
+              <span style={{ fontWeight: 600 }}>{tl(data.paymentMethod)}</span>
             </div>
 
             <div
@@ -365,9 +382,9 @@ const Invoice = () => {
                 justifyContent: "space-between",
               }}
             >
-              <span style={{ color: "#666" }}>Due Date :</span>
+              <span style={{ color: "#666" }}>{tx("auto.dueDate_1740")}</span>
               <span style={{ fontWeight: 600 }}>
-                {data.dueDate?.toLocaleDateString() || "N/A"}
+                {tl(data.dueDate?.toLocaleDateString() || tx("auto.nA_08d2"))}
               </span>
             </div>
           </div>
@@ -399,7 +416,7 @@ const Invoice = () => {
                   fontWeight: "bold",
                 }}
               >
-                Item & Description
+                {tx("auto.itemDescription_5c21")}
               </th>
               <th
                 style={{
@@ -408,7 +425,7 @@ const Invoice = () => {
                   fontWeight: "bold",
                 }}
               >
-                Qty
+                {tx("auto.qty_1e5f")}
               </th>
               <th
                 style={{
@@ -417,7 +434,7 @@ const Invoice = () => {
                   fontWeight: "bold",
                 }}
               >
-                Rate
+                {tx("auto.rate_3a9c")}
               </th>
               <th
                 style={{
@@ -426,7 +443,7 @@ const Invoice = () => {
                   fontWeight: "bold",
                 }}
               >
-                Amount
+                {tx("auto.amount_43dc")}
               </th>
             </tr>
           </thead>
@@ -436,10 +453,10 @@ const Invoice = () => {
               <tr key={index} style={{ borderBottom: "1px solid #e5e7eb" }}>
                 <td style={{ padding: "12px" }}>{index + 1}</td>
                 <td style={{ padding: "12px" }}>
-                  {item.description || item.name}
+                  {tl(item.description || item.name)}
                 </td>
                 <td style={{ padding: "12px", textAlign: "center" }}>
-                  {item.quantity}
+                  {tl(item.quantity)}
                 </td>
                 <td style={{ padding: "12px", textAlign: "right" }}>
                   ₦{item.price?.toLocaleString()}
@@ -462,7 +479,7 @@ const Invoice = () => {
           }}
         >
           <div style={{ display: "flex", gap: "64px", marginBottom: "12px" }}>
-            <span style={{ fontWeight: 600, color: "#374151" }}>Sub Total</span>
+            <span style={{ fontWeight: 600, color: "#374151" }}>{tx("auto.subTotal_04a1")}</span>
             <span style={{ width: "160px", textAlign: "right" }}>
               ₦{data.subtotal?.toLocaleString()}
             </span>
@@ -471,7 +488,7 @@ const Invoice = () => {
           {data.discountAmount > 0 && (
             <div style={{ display: "flex", gap: "64px", marginBottom: "12px" }}>
               <span style={{ fontWeight: 600, color: "#374151" }}>
-                Discount ({data.discount}%)
+                {tx("auto.discount_a89c")}{tl(data.discount)}%)
               </span>
               <span style={{ width: "160px", textAlign: "right" }}>
                 -₦{data.discountAmount?.toLocaleString()}
@@ -481,7 +498,7 @@ const Invoice = () => {
 
           <div style={{ display: "flex", gap: "64px", marginBottom: "12px" }}>
             <span style={{ fontWeight: 600, color: "#374151" }}>
-              Tax ({data.taxRate}%)
+              {tx("auto.tax_9cb7")}{tl(data.taxRate)}%)
             </span>
             <span style={{ width: "160px", textAlign: "right" }}>
               ₦{data.taxAmount?.toLocaleString()}
@@ -497,11 +514,20 @@ const Invoice = () => {
               gap: "64px",
             }}
           >
-            <span>Total</span>
+            <span>{tx("auto.total_b259")}</span>
             <span style={{ width: "160px", textAlign: "right" }}>
               ₦{data.amount?.toLocaleString()}
             </span>
           </div>
+
+          {paidOf(data) > 0 && (
+            <div style={{ display: "flex", gap: "64px", marginBottom: "12px" }}>
+              <span style={{ fontWeight: 600, color: "#374151" }}>{tl("Amount Paid")}</span>
+              <span style={{ width: "160px", textAlign: "right" }}>
+                -₦{paidOf(data).toLocaleString()}
+              </span>
+            </div>
+          )}
 
           <div
             style={{
@@ -514,7 +540,7 @@ const Invoice = () => {
               backgroundColor: "#f9fafb",
             }}
           >
-            <span style={{ fontWeight: "bold" }}>Balance Due</span>
+            <span style={{ fontWeight: "bold" }}>{tx("auto.balanceDue_5a6b")}</span>
             <span
               style={{
                 width: "160px",
@@ -522,7 +548,7 @@ const Invoice = () => {
                 fontWeight: "bold",
               }}
             >
-              ₦{data.amount?.toLocaleString()}
+              ₦{balanceOf(data).toLocaleString()}
             </span>
           </div>
         </div>
@@ -538,7 +564,7 @@ const Invoice = () => {
                 margin: "0 0 12px 0",
               }}
             >
-              Notes
+              {tx("auto.notes_7044")}
             </h4>
             <p
               style={{
@@ -548,7 +574,7 @@ const Invoice = () => {
                 margin: 0,
               }}
             >
-              {data.notes}
+              {tl(data.notes)}
             </p>
           </div>
         )}
@@ -563,7 +589,7 @@ const Invoice = () => {
               margin: "0 0 12px 0",
             }}
           >
-            Payment Details
+            {tx("auto.paymentDetails_b857")}
           </h4>
           <div
             style={{
@@ -573,16 +599,16 @@ const Invoice = () => {
             }}
           >
             <div>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>Bank Name</p>
-              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{company.bankName}</p>
+              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>{tx("auto.bankName_3126")}</p>
+              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{tl(company.bankName)}</p>
             </div>
             <div>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>Account Number</p>
-              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{company.accountNumber}</p>
+              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>{tx("auto.accountNumber_0bd6")}</p>
+              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{tl(company.accountNumber)}</p>
             </div>
             <div>
-              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>Account Name</p>
-              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{company.accountName}</p>
+              <p style={{ fontSize: "12px", color: "#666", margin: "0 0 4px 0" }}>{tx("auto.accountName_db3b")}</p>
+              <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>{tl(company.accountName)}</p>
             </div>
           </div>
         </div>
@@ -645,6 +671,7 @@ const Invoice = () => {
         subtotal: Number(invoice.subtotal) || 0,
         taxAmount: Number(invoice.taxAmount) || 0,
         discountAmount: Number(invoice.discountAmount) || 0,
+        amountPaid: Number(invoice.amountPaid) || 0,
         items: Array.isArray(invoice.items) ? invoice.items : [],
       };
 
@@ -750,7 +777,7 @@ const Invoice = () => {
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Failed to export PDF. Please try again.");
+      alert(tx("auto.failedToExportPdfPlease_0d6f"));
     } finally {
       setDownloadingPDF(null);
     }
@@ -766,10 +793,10 @@ const Invoice = () => {
     return (
       <div className="inv_invoice_management">
         <div className="inv_invoice_header">
-          <h1 className="inv_invoice_title">Your Invoice Management</h1>
+          <h1 className="inv_invoice_title">{tx("auto.yourInvoiceManagement_ebf6")}</h1>
         </div>
         <div className="inv_no_invoices">
-          <p>Please log in to view your invoices.</p>
+          <p>{tx("auto.pleaseLogInToView_011c")}</p>
         </div>
       </div>
     );
@@ -807,15 +834,15 @@ const Invoice = () => {
 
       {/* Header */}
       <div className="inv_invoice_header">
-        <h1 className="inv_invoice_title">Your Invoice Management</h1>
+        <h1 className="inv_invoice_title">{tx("auto.yourInvoiceManagement_ebf6")}</h1>
       </div>
 
       {/* Stats Section */}
       <div className="inv_invoice_stats_section">
         <div className="inv_ipo">
           <div className="inv_ipols">
-            <h1>Invoices</h1>
-            <p>Manage your invoices</p>
+            <h1>{tx("auto.invoices_35f8")}</h1>
+            <p>{tx("auto.manageYourInvoices_78c0")}</p>
           </div>
           <Button
             variant="primary"
@@ -826,37 +853,37 @@ const Invoice = () => {
           />
         </div>
         <div className="inv_stats_header">
-          <h2 className="inv_stats_period">December 2025</h2>
+          <h2 className="inv_stats_period">{tx("auto.december2025_e5c6")}</h2>
         </div>
         <div className="inv_invoice_stats">
           <div className="inv_stat_card">
             <div className="inv_stat_content">
-              <h3 className="inv_stat_title">Total Invoices</h3>
-              <p className="inv_stat_value">{stats.total}</p>
+              <h3 className="inv_stat_title">{tx("auto.totalInvoices_af62")}</h3>
+              <p className="inv_stat_value">{tl(stats.total)}</p>
               <p className="inv_stat_subtitle">
-                <MoneyAmount amount={stats.totalAmount} /> total value
+                <MoneyAmount amount={stats.totalAmount} />{" "}{tx("auto.totalValue_a6ea")}
               </p>
             </div>
           </div>
           <div className="inv_stat_card">
             <div className="inv_stat_content">
-              <h3 className="inv_stat_title">Paid Invoices</h3>
-              <p className="inv_stat_value">{stats.paid}</p>
+              <h3 className="inv_stat_title">{tx("auto.paidInvoices_3e3d")}</h3>
+              <p className="inv_stat_value">{tl(stats.paid)}</p>
               <p className="inv_stat_subtitle">
-                <MoneyAmount amount={stats.paidAmount} /> collected
+                <MoneyAmount amount={stats.paidAmount} />{" "}{tx("auto.collected_e5ee")}
               </p>
             </div>
           </div>
           <div className="inv_stat_card">
             <div className="inv_stat_content">
-              <h3 className="inv_stat_title">Pending Invoices</h3>
-              <p className="inv_stat_value">{stats.pending}</p>
+              <h3 className="inv_stat_title">{tx("auto.pendingInvoices_87ee")}</h3>
+              <p className="inv_stat_value">{tl(stats.pending)}</p>
             </div>
           </div>
           <div className="inv_stat_card">
             <div className="inv_stat_content">
-              <h3 className="inv_stat_title">Overdue Invoices</h3>
-              <p className="inv_stat_value">{stats.overdue}</p>
+              <h3 className="inv_stat_title">{tx("auto.overdueInvoices_739b")}</h3>
+              <p className="inv_stat_value">{tl(stats.overdue)}</p>
             </div>
           </div>
         </div>
@@ -871,7 +898,7 @@ const Invoice = () => {
               <Search className="inv_search_icon" size={20} />
               <input
                 type="text"
-                placeholder="Search clients by name, phone, or email"
+                placeholder={tx("auto.searchClientsByNamePhone_9984")}
                 className="inv_search_input"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -888,14 +915,14 @@ const Invoice = () => {
               {showFilter && (
                 <div className="inv_filter_dropdown">
                   <div className="inv_filter_section">
-                    <h4 className="inv_filter_section_title">Status</h4>
+                    <h4 className="inv_filter_section_title">{tx("auto.status_bae7")}</h4>
                     <button
                       className={`inv_filter_option ${
                         filterStatus === "all" ? "active" : ""
                       }`}
                       onClick={() => handleFilterSelect("all")}
                     >
-                      All Invoices
+                      {tx("auto.allInvoices_9d7e")}
                     </button>
                     <button
                       className={`inv_filter_option ${
@@ -903,7 +930,7 @@ const Invoice = () => {
                       }`}
                       onClick={() => handleFilterSelect("paid")}
                     >
-                      Paid
+                      {tx("auto.paid_dc9d")}
                     </button>
                     <button
                       className={`inv_filter_option ${
@@ -911,7 +938,7 @@ const Invoice = () => {
                       }`}
                       onClick={() => handleFilterSelect("pending")}
                     >
-                      Pending
+                      {tx("auto.pending_96f6")}
                     </button>
                     <button
                       className={`inv_filter_option ${
@@ -919,7 +946,7 @@ const Invoice = () => {
                       }`}
                       onClick={() => handleFilterSelect("overdue")}
                     >
-                      Overdue
+                      {tx("auto.overdue_0721")}
                     </button>
                   </div>
                 </div>
@@ -949,7 +976,7 @@ const Invoice = () => {
             onClick={toggleCreateInvoice}
           >
             <Plus size={20} />
-            Create Invoice
+            {tx("auto.createInvoice_3281")}
           </button>
         </div>
 
@@ -963,11 +990,11 @@ const Invoice = () => {
                     <FileText size={20} />
                   </div>
                   <div className="inv_invoice_basic_info">
-                    <h3 className="inv_invoice_id">{invoice.invoiceNumber}</h3>
+                    <h3 className="inv_invoice_id">{tl(invoice.invoiceNumber)}</h3>
                     <p className="inv_invoice_date">
-                      {invoice.createdDate?.toLocaleDateString?.() ?? ""}
+                      {tl(invoice.createdDate?.toLocaleDateString?.() ?? "")}
                     </p>
-                    <p className="inv_invoice_client">{invoice.clientName}</p>
+                    <p className="inv_invoice_client">{tl(invoice.clientName)}</p>
                   </div>
                 </div>
                 <div className="inv_invoice_right_section">
@@ -979,7 +1006,7 @@ const Invoice = () => {
                       .toLowerCase()
                       .replace(" ", "")}`}
                   >
-                    {invoice.status ?? ""}
+                    {tl(invoice.status ?? "")}
                   </div>
                 </div>
               </div>
@@ -990,7 +1017,7 @@ const Invoice = () => {
                   onClick={() => handleViewInvoice(invoice)}
                 >
                   <Eye size={16} />
-                  View
+                  {tx("auto.view_69bd")}
                 </button>
                 <button
                   className="inv_action_btn inv_pdf_btn"
@@ -1001,7 +1028,7 @@ const Invoice = () => {
                   disabled={downloadingPDF === invoice.id}
                 >
                   <Download size={16} />
-                  {downloadingPDF === invoice.id ? "Loading..." : "PDF"}
+                  {tl(downloadingPDF === invoice.id ? tx("auto.loading_b04b") : "PDF")}
                 </button>
 
                 <button
@@ -1023,7 +1050,7 @@ const Invoice = () => {
 
         {filteredInvoices.length === 0 && (
           <div className="inv_no_invoices">
-            <p>No invoices found matching your search criteria.</p>
+            <p>{tx("auto.noInvoicesFoundMatchingYour_ae4d")}</p>
           </div>
         )}
       </div>

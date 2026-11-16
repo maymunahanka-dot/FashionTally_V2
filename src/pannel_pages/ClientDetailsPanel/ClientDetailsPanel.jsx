@@ -9,6 +9,14 @@ import {
 } from "./tabs";
 import "./ClientDetailsPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 const ClientDetailsPanel = ({
   client,
   onClose,
@@ -20,6 +28,7 @@ const ClientDetailsPanel = ({
   onCreateOrder,
   onViewOrder,
 }) => {
+  const { t: tx } = useTranslation();
   const [activeTab, setActiveTab] = useState("Overview");
 
   const tabs = ["Overview", "Measurements", "Designs", "Invoice", "Orders"];
@@ -28,7 +37,7 @@ const ClientDetailsPanel = ({
 
   const formatDate = (date) => {
     if (!date) return "No orders yet";
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -80,10 +89,10 @@ const ClientDetailsPanel = ({
         <button
           className="client_details_edit_btn"
           onClick={() => onEditClient && onEditClient(client)}
-          title="Edit Client"
+          title={tx("auto.editClient_f618")}
         >
           <Pencil size={16} />
-          Edit
+          {tx("auto.edit_5301")}
         </button>
       </div>
 
@@ -101,13 +110,13 @@ const ClientDetailsPanel = ({
 
         <div className="client_details_info">
           <div className="client_details_name_section">
-            <h2 className="client_details_name">{client.name}</h2>
+            <h2 className="client_details_name">{tl(client.name)}</h2>
             <span
               className={`client_details_status_badge ${
                 client.status === "Active" ? "active" : "inactive"
               }`}
             >
-              {client.status}
+              {tl(client.status)}
             </span>
           </div>
 
@@ -115,19 +124,19 @@ const ClientDetailsPanel = ({
             <div className="client_details_contact_item">
               <Mail size={16} className="client_details_contact_icon" />
               <span className="client_details_contact_text">
-                {client.email}
+                {tl(client.email)}
               </span>
             </div>
             <div className="client_details_contact_item">
               <Phone size={16} className="client_details_contact_icon" />
               <span className="client_details_contact_text">
-                {client.phone}
+                {tl(client.phone)}
               </span>
             </div>
             <div className="client_details_contact_item">
               <Package size={16} className="client_details_contact_icon" />
               <span className="client_details_contact_text">
-                Last order: {formatDate(client.lastOrder)}
+                {tx("auto.lastOrder_cc82")}{" "}{tl(formatDate(client.lastOrder))}
               </span>
             </div>
           </div>
@@ -144,13 +153,13 @@ const ClientDetailsPanel = ({
             }`}
             onClick={() => setActiveTab(tab)}
           >
-            {tab}
+            {tl(tab)}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className="client_details_content">{renderTabContent()}</div>
+      <div className="client_details_content">{tl(renderTabContent())}</div>
     </div>
   );
 };

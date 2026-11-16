@@ -7,7 +7,15 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./OrderDetailsPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
 const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
+  const { t: tx } = useTranslation();
   const { isDark } = useTheme();
   const { user } = useContext(NewAuthContext);
   const [currentStatus, setCurrentStatus] = useState(
@@ -44,7 +52,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
       console.log("Order status updated successfully");
     } catch (error) {
       console.error("Error updating order status:", error);
-      alert("Failed to update order status");
+      alert(tx("auto.failedToUpdateOrderStatus_7beb"));
     } finally {
       setUpdating(false);
     }
@@ -68,9 +76,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
     if (!order?.id || !user?.email) return;
 
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete this order "${
-        order.title || "Untitled Order"
-      }"? This action cannot be undone.`
+      tx("tpl.areYouSureYouWant_ce29", { v0: order.title || tx("auto.untitledOrder_d54a") })
     );
 
     if (!confirmDelete) return;
@@ -81,7 +87,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
       onClose(); // Close the panel after successful deletion
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert("Failed to delete order. Please try again.");
+      alert(tx("auto.failedToDeleteOrderPlease_a19e"));
     }
   };
 
@@ -97,12 +103,12 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
             <X size={20} />
           </button>
           <div className="odp_header-content">
-            <h2 className="odp_panel-title">Order Details</h2>
+            <h2 className="odp_panel-title">{tx("auto.orderDetails_abb7")}</h2>
           </div>
         </div>
         <div className="odp_order-details-content">
           <div className="odp_loading">
-            <p>Loading order details...</p>
+            <p>{tx("auto.loadingOrderDetails_d7cd")}</p>
           </div>
         </div>
       </div>
@@ -145,7 +151,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
       item: order.title || "Untitled Order",
       fabric: order.fabric || order.originalData?.materials?.[0] || "Not specified",
       deliveryDate: order.dueDate
-        ? (order.dueDate instanceof Date ? order.dueDate.toLocaleDateString() : new Date(order.dueDate).toLocaleDateString())
+        ? (order.dueDate instanceof Date ? order.dueDate.toLocaleDateString(dateLocale()) : new Date(order.dueDate).toLocaleDateString(dateLocale()))
         : "Not set",
       customItems: order.specialInstructions || order.originalData?.description || "No additional details",
     },
@@ -202,8 +208,8 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
           <X size={20} />
         </button>
         <div className="odp_header-content">
-          <h2 className="odp_panel-title">Order Details</h2>
-          <p className="odp_order-number">{orderDetails.orderNumber}</p>
+          <h2 className="odp_panel-title">{tx("auto.orderDetails_abb7")}</h2>
+          <p className="odp_order-number">{tl(orderDetails.orderNumber)}</p>
         </div>
         <div className="odp_header-actions">
           <button className="odp_delete-btn" onClick={handleDeleteOrder}>
@@ -219,7 +225,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
       <div className="odp_order-details-content">
         {/* Order Status */}
         <div className="odp_section">
-          <h3 className="odp_section-title">Order Status</h3>
+          <h3 className="odp_section-title">{tx("auto.orderStatus_a15b")}</h3>
           <div className="odp_status-container">
             <select
               className={`odp_status-select ${getStatusColor(currentStatus)}`}
@@ -230,32 +236,32 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
               }}
               disabled={updating}
             >
-              <option value="pending">Pending</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="pending">{tx("auto.pending_96f6")}</option>
+              <option value="in-progress">{tx("auto.inProgress_f61e")}</option>
+              <option value="completed">{tx("auto.completed_1798")}</option>
+              <option value="cancelled">{tx("auto.cancelled_a1bf")}</option>
             </select>
-            {updating && <span className="odp_updating-text">Updating...</span>}
+            {updating && <span className="odp_updating-text">{tx("auto.updating_e349")}</span>}
           </div>
         </div>
 
         {/* Client Information */}
         <div className="odp_section">
-          <h3 className="odp_section-title">Client Information</h3>
+          <h3 className="odp_section-title">{tx("auto.clientInformation_9b2e")}</h3>
           <div className="odp_client-info">
             <div className="odp_client-avatar">
-              {orderDetails.client.avatar}
+              {tl(orderDetails.client.avatar)}
             </div>
             <div className="odp_client-details">
-              <h4 className="odp_client-name">{orderDetails.client.name}</h4>
+              <h4 className="odp_client-name">{tl(orderDetails.client.name)}</h4>
               <div className="odp_contact-info">
                 <div className="odp_contact-item">
                   <Phone size={16} />
-                  <span>{orderDetails.client.phone}</span>
+                  <span>{tl(orderDetails.client.phone)}</span>
                 </div>
                 <div className="odp_contact-item">
                   <Mail size={16} />
-                  <span>{orderDetails.client.email}</span>
+                  <span>{tl(orderDetails.client.email)}</span>
                 </div>
               </div>
             </div>
@@ -264,19 +270,19 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
 
         {/* Order Details */}
         <div className="odp_section">
-          <h3 className="odp_section-title">Order Details</h3>
+          <h3 className="odp_section-title">{tx("auto.orderDetails_abb7")}</h3>
           <div className="odp_order-details-grid">
             <div className="odp_detail-column">
               <div className="odp_detail-item">
                 <div className="odp_detail-header">
                   <Package size={20} className="odp_detail-icon" />
-                  <span className="odp_detail-label">Item</span>
+                  <span className="odp_detail-label">{tx("auto.item_ecdd")}</span>
                 </div>
                 <div className="odp_detail-content">
                   <p className="odp_detail-main">
-                    {orderDetails.orderDetails.item}
+                    {tl(orderDetails.orderDetails.item)}
                   </p>
-                  <p className="odp_detail-sub">Custom Dress</p>
+                  <p className="odp_detail-sub">{tx("auto.customDress_2197")}</p>
                 </div>
               </div>
             </div>
@@ -285,13 +291,13 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
               <div className="odp_detail-item">
                 <div className="odp_detail-header">
                   <Package size={20} className="odp_detail-icon" />
-                  <span className="odp_detail-label">Fabric</span>
+                  <span className="odp_detail-label">{tx("auto.fabric_a010")}</span>
                 </div>
                 <div className="odp_detail-content">
                   <p className="odp_detail-main">
-                    {orderDetails.orderDetails.fabric}
+                    {tl(orderDetails.orderDetails.fabric)}
                   </p>
-                  <p className="odp_detail-sub">Material</p>
+                  <p className="odp_detail-sub">{tx("auto.material_d816")}</p>
                 </div>
               </div>
             </div>
@@ -300,13 +306,13 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
               <div className="odp_detail-item">
                 <div className="odp_detail-header">
                   <Calendar size={20} className="odp_detail-icon" />
-                  <span className="odp_detail-label">Delivery Date</span>
+                  <span className="odp_detail-label">{tx("auto.deliveryDate_7e86")}</span>
                 </div>
                 <div className="odp_detail-content">
                   <p className="odp_detail-main">
-                    {orderDetails.orderDetails.deliveryDate}
+                    {tl(orderDetails.orderDetails.deliveryDate)}
                   </p>
-                  <p className="odp_detail-sub">Due Date</p>
+                  <p className="odp_detail-sub">{tx("auto.dueDate_a1b3")}</p>
                 </div>
               </div>
             </div>
@@ -315,7 +321,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
 
         {/* Measurements */}
         <div className="odp_section">
-          <h3 className="odp_section-title">Measurements</h3>
+          <h3 className="odp_section-title">{tx("auto.measurements_737b")}</h3>
           {orderDetails.measurements.length > 0 ? (
             <div className="odp_measurements-layout">
               {/* Group measurements into rows of 3 */}
@@ -331,10 +337,10 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
                           className="odp_measurement-col"
                         >
                           <span className="odp_measurement-label">
-                            {measurement.label}
+                            {tl(measurement.label)}
                           </span>
                           <span className="odp_measurement-value">
-                            {measurement.value}
+                            {tl(measurement.value)}
                           </span>
                         </div>
                       ))}
@@ -344,17 +350,17 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
             </div>
           ) : (
             <div className="odp_no-measurements">
-              <p>No measurements recorded for this order</p>
+              <p>{tx("auto.noMeasurementsRecordedForThis_7e86")}</p>
             </div>
           )}
         </div>
 
         {/* Pricing */}
         <div className="odp_section">
-          <h3 className="odp_section-title">Pricing</h3>
+          <h3 className="odp_section-title">{tx("auto.pricing_a0d9")}</h3>
           <div className="odp_pricing-details">
             <div className="odp_pricing-row">
-              <span className="odp_pricing-label">Base Price</span>
+              <span className="odp_pricing-label">{tx("auto.basePrice_03e5")}</span>
               <span className="odp_pricing-value">
                 <MoneyAmount amount={orderDetails.pricing.basePrice} align="end" />
               </span>
@@ -365,13 +371,13 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
               <>
                 <div className="odp_additional-items-section">
                   <h4 className="odp_additional-items-title">
-                    Additional Items
+                    {tx("auto.additionalItems_407e")}
                   </h4>
                   {orderDetails.pricing.additionalItemsList.map(
                     (item, index) => (
                       <div key={index} className="odp_additional-item">
                         <span className="odp_additional-item-name">
-                          {item.name}
+                          {tl(item.name)}
                         </span>
                         <span className="odp_additional-item-price">
                           <MoneyAmount amount={item.price} align="end" />
@@ -382,7 +388,7 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
                 </div>
                 <div className="odp_pricing-row">
                   <span className="odp_pricing-label">
-                    Additional Items Total
+                    {tx("auto.additionalItemsTotal_d02f")}
                   </span>
                   <span className="odp_pricing-value">
                     <MoneyAmount amount={orderDetails.pricing.additionalItems} align="end" />
@@ -392,19 +398,19 @@ const OrderDetailsPanel = ({ order, onClose, onEdit }) => {
             )}
 
             <div className="odp_pricing-row odp_total">
-              <span className="odp_pricing-label">Total Amount</span>
+              <span className="odp_pricing-label">{tx("auto.totalAmount_490a")}</span>
               <span className="odp_pricing-value">
                 <MoneyAmount amount={orderDetails.pricing.totalAmount} align="end" />
               </span>
             </div>
             <div className="odp_pricing-row odp_deposit">
-              <span className="odp_pricing-label">Deposit Paid</span>
+              <span className="odp_pricing-label">{tx("auto.depositPaid_06f8")}</span>
               <span className="odp_pricing-value odp_deposit-amount">
                 <MoneyAmount amount={orderDetails.pricing.depositPaid} align="end" />
               </span>
             </div>
             <div className="odp_pricing-row odp_balance">
-              <span className="odp_pricing-label">Balance Due</span>
+              <span className="odp_pricing-label">{tx("auto.balanceDue_5a6b")}</span>
               <span className="odp_pricing-value odp_balance-amount">
                 <MoneyAmount amount={orderDetails.pricing.balanceDue} align="end" />
               </span>

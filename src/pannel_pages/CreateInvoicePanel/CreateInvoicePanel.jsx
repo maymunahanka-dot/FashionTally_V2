@@ -5,9 +5,16 @@ import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
 import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
+import { formatMoney } from "../../utils/exchangeRate";
 import "./CreateInvoicePanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess }) => {
+  const { t: tx } = useTranslation();
   // Form state
   const [clientName, setClientName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,6 +27,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   const [status, setStatus] = useState("Unpaid");
   const [discount, setDiscount] = useState(0);
   const [taxRate, setTaxRate] = useState(7.5);
+  // Typed in only for "Partially Paid"; "Paid" uses the total, "Unpaid" is 0
+  const [amountPaid, setAmountPaid] = useState("");
   const [items, setItems] = useState([
     {
       id: Date.now(),
@@ -77,6 +86,11 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       setStatus(selectedInvoice.status || "Unpaid");
       setDiscount(selectedInvoice.discount || 0);
       setTaxRate(selectedInvoice.taxRate ?? 7.5);
+      {
+        const paidNaira = Number(selectedInvoice.amountPaid) || 0;
+        const shown = currency !== "NGN" && usdToNgn ? Number((paidNaira / usdToNgn).toFixed(2)) : paidNaira;
+        setAmountPaid(paidNaira ? String(shown) : "");
+      }
       setRecordAsIncome(false); // Don't record as income when editing
       setUpdateFinanceTransaction(true); // Default to true for editing
       setItems(
@@ -136,7 +150,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   }, [isEditMode, selectedInvoice]);
 
   useEffect(() => {
-    if (pricesTouched.current || !isEditMode || !selectedInvoice?.items || currency !== "USD" || !usdToNgn) return;
+    if (pricesTouched.current || !isEditMode || !selectedInvoice?.items || currency === "NGN" || !usdToNgn) return;
     setItems(
       selectedInvoice.items.map((item, index) => ({
         ...item,
@@ -214,7 +228,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
               inventoryItemName: selectedItem.name,
               description: selectedItem.name,
               price:
-                currency === "USD" && usdToNgn
+                currency !== "NGN" && usdToNgn
                   ? Number(((selectedItem.price || 0) / usdToNgn).toFixed(2))
                   : selectedItem.price || 0,
               category: selectedItem.category,
@@ -281,23 +295,37 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
     );
   };
 
+  /** What the client has paid so far, from the status. */
+  const calculateAmountPaid = () => {
+    if (status === "Paid") return calculateTotal();
+    if (status === "Partially Paid") return Math.min(parseFloat(amountPaid) || 0, calculateTotal());
+    return 0;
+  };
+  const calculateBalanceDue = () => Math.max(0, calculateTotal() - calculateAmountPaid());
+
   const validateForm = () => {
     const newErrors = {};
 
     if (!clientName.trim()) {
-      newErrors.clientName = "Client name is required";
+      newErrors.clientName = tx("auto.clientNameIsRequired_2cf1");
     }
 
     if (!email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = tx("auto.emailIsRequired_4da1");
     }
 
     if (!dueDate.trim()) {
-      newErrors.dueDate = "Due date is required";
+      newErrors.dueDate = tx("auto.dueDateIsRequired_e0a2");
+    }
+
+    if (status === "Partially Paid") {
+      const paid = parseFloat(amountPaid) || 0;
+      if (paid <= 0) newErrors.amountPaid = tl("Enter the amount paid");
+      else if (paid >= calculateTotal()) newErrors.amountPaid = tl("Amount paid must be less than the total. Use the Paid status instead.");
     }
 
     if (items.some((item) => !item.description.trim())) {
-      newErrors.items = "All items must have a description";
+      newErrors.items = tx("auto.allItemsMustHaveA_985f");
     }
 
     // Validate inventory availability for items
@@ -321,7 +349,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
     if (!validateForm()) return;
 
     if (!user?.email) {
-      setErrors({ submit: "You must be logged in to create invoices" });
+      setErrors({ submit: tx("auto.youMustBeLoggedIn_fada") });
       return;
     }
 
@@ -333,6 +361,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       const discountAmount = toNaira(calculateDiscountAmount());
       const taxAmount = toNaira(calculateTaxAmount());
       const total = toNaira(calculateTotal());
+      const paidNaira = status === "Paid" ? total : toNaira(calculateAmountPaid());
 
       const token = localStorage.getItem("authToken");
       const invoicePayload = {
@@ -358,6 +387,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         discountAmount,
         taxAmount,
         amount: total,
+        amountPaid: paidNaira,
         notes: notes.trim(),
       };
 
@@ -430,6 +460,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       ]);
       setDiscount(0);
       setTaxRate(7.5);
+      setAmountPaid("");
       setStatus("Unpaid");
       setPaymentMethod("Cash");
       setRecordAsIncome(false);
@@ -438,7 +469,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       onClose();
     } catch (error) {
       console.error("Error saving invoice:", error);
-      setErrors({ submit: error.message || "Failed to save invoice. Please try again." });
+      setErrors({ submit: error.message || tx("auto.failedToSaveInvoicePlease_849d") });
     } finally {
       setIsSubmitting(false);
     }
@@ -446,10 +477,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
 
   const formatCurrency = (amount) => {
     const num = Number(amount) || 0;
-    if (currency === "USD") {
-      return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-    return `₦${num.toLocaleString()}`;
+    return formatMoney(num, currency);
   };
 
   return (
@@ -460,7 +488,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           <X size={24} />
         </button>
         <h2 className="create_invoice_title">
-          {isEditMode ? "Edit Invoice" : "Create Invoice"}
+          {tl(isEditMode ? tx("auto.editInvoice_caa9") : tx("auto.createInvoice_3281"))}
         </h2>
       </div>
 
@@ -468,13 +496,13 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       <form className="create_invoice_form" onSubmit={handleSubmit}>
         {/* Client Details Section */}
         <div className="create_invoice_section">
-          <h3 className="create_invoice_section_title">Client Details</h3>
+          <h3 className="create_invoice_section_title">{tx("auto.clientDetails_7f08")}</h3>
 
           <div className="create_invoice_form_group">
             <Input
-              label="Select Existing Client"
+              label={tx("auto.selectExistingClient_7b2b")}
               type="select"
-              placeholder="Choose a client or enter manually"
+              placeholder={tx("auto.chooseAClientOrEnter_77d4")}
               value={selectedClientId}
               onChange={(e) => handleClientSelection(e.target.value)}
               variant="rounded"
@@ -490,9 +518,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
 
           <div className="create_invoice_form_group">
             <Input
-              label="Client Name *"
+              label={tx("auto.clientName_95a0")}
               type="text"
-              placeholder="Client Name"
+              placeholder={tx("auto.clientName_130c")}
               value={clientName}
               onChange={(e) => {
                 setClientName(e.target.value);
@@ -506,9 +534,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
 
           <div className="create_invoice_form_group">
             <Input
-              label="Email Address *"
+              label={tx("auto.emailAddress_ff92")}
               type="email"
-              placeholder="Email Address"
+              placeholder={tx("auto.emailAddress_09ba")}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -522,9 +550,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
 
           <div className="create_invoice_form_group">
             <Input
-              label="Phone Number"
+              label={tx("auto.phoneNumber_ab25")}
               type="text"
-              placeholder="Phone Number"
+              placeholder={tx("auto.phoneNumber_ab25")}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               variant="rounded"
@@ -533,9 +561,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
 
           <div className="create_invoice_form_group">
             <Input
-              label="Address"
+              label={tx("auto.address_d70f")}
               type="textarea"
-              placeholder="Address"
+              placeholder={tx("auto.address_d70f")}
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               variant="rounded"
@@ -548,9 +576,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         <div className="create_invoice_date_section">
           <div className="create_invoice_form_group create_invoice_form_group_half">
             <Input
-              label="Invoice Date"
+              label={tx("auto.invoiceDate_8448")}
               type="date"
-              placeholder="DD/MM/YYYY"
+              placeholder={tx("auto.ddMmYyyy_5d95")}
               value={invoiceDate}
               onChange={(e) => setInvoiceDate(e.target.value)}
               variant="rounded"
@@ -558,9 +586,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           </div>
           <div className="create_invoice_form_group create_invoice_form_group_half">
             <Input
-              label="Due Date *"
+              label={tx("auto.dueDate_d7e2")}
               type="date"
-              placeholder="DD/MM/YYYY"
+              placeholder={tx("auto.ddMmYyyy_5d95")}
               value={dueDate}
               onChange={(e) => {
                 setDueDate(e.target.value);
@@ -577,9 +605,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         <div className="create_invoice_date_section">
           <div className="create_invoice_form_group create_invoice_form_group_half">
             <Input
-              label="Payment Method"
+              label={tx("auto.paymentMethod_f383")}
               type="select"
-              placeholder="Select payment method"
+              placeholder={tx("auto.selectPaymentMethod_2f31")}
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               variant="rounded"
@@ -594,9 +622,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           </div>
           <div className="create_invoice_form_group create_invoice_form_group_half">
             <Input
-              label="Status"
+              label={tx("auto.status_bae7")}
               type="select"
-              placeholder="Select status"
+              placeholder={tx("auto.selectStatus_0332")}
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               variant="rounded"
@@ -612,14 +640,14 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         {/* Items Section */}
         <div className="create_invoice_section">
           <div className="create_invoice_items_header">
-            <h3 className="create_invoice_section_title">Items</h3>
+            <h3 className="create_invoice_section_title">{tx("auto.items_44d2")}</h3>
             <button
               type="button"
               className="create_invoice_add_item_btn"
               onClick={addItem}
             >
               <Plus size={16} />
-              Add Item
+              {tx("auto.addItem_4dba")}
             </button>
           </div>
 
@@ -628,9 +656,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
               {/* Item Type Selection */}
               <div className="create_invoice_form_group">
                 <Input
-                  label="Item Type"
+                  label={tx("auto.itemType_a9fc")}
                   type="select"
-                  placeholder="Select item type"
+                  placeholder={tx("auto.selectItemType_ef20")}
                   value={item.itemType}
                   onChange={(e) => {
                     const newItemType = e.target.value;
@@ -675,9 +703,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
               {item.itemType === "Service" ? (
                 <div className="create_invoice_form_group">
                   <Input
-                    label="Service Type"
+                    label={tx("auto.serviceType_8941")}
                     type="select"
-                    placeholder="Select service type"
+                    placeholder={tx("auto.selectServiceType_eaf5")}
                     value={item.category}
                     onChange={(e) =>
                       updateItem(index, "category", e.target.value)
@@ -693,9 +721,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
               ) : (
                 <div className="create_invoice_form_group">
                   <Input
-                    label="Select Inventory Item"
+                    label={tx("auto.selectInventoryItem_41ff")}
                     type="select"
-                    placeholder="Choose inventory item"
+                    placeholder={tx("auto.chooseInventoryItem_958a")}
                     value={item.inventoryItemId}
                     onChange={(e) =>
                       handleInventoryItemSelection(e.target.value, index)
@@ -713,14 +741,14 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
                   {item.inventoryItemId && (
                     <div className="create_invoice_stock_info">
                       <p className="create_invoice_stock_text">
-                        📦 Available Stock:{" "}
-                        {getInventoryItemStock(item.inventoryItemId)} units
+                        {tx("auto.availableStock_12ab")}{" "}
+                        {tl(getInventoryItemStock(item.inventoryItemId))}{" "}{tx("auto.units_9176")}
                         {item.inventoryItemName &&
                           ` - ${item.inventoryItemName}`}
                       </p>
                       {getInventoryItemStock(item.inventoryItemId) <= 3 && (
                         <p className="create_invoice_stock_warning">
-                          ⚠️ Low stock warning!
+                          {tx("auto.lowStockWarning_976a")}
                         </p>
                       )}
                     </div>
@@ -730,9 +758,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
 
               <div className="create_invoice_form_group">
                 <Input
-                  label="Description"
+                  label={tx("auto.description_55f8")}
                   type="text"
-                  placeholder="Description"
+                  placeholder={tx("auto.description_55f8")}
                   value={item.description}
                   onChange={(e) =>
                     updateItem(index, "description", e.target.value)
@@ -744,7 +772,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
               <div className="create_invoice_item_row">
                 <div className="create_invoice_form_group create_invoice_form_group_third">
                   <Input
-                    label="Quantity"
+                    label={tx("auto.quantity_44f6")}
                     type="number"
                     placeholder=""
                     value={item.quantity}
@@ -765,16 +793,16 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
                   />
                   {item.itemType === "Item" && item.inventoryItemId && (
                     <p className="create_invoice_quantity_helper">
-                      Max available:{" "}
-                      {getInventoryItemStock(item.inventoryItemId)}
+                      {tx("auto.maxAvailable_8492")}{" "}
+                      {tl(getInventoryItemStock(item.inventoryItemId))}
                     </p>
                   )}
                 </div>
                 <div className="create_invoice_form_group create_invoice_form_group_third">
                   <Input
-                    label={`Price (${symbol})`}
+                    label={tx("tpl.price_dc72", { v0: symbol })}
                     type="number"
-                    placeholder={currency === "USD" ? "$0" : "₦0"}
+                    placeholder={`${symbol}0`}
                     value={item.price === 0 ? "" : item.price}
                     onFocus={(e) => { if (parseFloat(e.target.value) === 0) updateItem(index, "price", ""); }}
                     onChange={(e) =>
@@ -786,10 +814,10 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
                 </div>
                 <div className="create_invoice_form_group create_invoice_form_group_third">
                   <label className="create_invoice_item_total_label">
-                    Total
+                    {tx("auto.total_b259")}
                   </label>
                   <div className="create_invoice_item_total">
-                    {formatCurrency(item.quantity * item.price)}
+                    {tl(formatCurrency(item.quantity * item.price))}
                   </div>
                 </div>
               </div>
@@ -800,22 +828,58 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
                   className="create_invoice_remove_item_btn"
                   onClick={() => removeItem(index)}
                 >
-                  Remove
+                  {tx("auto.remove_e963")}
                 </button>
               )}
             </div>
           ))}
 
           {errors.items && (
-            <span className="create_invoice_error_message">{errors.items}</span>
+            <span className="create_invoice_error_message">{tl(errors.items)}</span>
           )}
+        </div>
+
+        {/* Amount Paid: follows the status */}
+        <div className="create_invoice_section">
+          <div className="create_invoice_form_group">
+            <Input
+              label={`${tl("Amount Paid")} (${symbol})`}
+              type="number"
+              placeholder={`${symbol}0`}
+              value={
+                status === "Paid"
+                  ? Number(calculateTotal().toFixed(2))
+                  : status === "Partially Paid"
+                  ? amountPaid
+                  : 0
+              }
+              onChange={(e) => {
+                setAmountPaid(e.target.value);
+                clearError("amountPaid");
+              }}
+              disabled={status !== "Partially Paid"}
+              error={errors.amountPaid}
+              required={status === "Partially Paid"}
+              variant="rounded"
+              min="0"
+            />
+            <p className="create_invoice_quantity_helper">
+              {tl(
+                status === "Paid"
+                  ? "Paid in full: the total is filled in."
+                  : status === "Partially Paid"
+                  ? "Enter how much the client has paid so far."
+                  : "Unpaid: nothing paid yet. Change the status to record a payment."
+              )}
+            </p>
+          </div>
         </div>
 
         {/* Discount & Tax Section */}
         <div className="create_invoice_date_section">
           <div className="create_invoice_form_group create_invoice_form_group_half">
             <Input
-              label="Discount (%)"
+              label={tx("auto.discount_2d08")}
               type="number"
               placeholder="0"
               value={discount === 0 ? "" : discount}
@@ -828,7 +892,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           </div>
           <div className="create_invoice_form_group create_invoice_form_group_half">
             <Input
-              label="Tax Rate (%)"
+              label={tx("auto.taxRate_4550")}
               type="number"
               placeholder="0"
               value={taxRate === 0 ? "" : taxRate}
@@ -845,9 +909,9 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         <div className="create_invoice_section">
           <div className="create_invoice_form_group">
             <Input
-              label="Notes (Optional)"
+              label={tx("auto.notesOptional_2fd5")}
               type="textarea"
-              placeholder="Add payment terms, delivery notes, etc."
+              placeholder={tx("auto.addPaymentTermsDeliveryNotes_fe4f")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               variant="rounded"
@@ -861,33 +925,45 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         {/* Summary Section */}
         <div className="create_invoice_summary">
           <div className="create_invoice_summary_row">
-            <span className="create_invoice_summary_label">Subtotal</span>
+            <span className="create_invoice_summary_label">{tx("auto.subtotal_97f7")}</span>
             <span className="create_invoice_summary_value">
-              {formatCurrency(calculateSubtotal())}
+              {tl(formatCurrency(calculateSubtotal()))}
             </span>
           </div>
           {discount > 0 && (
             <div className="create_invoice_summary_row">
               <span className="create_invoice_summary_label">
-                Discount ({discount}%)
+                {tx("auto.discount_a89c")}{tl(discount)}%)
               </span>
               <span className="create_invoice_summary_value">
-                -{formatCurrency(calculateDiscountAmount())}
+                -{tl(formatCurrency(calculateDiscountAmount()))}
               </span>
             </div>
           )}
           <div className="create_invoice_summary_row">
             <span className="create_invoice_summary_label">
-              Tax ({taxRate}%)
+              {tx("auto.tax_9cb7")}{tl(taxRate)}%)
             </span>
             <span className="create_invoice_summary_value">
-              {formatCurrency(calculateTaxAmount())}
+              {tl(formatCurrency(calculateTaxAmount()))}
             </span>
           </div>
           <div className="create_invoice_summary_row create_invoice_summary_total">
-            <span className="create_invoice_summary_label">Total</span>
+            <span className="create_invoice_summary_label">{tx("auto.total_b259")}</span>
             <span className="create_invoice_summary_value create_invoice_total_amount">
-              {formatCurrency(calculateTotal())}
+              {tl(formatCurrency(calculateTotal()))}
+            </span>
+          </div>
+          <div className="create_invoice_summary_row">
+            <span className="create_invoice_summary_label">{tl("Amount Paid")}</span>
+            <span className="create_invoice_summary_value">
+              -{tl(formatCurrency(calculateAmountPaid()))}
+            </span>
+          </div>
+          <div className="create_invoice_summary_row create_invoice_summary_total">
+            <span className="create_invoice_summary_label">{tl("Balance Due")}</span>
+            <span className="create_invoice_summary_value create_invoice_total_amount">
+              {tl(formatCurrency(calculateBalanceDue()))}
             </span>
           </div>
         </div>
@@ -895,7 +971,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
         {/* Error Display */}
         {errors.submit && (
           <div className="create_invoice_error">
-            <p>{errors.submit}</p>
+            <p>{tl(errors.submit)}</p>
           </div>
         )}
 
@@ -909,10 +985,10 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           disabled={isSubmitting}
         >
           {isSubmitting
-            ? "Saving..."
+            ? tx("auto.saving_ae7e")
             : isEditMode
-            ? "Update Invoice"
-            : "Create Invoice"}
+            ? tx("auto.updateInvoice_b9ad")
+            : tx("auto.createInvoice_3281")}
         </Button>
       </form>
     </div>

@@ -4,6 +4,12 @@ import Input from "../../../components/Input";
 import Button from "../../../components/button/Button";
 import SearchableSelect from "../../../components/SearchableSelect";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+
+
 // Business categories
 const businessCategories = [
   "Fashion Design",
@@ -17,60 +23,118 @@ const businessCategories = [
   "Other",
 ];
 
-// All African countries
+// Countries offered at sign-up (same as the mobile app, plus all of Africa).
+// The backend sets the account's display currency from this.
 const africanCountries = [
+  "Afghanistan",
+  "Albania",
   "Algeria",
   "Angola",
+  "Argentina",
+  "Australia",
+  "Austria",
+  "Bangladesh",
+  "Belgium",
   "Benin",
+  "Bolivia",
   "Botswana",
+  "Brazil",
   "Burkina Faso",
   "Burundi",
   "Cabo Verde",
   "Cameroon",
+  "Canada",
   "Central African Republic",
   "Chad",
+  "Chile",
+  "China",
+  "Colombia",
   "Comoros",
+  "Congo",
   "Congo (Brazzaville)",
   "Congo (Kinshasa)",
   "Côte d'Ivoire",
+  "DR Congo",
+  "Denmark",
   "Djibouti",
+  "Ecuador",
   "Egypt",
   "Equatorial Guinea",
   "Eritrea",
   "Eswatini",
   "Ethiopia",
+  "Finland",
+  "France",
   "Gabon",
   "Gambia",
+  "Germany",
   "Ghana",
+  "Greece",
   "Guinea",
   "Guinea-Bissau",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
   "Kenya",
   "Lesotho",
   "Liberia",
   "Libya",
   "Madagascar",
   "Malawi",
+  "Malaysia",
   "Mali",
   "Mauritania",
   "Mauritius",
+  "Mexico",
   "Morocco",
   "Mozambique",
   "Namibia",
+  "Netherlands",
+  "New Zealand",
   "Niger",
   "Nigeria",
+  "Norway",
+  "Pakistan",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Romania",
+  "Russia",
   "Rwanda",
-  "São Tomé and Príncipe",
+  "Saudi Arabia",
   "Senegal",
   "Seychelles",
   "Sierra Leone",
   "Somalia",
   "South Africa",
+  "South Korea",
   "South Sudan",
+  "Spain",
   "Sudan",
+  "Sweden",
+  "Switzerland",
+  "São Tomé and Príncipe",
   "Tanzania",
+  "Thailand",
   "Togo",
   "Tunisia",
+  "Turkey",
   "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
   "Zambia",
   "Zimbabwe",
 ];
@@ -83,6 +147,7 @@ const Step3BusinessInfo = ({
   onSubmit,
   onBack,
 }) => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -95,20 +160,20 @@ const Step3BusinessInfo = ({
     const newErrors = {};
 
     if (!formData.businessName.trim()) {
-      newErrors.businessName = "Business/Store name is required";
+      newErrors.businessName = tx("auto.businessStoreNameIsRequired_0902");
     }
 
     if (!formData.category) {
-      newErrors.category = "Category is required";
+      newErrors.category = tx("auto.categoryIsRequired_eb1a");
     }
 
     // If "Other" is selected, validate custom category
     if (showCustomCategory && !customCategory.trim()) {
-      newErrors.category = "Please specify your category";
+      newErrors.category = tx("auto.pleaseSpecifyYourCategory_a455");
     }
 
     if (!formData.country) {
-      newErrors.country = "Country is required";
+      newErrors.country = tx("auto.countryIsRequired_66a0");
     }
 
     setErrors(newErrors);
@@ -151,7 +216,7 @@ const Step3BusinessInfo = ({
     if (file && file.type.startsWith("image/")) {
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert("File size must be less than 10MB");
+        alert(tx("auto.fileSizeMustBeLess_1964"));
         return;
       }
 
@@ -160,7 +225,7 @@ const Step3BusinessInfo = ({
       setLogoPreview(previewUrl);
       onInputChange("logoFile", file);
     } else if (file) {
-      alert("Please select a valid image file (PNG, JPG, GIF)");
+      alert(tx("auto.pleaseSelectAValidImage_3c54"));
     }
   };
 
@@ -237,8 +302,8 @@ const Step3BusinessInfo = ({
       </div>
 
       <div className="n_s_u_s-s-title-con">
-        <h1 className="n_s_u_s-s-title">Business Information</h1>
-        <p className="n_s_u_s-s-subtitle">Tell us about your business</p>
+        <h1 className="n_s_u_s-s-title">{tx("auto.businessInformation_a10a")}</h1>
+        <p className="n_s_u_s-s-subtitle">{tx("auto.tellUsAboutYourBusiness_7b13")}</p>
       </div>
 
       <form
@@ -250,10 +315,10 @@ const Step3BusinessInfo = ({
         {/* Business Name/Store Name */}
         <Input
           type="text"
-          label="Business/Store Name"
+          label={tx("auto.businessStoreName_5f92")}
           value={formData.businessName}
           onChange={(e) => onInputChange("businessName", e.target.value)}
-          placeholder="Enter your business or store name"
+          placeholder={tx("auto.enterYourBusinessOrStore_170b")}
           required
           error={errors.businessName}
           active={!!formData.businessName}
@@ -270,7 +335,7 @@ const Step3BusinessInfo = ({
               fontWeight: "500",
             }}
           >
-            Category
+            {tx("auto.category_a3c6")}
           </label>
           <select
             value={showCustomCategory ? "Other" : formData.category}
@@ -287,15 +352,15 @@ const Step3BusinessInfo = ({
               boxSizing: "border-box",
             }}
           >
-            <option value="">Select Category</option>
+            <option value="">{tx("auto.selectCategory_4d18")}</option>
             {businessCategories.map((category) => (
               <option key={category} value={category}>
-                {category}
+                {tl(category)}
               </option>
             ))}
           </select>
           {errors.category && !showCustomCategory && (
-            <div className="n_s_u_error-message">{errors.category}</div>
+            <div className="n_s_u_error-message">{tl(errors.category)}</div>
           )}
         </div>
 
@@ -303,10 +368,10 @@ const Step3BusinessInfo = ({
         {showCustomCategory && (
           <Input
             type="text"
-            label="Specify Your Category"
+            label={tx("auto.specifyYourCategory_ed90")}
             value={customCategory}
             onChange={handleCustomCategoryChange}
-            placeholder="Enter your business category"
+            placeholder={tx("auto.enterYourBusinessCategory_e13f")}
             required
             error={errors.category}
             active={!!customCategory}
@@ -316,11 +381,11 @@ const Step3BusinessInfo = ({
 
         {/* Country Selection */}
         <SearchableSelect
-          label="Country"
+          label={tx("auto.country_d523")}
           options={africanCountries}
           value={formData.country}
           onChange={(value) => onInputChange("country", value)}
-          placeholder="Search and select your country"
+          placeholder={tx("auto.searchAndSelectYourCountry_a38d")}
           error={errors.country}
         />
 
@@ -334,7 +399,7 @@ const Step3BusinessInfo = ({
               fontWeight: "500",
             }}
           >
-            Logo (Optional)
+            {tx("auto.logoOptional_edfb")}
           </label>
 
           <div
@@ -386,7 +451,7 @@ const Step3BusinessInfo = ({
                         />
                       </svg>
                     </button>
-                    <p className="n_s_u_logo-change-text">Click to change</p>
+                    <p className="n_s_u_logo-change-text">{tx("auto.clickToChange_31d9")}</p>
                   </div>
               </div>
             ) : (
@@ -404,11 +469,11 @@ const Step3BusinessInfo = ({
                 </div>
                 <div className="n_s_u_upload-text">
                   <p className="n_s_u_upload-main-text">
-                    Drop your logo here, or{" "}
-                    <span className="n_s_u_upload-link">browse</span>
+                    {tx("auto.dropYourLogoHereOr_55b3")}{" "}
+                    <span className="n_s_u_upload-link">{tx("auto.browse_0f6a")}</span>
                   </p>
                   <p className="n_s_u_upload-sub-text">
-                    PNG, JPG, GIF up to 10MB
+                    {tx("auto.pngJpgGifUpTo_5077")}
                   </p>
                 </div>
               </div>
@@ -424,34 +489,34 @@ const Step3BusinessInfo = ({
             disabled={!isFormValid || isSubmitting}
             className={isFormValid && !isSubmitting ? "" : "n_s_u_s-s-btn-inactive"}
           >
-            {isSubmitting ? "Creating Account..." : "Complete Signup"}
+            {tl(isSubmitting ? tx("auto.creatingAccount_2b62") : tx("auto.completeSignup_4e23"))}
           </Button>
         </div>
 
         <p className="n_s_u_s-s-term">
-          By signing up, you agree to the{" "}
+          {tx("auto.bySigningUpYouAgree_d580")}{" "}
           <span
             className="n_s_u_s-s-terml-link"
             onClick={() => navigate("/terms-of-service")}
           >
-            Terms of Service
+            {tx("auto.termsOfService_0c8a")}
           </span>{" "}
-          and{" "}
+          {tx("auto.and_cffa")}{" "}
           <span
             className="n_s_u_s-s-terml-link"
             onClick={() => navigate("/privacy-policy")}
           >
-            Data Processing Agreement
+            {tx("auto.dataProcessingAgreement_a061")}
           </span>
         </p>
 
         <p className="n_s_u_s-s-already-have-account">
-          Already have an account?{" "}
+          {tx("auto.alreadyHaveAnAccount_8559")}{" "}
           <span
             className="n_s_u_s-s-link"
             onClick={() => (window.location.href = "/login")}
           >
-            Sign in
+            {tx("auto.signIn_ada2")}
           </span>
         </p>
       </form>

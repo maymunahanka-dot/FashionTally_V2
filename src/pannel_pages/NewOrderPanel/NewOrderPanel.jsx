@@ -6,7 +6,13 @@ import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./NewOrderPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSuccess }) => {
+  const { t: tx } = useTranslation();
   // Individual useState for each input field
   const [client, setClient] = useState("");
   const [clientName, setClientName] = useState("");
@@ -152,12 +158,12 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
 
   useEffect(() => {
     if (pricesTouched.current || !editMode || !initialData) return;
-    if (currency === "USD" && !usdToNgn) return;
+    if (currency !== "NGN" && !usdToNgn) return;
     const asEntry = (value) => {
       const naira = Number(value) || 0;
       return (naira / usdToNgn).toFixed(2);
     };
-    if (currency !== "USD") return;
+    if (currency === "NGN") return;
     setBasePrice(
       asEntry(
         initialData.basePrice ||
@@ -418,39 +424,39 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
     // Client selection is optional, but if no client selected, manual details are required
     if (!client && !clientName.trim()) {
       newErrors.clientName =
-        "Client name is required when no client is selected";
+        tx("auto.clientNameIsRequiredWhen_03b7");
     }
     if (!client && !clientEmail.trim()) {
       newErrors.clientEmail =
-        "Client email is required when no client is selected";
+        tx("auto.clientEmailIsRequiredWhen_f67d");
     }
     if (!client && !clientPhone.trim()) {
       newErrors.clientPhone =
-        "Client phone is required when no client is selected";
+        tx("auto.clientPhoneIsRequiredWhen_e348");
     }
 
     if (!orderType) {
-      newErrors.orderType = "Order type is required";
+      newErrors.orderType = tx("auto.orderTypeIsRequired_09e1");
     }
 
     if (!designStyleName.trim()) {
-      newErrors.designStyleName = "Design/Style name is required";
+      newErrors.designStyleName = tx("auto.designStyleNameIsRequired_30ae");
     }
 
     if (!fabricType) {
-      newErrors.fabricType = "Fabric type is required";
+      newErrors.fabricType = tx("auto.fabricTypeIsRequired_526b");
     }
 
     if (!quantity || quantity <= 0) {
-      newErrors.quantity = "Valid quantity is required";
+      newErrors.quantity = tx("auto.validQuantityIsRequired_3cb2");
     }
 
     if (!deliveryDate) {
-      newErrors.deliveryDate = "Delivery date is required";
+      newErrors.deliveryDate = tx("auto.deliveryDateIsRequired_c596");
     }
 
     if (!basePrice || basePrice <= 0) {
-      newErrors.basePrice = "Valid base price is required";
+      newErrors.basePrice = tx("auto.validBasePriceIsRequired_ecd5");
     }
 
     setErrors(newErrors);
@@ -499,7 +505,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
     if (!validateForm()) return;
 
     if (!user?.email) {
-      alert("You must be logged in to create orders");
+      alert(tx("auto.youMustBeLoggedIn_432a"));
       return;
     }
 
@@ -575,7 +581,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
       onClose();
     } catch (error) {
       console.error("Error saving order:", error);
-      alert(error.message || "Failed to save order. Please try again.");
+      alert(error.message || tx("auto.failedToSaveOrderPlease_6639"));
     } finally {
       setLoading(false);
     }
@@ -615,7 +621,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
           <X size={24} />
         </button>
         <h2 className="new_oda_title">
-          {editMode ? "Edit Order" : "Create order"}
+          {tl(editMode ? tx("auto.editOrder_13fc") : tx("auto.createOrder_f69d"))}
         </h2>
       </div>
 
@@ -624,7 +630,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
         <div className="new_oda_form_content">
           {/* Client Selection with Existing Button */}
           <div className="new_oda_form_group">
-            <label className="new_oda_client_label">Client (Optional)</label>
+            <label className="new_oda_client_label">{tx("auto.clientOptional_4042")}</label>
             <div className="new_oda_client_row">
               <div className="new_oda_client_select">
                 <Input
@@ -649,20 +655,20 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                   /* Handle existing client selection */
                 }}
               >
-                ← Existing
+                {tx("auto.existing_dc50")}
               </button>
             </div>
           </div>
           {/* New Client Details */}
           <div className="new_oda_client_details">
-            <h3 className="new_oda_section_title">New Client Details</h3>
+            <h3 className="new_oda_section_title">{tx("auto.newClientDetails_7661")}</h3>
 
             {/* Client Name */}
             <div className="new_oda_form_group">
               <Input
                 type="text"
-                label="Name *"
-                placeholder="e.g., Adunze Okonkwo"
+                label={tx("auto.name_d145")}
+                placeholder={tx("auto.eGAdunzeOkonkwo_f1cb")}
                 value={clientName}
                 onChange={(e) => handleInputChange("clientName", e)}
                 error={errors.clientName}
@@ -675,8 +681,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             <div className="new_oda_form_group">
               <Input
                 type="email"
-                label="Email *"
-                placeholder="e.g., adunze@example.com"
+                label={tx("auto.email_604e")}
+                placeholder={tx("auto.eGAdunzeExampleCom_f481")}
                 value={clientEmail}
                 onChange={(e) => handleInputChange("clientEmail", e)}
                 error={errors.clientEmail}
@@ -689,8 +695,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             <div className="new_oda_form_group">
               <Input
                 type="text"
-                label="Phone *"
-                placeholder="e.g., +234 801 234 5678"
+                label={tx("auto.phone_187a")}
+                placeholder={tx("auto.eG234801234_527b")}
                 value={clientPhone}
                 onChange={(e) => handleInputChange("clientPhone", e)}
                 error={errors.clientPhone}
@@ -703,7 +709,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
           <div className="new_oda_form_group">
             <Input
               type="select"
-              label="Order Type *"
+              label={tx("auto.orderType_b80b")}
               value={orderType}
               onChange={(e) => handleInputChange("orderType", e)}
               options={orderTypeOptions}
@@ -716,8 +722,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
           <div className="new_oda_form_group">
             <Input
               type="text"
-              label="Design/Style Name *"
-              placeholder="e.g., Elegant Wedding Gown"
+              label={tx("auto.designStyleName_d3de")}
+              placeholder={tx("auto.eGElegantWeddingGown_52db")}
               value={designStyleName}
               onChange={(e) => handleInputChange("designStyleName", e)}
               error={errors.designStyleName}
@@ -730,7 +736,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             <div className="new_oda_form_group new_oda_form_group_half">
               <Input
                 type="select"
-                label="Fabric Type"
+                label={tx("auto.fabricType_ce68")}
                 value={fabricType}
                 onChange={(e) => handleInputChange("fabricType", e)}
                 options={fabricTypeOptions}
@@ -741,8 +747,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             <div className="new_oda_form_group new_oda_form_group_half">
               <Input
                 type="number"
-                label="Quantity (yards)"
-                placeholder="e.g., 5"
+                label={tx("auto.quantityYards_7c3a")}
+                placeholder={tx("auto.eG5_9b53")}
                 value={quantity}
                 onChange={(e) => handleInputChange("quantity", e)}
                 error={errors.quantity}
@@ -753,14 +759,14 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
           {/* Measurements */}
           <div className="new_oda_form_group">
             <div className="new_oda_measurements_header">
-              <h3 className="new_oda_section_title">Measurements (Optional)</h3>
+              <h3 className="new_oda_section_title">{tx("auto.measurementsOptional_d737")}</h3>
               <button
                 type="button"
                 className="new_oda_add_measurement_btn"
                 onClick={addMeasurementField}
               >
                 <span className="new_oda_add_icon">+</span>
-                <span>Add Measurement</span>
+                <span>{tx("auto.addMeasurement_7891")}</span>
               </button>
             </div>
             <div className="new_oda_measurements_list">
@@ -769,7 +775,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                   <div className="new_oda_measurement_inputs">
                     <Input
                       type="text"
-                      placeholder="Field name (e.g., Bust, Waist, Length)"
+                      placeholder={tx("auto.fieldNameEGBust_83a0")}
                       value={measurement.field}
                       onChange={(e) =>
                         handleMeasurementChange(
@@ -782,7 +788,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                     />
                     <Input
                       type="number"
-                      placeholder="Value (inches)"
+                      placeholder={tx("auto.valueInches_f5da")}
                       value={measurement.value}
                       onChange={(e) =>
                         handleMeasurementChange(
@@ -813,8 +819,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             <div className="new_oda_date_container">
               <Input
                 type="date"
-                label="Delivery Date *"
-                placeholder="Select date"
+                label={tx("auto.deliveryDate_7a1d")}
+                placeholder={tx("auto.selectDate_b84a")}
                 value={deliveryDate}
                 onChange={(e) => handleInputChange("deliveryDate", e)}
                 error={errors.deliveryDate}
@@ -826,15 +832,15 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
           </div>
           {/* Pricing Section */}
           <div className="new_oda_pricing_section">
-            <h3 className="new_oda_section_title">Pricing</h3>
+            <h3 className="new_oda_section_title">{tx("auto.pricing_a0d9")}</h3>
 
             {/* Base Price and Deposit Row */}
             <div className="new_oda_form_row">
               <div className="new_oda_form_group new_oda_form_group_half">
                 <Input
                   type="number"
-                  label={`Base Price (${symbol})`}
-                  placeholder={currency === "USD" ? "e.g., 50" : "e.g., 50000"}
+                  label={tx("tpl.basePrice_66a9", { v0: symbol })}
+                  placeholder={currency !== "NGN" ? tx("auto.eG50_d0c3") : tx("auto.eG50000_d1af")}
                   value={basePrice}
                   onChange={(e) => {
                     pricesTouched.current = true;
@@ -848,8 +854,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
               <div className="new_oda_form_group new_oda_form_group_half">
                 <Input
                   type="number"
-                  label={`Deposit Paid (${symbol})`}
-                  placeholder={currency === "USD" ? "e.g., 20" : "e.g., 25000"}
+                  label={tx("tpl.depositPaid_ad4f", { v0: symbol })}
+                  placeholder={currency !== "NGN" ? tx("auto.eG20_0931") : tx("auto.eG25000_6a2b")}
                   value={depositPaid}
                   onChange={(e) => {
                     pricesTouched.current = true;
@@ -863,14 +869,14 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             {/* Additional Items */}
             <div className="new_oda_additional_items">
               <div className="new_oda_additional_header">
-                <h4 className="new_oda_additional_title">Additional Items</h4>
+                <h4 className="new_oda_additional_title">{tx("auto.additionalItems_407e")}</h4>
                 <button
                   type="button"
                   className="new_oda_add_item_btn"
                   onClick={handleAddItem}
                 >
                   <span className="new_oda_add_icon">+</span>
-                  <span>Add Item</span>
+                  <span>{tx("auto.addItem_4dba")}</span>
                 </button>
               </div>
 
@@ -879,7 +885,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                 {additionalItems.length === 0 ? (
                   <div className="new_oda_no_items">
                     <p>
-                      No additional items added. Click "Add Item" to add extras.
+                      {tx("auto.noAdditionalItemsAddedClick_7e75")}
                     </p>
                   </div>
                 ) : (
@@ -888,7 +894,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                       <div className="new_oda_item_inputs">
                         <Input
                           type="text"
-                          placeholder="Item name"
+                          placeholder={tx("auto.itemName_b56b")}
                           value={item.name}
                           onChange={(e) =>
                             handleItemChange(item.id, "name", e.target.value)
@@ -897,7 +903,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
                         />
                         <Input
                           type="number"
-                          placeholder={`Price (${symbol})`}
+                          placeholder={tx("tpl.price_dc72", { v0: symbol })}
                           value={item.price}
                           onChange={(e) => {
                             pricesTouched.current = true;
@@ -923,23 +929,23 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             <CurrencyHint currency={currency} usdToNgn={usdToNgn} amount={calculateTotalAmount()} />
             <div className="new_oda_totals">
               <div className="new_oda_total_row">
-                <span className="new_oda_total_label">Total Amount:</span>
+                <span className="new_oda_total_label">{tx("auto.totalAmount_a10e")}</span>
                 <span className="new_oda_total_value">
-                  {currency === "USD" ? "$" : "₦"}
+                  {tl(symbol)}
                   {calculateTotalAmount().toLocaleString()}
                 </span>
               </div>
               <div className="new_oda_total_row">
-                <span className="new_oda_total_label">Deposit:</span>
+                <span className="new_oda_total_label">{tx("auto.deposit_b8ca")}</span>
                 <span className="new_oda_total_value">
-                  {currency === "USD" ? "$" : "₦"}
+                  {tl(symbol)}
                   {(parseFloat(depositPaid) || 0).toLocaleString()}
                 </span>
               </div>
               <div className="new_oda_total_row new_oda_balance_row">
-                <span className="new_oda_total_label">Balance:</span>
+                <span className="new_oda_total_label">{tx("auto.balance_802d")}</span>
                 <span className="new_oda_balance_value">
-                  {currency === "USD" ? "$" : "₦"}
+                  {tl(symbol)}
                   {calculateBalance().toLocaleString()}
                 </span>
               </div>
@@ -949,8 +955,8 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
           <div className="new_oda_form_group">
             <Input
               type="textarea"
-              label="Special Instructions / Notes"
-              placeholder="Any special requirements, modifications, or notes..."
+              label={tx("auto.specialInstructionsNotes_7ea3")}
+              placeholder={tx("auto.anySpecialRequirementsModificati_d888")}
               value={specialInstructions}
               onChange={(e) => handleInputChange("specialInstructions", e)}
               variant="rounded"
@@ -966,7 +972,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
             className="new_oda_submit_btn"
             disabled={loading}
           >
-            {loading ? "Saving..." : editMode ? "Update Order" : "Create Order"}
+            {loading ? tx("auto.saving_ae7e") : editMode ? tx("auto.updateOrder_56ac") : tx("auto.createOrder_0289")}
           </button>
         </div>
       </form>

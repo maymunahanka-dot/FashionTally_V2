@@ -8,7 +8,14 @@ import Step3BusinessInfo from "./steps/Step3BusinessInfo";
 import "./NewSignup.css";
 import logo from "../../assets/Image/logo.png";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import LanguageSwitch from "../../components/LanguageSwitch/LanguageSwitch.jsx";
 const NewSignup = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedPlan = searchParams.get("plan");
@@ -125,37 +132,38 @@ const NewSignup = () => {
         <div className="n_s_u_signup-step-left-sec-content">
           <img src={logo} alt="" className="n_s_u_s-s-logo" />
           <h2 className="n_s_u_s-s-logo-text">
-            Run Your Fashion Business Smarter, Faster, Better
+            {tx("auto.runYourFashionBusinessSmarter_b787")}
           </h2>
         </div>
       </div>
       <div className="n_s_u_signup-step-right-sec">
+        <LanguageSwitch className="lang-switch-corner" />
         <div className="n_s_u_signup-step-right-sec-content">
           <button
             type="button"
             className="new-signup-back-btn"
             onClick={() => navigate("/")}
-            title="Back to Home"
+            title={tx("auto.backToHome_ce74")}
           >
             <ArrowLeft size={20} />
           </button>
           {selectedPlan && (
             <div className="selected-plan-indicator">
               <p className="selected-plan-text">
-                Selected Plan: <strong>{selectedPlan.toUpperCase()}</strong>
+                {tx("auto.selectedPlan_913d")}{" "}<strong>{selectedPlan.toUpperCase()}</strong>
               </p>
             </div>
           )}
-          <p className="n_s_u_s-s-step">step {currentStep} / 3</p>
-          {renderStep()}
+          <p className="n_s_u_s-s-step">{tx("auto.step_bd37")}{" "}{tl(currentStep)} / 3</p>
+          {tl(renderStep())}
 
           <p className="new-signup-signin-link">
-            Already have an account?{" "}
+            {tx("auto.alreadyHaveAnAccount_8559")}{" "}
             <span
               className="new-signup-link"
               onClick={() => navigate("/login")}
             >
-              Sign in
+              {tx("auto.signIn_ada2")}
             </span>
           </p>
         </div>

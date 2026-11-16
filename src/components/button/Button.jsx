@@ -1,6 +1,11 @@
 import { useTheme } from "../../contexts/ThemeContext";
 import "./Button.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const Button = ({
   children,
   type = "button",
@@ -16,6 +21,7 @@ const Button = ({
   className = "",
   ...props
 }) => {
+  const { t: tx } = useTranslation();
   const { actualTheme } = useTheme();
 
   const handleClick = (e) => {
@@ -179,14 +185,14 @@ const Button = ({
     }
 
     // If icon is a React component/element
-    return <span className="btn-icon">{icon}</span>;
+    return <span className="btn-icon">{tl(icon)}</span>;
   };
 
   const renderContent = () => {
     if (loading) {
       return (
         <>
-          {renderIcon() || (
+          {tl(renderIcon() || (
             <svg className="btn-icon btn-spinner" viewBox="0 0 24 24">
               <circle
                 cx="12"
@@ -212,8 +218,8 @@ const Button = ({
                 />
               </circle>
             </svg>
-          )}
-          <span className="btn-text">Loading...</span>
+          ))}
+          <span className="btn-text">{tx("auto.loading_b04b")}</span>
         </>
       );
     }
@@ -236,7 +242,7 @@ const Button = ({
       data-theme={actualTheme}
       {...props}
     >
-      {renderContent()}
+      {tl(renderContent())}
     </button>
   );
 };

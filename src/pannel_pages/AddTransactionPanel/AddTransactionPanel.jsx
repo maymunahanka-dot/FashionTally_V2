@@ -6,7 +6,12 @@ import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./AddTransactionPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
 const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, onSuccess }) => {
+  const { t: tx } = useTranslation();
   const { user } = useContext(NewAuthContext);
   const [loading, setLoading] = useState(false);
   const amountTouched = useRef(false);
@@ -44,7 +49,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
 
   useEffect(() => {
     if (amountTouched.current || !editingTransaction) return;
-    if (currency === "USD" && !usdToNgn) return;
+    if (currency !== "NGN" && !usdToNgn) return;
     setAmount(fromNaira(editingTransaction.amount));
   }, [currency, usdToNgn, editingTransaction]);
 
@@ -61,19 +66,19 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
     const newErrors = {};
 
     if (!amount.trim() || parseFloat(amount) <= 0) {
-      newErrors.amount = "Amount must be greater than 0";
+      newErrors.amount = tx("auto.amountMustBeGreaterThan_40d3");
     }
 
     if (!category.trim()) {
-      newErrors.category = "Category is required";
+      newErrors.category = tx("auto.categoryIsRequired_eb1a");
     }
 
     if (!description.trim()) {
-      newErrors.description = "Description is required";
+      newErrors.description = tx("auto.descriptionIsRequired_b817");
     }
 
     if (!date.trim()) {
-      newErrors.date = "Date is required";
+      newErrors.date = tx("auto.dateIsRequired_2f74");
     }
 
     setErrors(newErrors);
@@ -84,7 +89,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
     e.preventDefault();
 
     if (!user?.email) {
-      alert("User not authenticated");
+      alert(tx("auto.userNotAuthenticated_dc86"));
       return;
     }
 
@@ -136,7 +141,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
       onClose();
     } catch (error) {
       console.error("Error saving transaction:", error);
-      alert(error.message || "Failed to save transaction. Please try again.");
+      alert(error.message || tx("auto.failedToSaveTransactionPlease_5892"));
     } finally {
       setLoading(false);
     }
@@ -150,7 +155,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
           <X size={24} />
         </button>
         <h2 className="add_trans_title">
-          {editMode ? "Edit Transaction" : "Add Transaction"}
+          {tl(editMode ? tx("auto.editTransaction_8172") : tx("auto.addTransaction_ea77"))}
         </h2>
       </div>
 
@@ -158,7 +163,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
       <form className="add_trans_form" onSubmit={handleSubmit}>
         {/* Transaction Type */}
         <div className="add_trans_form_group">
-          <label className="add_trans_label">Type</label>
+          <label className="add_trans_label">{tx("auto.type_3deb")}</label>
           <div className="add_trans_type_buttons">
             <button
               type="button"
@@ -168,7 +173,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
               onClick={() => setTransactionType("income")}
             >
               <ArrowUpCircle size={24} />
-              <span>Income</span>
+              <span>{tx("auto.income_1c89")}</span>
             </button>
             <button
               type="button"
@@ -178,7 +183,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
               onClick={() => setTransactionType("expense")}
             >
               <ArrowDownCircle size={24} />
-              <span>Expense</span>
+              <span>{tx("auto.expense_a0db")}</span>
             </button>
           </div>
         </div>
@@ -186,7 +191,7 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         {/* Amount */}
         <div className="add_trans_form_group">
           <Input
-            label={`Amount (${symbol}) *`}
+            label={tx("tpl.amount_fa34", { v0: symbol })}
             type="number"
             placeholder="0"
             value={amount}
@@ -207,9 +212,9 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         {/* Category */}
         <div className="add_trans_form_group">
           <Input
-            label="Category *"
+            label={tx("auto.category_b1e9")}
             type="select"
-            placeholder="Select category"
+            placeholder={tx("auto.selectCategory_a2a5")}
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
@@ -235,9 +240,9 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         {/* Description */}
         <div className="add_trans_form_group">
           <Input
-            label="Description *"
+            label={tx("auto.description_b5bb")}
             type="textarea"
-            placeholder="Add details about this transaction..."
+            placeholder={tx("auto.addDetailsAboutThisTransaction_e921")}
             value={description}
             onChange={(e) => {
               setDescription(e.target.value);
@@ -254,9 +259,9 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         <div className="add_trans_form_row">
           <div className="add_trans_form_group add_trans_form_group_half">
             <Input
-              label="Date *"
+              label={tx("auto.date_d36f")}
               type="date"
-              placeholder="DD/MM/YYYY"
+              placeholder={tx("auto.ddMmYyyy_5d95")}
               value={date}
               onChange={(e) => {
                 setDate(e.target.value);
@@ -269,9 +274,9 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
           </div>
           <div className="add_trans_form_group add_trans_form_group_half">
             <Input
-              label="Payment"
+              label={tx("auto.payment_b41a")}
               type="select"
-              placeholder="Cash"
+              placeholder={tx("auto.cash_758e")}
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
               variant="rounded"
@@ -289,9 +294,9 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         {/* Reference Number */}
         <div className="add_trans_form_group">
           <Input
-            label="Reference Number (Optional)"
+            label={tx("auto.referenceNumberOptional_3376")}
             type="text"
-            placeholder="Enter reference number"
+            placeholder={tx("auto.enterReferenceNumber_30d8")}
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             variant="rounded"
@@ -301,9 +306,9 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
         {/* Notes */}
         <div className="add_trans_form_group">
           <Input
-            label="Notes (Optional)"
+            label={tx("auto.notesOptional_2fd5")}
             type="textarea"
-            placeholder="Add any additional notes..."
+            placeholder={tx("auto.addAnyAdditionalNotes_e8d8")}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             variant="rounded"
@@ -318,10 +323,10 @@ const AddTransactionPanel = ({ onClose, onSubmit, editingTransaction, editMode, 
           disabled={loading}
         >
           {loading
-            ? "Saving..."
+            ? tx("auto.saving_ae7e")
             : editMode
-            ? "Update Transaction"
-            : "Add Transaction"}
+            ? tx("auto.updateTransaction_a64e")
+            : tx("auto.addTransaction_ea77")}
         </button>
       </form>
     </div>

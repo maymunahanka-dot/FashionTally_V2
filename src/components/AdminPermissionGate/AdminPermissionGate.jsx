@@ -5,6 +5,11 @@ import { useNewAuth } from "../../contexts/NewAuthContext";
 import { SubscriptionGate } from "../SubscriptionGate/SubscriptionGate";
 import "./AdminPermissionGate.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 // Map feature names to permission keys
 const FEATURE_TO_PERMISSION_MAP = {
   "Dashboard Analytics": "dashboard",
@@ -28,6 +33,7 @@ export function AdminPermissionGate({
   children,
   requiredFeature = "CRM Tools",
 }) {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const navigate = useNavigate();
 
@@ -91,11 +97,10 @@ export function AdminPermissionGate({
 
           {/* Main Message */}
           <div className="gate-header">
-            <h1 className="gate-title">Access Restricted</h1>
+            <h1 className="gate-title">{tx("auto.accessRestricted_13a4")}</h1>
             <p className="gate-description">
-              You don't have permission to access{" "}
-              <strong>{requiredFeature}</strong>. Contact the main account owner
-              to request access to this feature.
+              {tx("auto.youDonTHavePermission_d8d9")}{" "}
+              <strong>{tl(requiredFeature)}</strong>{tx("auto.contactTheMainAccountOwner_439d")}
             </p>
           </div>
 
@@ -103,15 +108,14 @@ export function AdminPermissionGate({
           <div className="admin-info-card">
             <div className="admin-info-header">
               <User className="admin-info-icon" />
-              <h3 className="admin-info-title">Sub-Admin Account</h3>
+              <h3 className="admin-info-title">{tx("auto.subAdminAccount_cf37")}</h3>
             </div>
             <div className="admin-info-content">
               <p className="admin-info-text">
-                You are logged in as a sub-admin with limited permissions. The
-                main account owner controls which features you can access.
+                {tx("auto.youAreLoggedInAs_6b82")}
               </p>
               <div className="admin-info-detail">
-                <strong>Account Owner:</strong> {user?.invitedBy}
+                <strong>{tx("auto.accountOwner_a4c3")}</strong> {user?.invitedBy}
               </div>
             </div>
           </div>
@@ -120,7 +124,7 @@ export function AdminPermissionGate({
           <div className="permission-status">
             <div className="permission-status-header">
               <Shield className="permission-status-icon" />
-              <h3 className="permission-status-title">Your Permissions</h3>
+              <h3 className="permission-status-title">{tx("auto.yourPermissions_c04c")}</h3>
             </div>
             <div className="permissions-grid">
               {user?.permissions &&
@@ -136,7 +140,7 @@ export function AdminPermissionGate({
                         value ? "granted" : "denied"
                       }`}
                     >
-                      {value ? "✓" : "✗"}
+                      {tl(value ? "✓" : "✗")}
                     </div>
                     <span className="permission-name">
                       {key.charAt(0).toUpperCase() + key.slice(1)}
@@ -154,7 +158,7 @@ export function AdminPermissionGate({
               className="logout-btn"
             >
               <LogOut className="btn-icon" />
-              Logout
+              {tx("auto.logout_e43d")}
             </Button>
           </div>
 
@@ -162,9 +166,9 @@ export function AdminPermissionGate({
           <div className="help-section">
             <AlertCircle className="help-icon" />
             <p className="help-text">
-              Need access to this feature? Contact{" "}
+              {tx("auto.needAccessToThisFeature_3a00")}{" "}
               <strong>{user?.invitedBy}</strong>
-              to request permission updates for your account.
+              {tx("auto.toRequestPermissionUpdatesFor_6e0a")}
             </p>
           </div>
         </div>

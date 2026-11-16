@@ -5,7 +5,14 @@ import LoyaltyTab from "../../../../components/LoyaltyTab";
 import FeedbackTab from "../../../../components/FeedbackTab";
 import "./CRM.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../../i18n";
+
+import { tl } from "../../../../i18n";
+
+
 const CRM = () => {
+  const { t: tx } = useTranslation();
   const [activeTab, setActiveTab] = useState("Loyalty");
 
   // CRM data using JSON structure
@@ -118,7 +125,7 @@ const CRM = () => {
     <div className="crm-management">
       {/* Header */}
       <div className="crm-header">
-        <h1 className="crm-title">Manage Your Customer Relationship</h1>
+        <h1 className="crm-title">{tx("auto.manageYourCustomerRelationship_7496")}</h1>
       </div>
 
       {/* Stats Section */}
@@ -126,7 +133,7 @@ const CRM = () => {
         <div className="crm_ipo">
           <div className="crm_ipols">
             <h1>CRM</h1>
-            <p>Manage customer relationships</p>
+            <p>{tx("auto.manageCustomerRelationships_eb26")}</p>
           </div>
           <Button
             variant="primary"
@@ -135,14 +142,14 @@ const CRM = () => {
             className="crm_ipolsbbb"
           />
         </div>
-        <h2 className="stats-period">{crmData.month}</h2>
+        <h2 className="stats-period">{tl(crmData.month)}</h2>
         <div className="crm-stats">
           {crmData.stats.map((stat, index) => (
             <div key={index} className="stat-card">
               <div className="stat-content">
-                <div className="stat-icon">{stat.icon}</div>
-                <h3 className="stat-title">{stat.label}</h3>
-                <p className="stat-value">{stat.value}</p>
+                <div className="stat-icon">{tl(stat.icon)}</div>
+                <h3 className="stat-title">{tl(stat.label)}</h3>
+                <p className="stat-value">{tl(stat.value)}</p>
               </div>
             </div>
           ))}
@@ -161,14 +168,14 @@ const CRM = () => {
                 onClick={() => setActiveTab(tab.name)}
               >
                 <IconComponent size={16} />
-                {tab.name}
+                {tl(tab.name)}
               </button>
             );
           })}
         </div>
 
         {/* Tab Content */}
-        <div className="crm-tab-content">{renderTabContent()}</div>
+        <div className="crm-tab-content">{tl(renderTabContent())}</div>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import "./OTPInput.css";
 
+import { tl } from "../../i18n";
+import { useTranslation } from "react-i18next";
+
 const OTPInput = ({
   length = 6,
   value = "",
@@ -14,6 +17,7 @@ const OTPInput = ({
   className = "",
   ...props
 }) => {
+  useTranslation(); // re-render when the language changes
   const [otp, setOtp] = useState(Array(length).fill(""));
   const inputRefs = useRef([]);
 
@@ -175,7 +179,7 @@ const OTPInput = ({
             onPaste={handlePaste}
             onFocus={() => handleFocus(index)}
             disabled={disabled}
-            placeholder={placeholder}
+            placeholder={tl(placeholder)}
             className={`otp-input-digit ${digit ? "filled" : ""} ${
               disabled ? "disabled" : ""
             }`}
@@ -184,7 +188,7 @@ const OTPInput = ({
           />
         ))}
       </div>
-      {error && <span className="otp-error-message">{error}</span>}
+      {error && <span className="otp-error-message">{tl(error)}</span>}
     </div>
   );
 };

@@ -19,6 +19,14 @@ import { hasFeatureAccess } from "../../lib/subscription-utils";
 import "./SubscriptionGate.css";
 import { SUBSCRIPTION_PRICING } from "../../config/subscriptionPricing.js";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
+
 /** Pages that stay open when the trial or plan has ended (keep in step with the mobile app). */
 const FREE_PLAN_FEATURES = ["Dashboard Analytics", "Client Management", "Invoicing"];
 
@@ -109,6 +117,7 @@ const pricingPlans = [
 ];
 
 export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
+  const { t: tx } = useTranslation();
   const { user, signOut } = useNewAuth();
   const { actualTheme } = useTheme();
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
@@ -122,7 +131,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
-      alert("Failed to logout. Please try again.");
+      alert(tx("auto.failedToLogoutPleaseTry_9d05"));
     }
   };
 
@@ -213,11 +222,9 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
 
           {/* Main Message */}
           <div className="gate-header">
-            <h1 className="gate-title">Premium Feature</h1>
+            <h1 className="gate-title">{tx("auto.premiumFeature_fbaf")}</h1>
             <p className="gate-description">
-              {requiredFeature} is available for subscribed users only. Without a
-              plan you can still use the Dashboard, Clients and Invoices (up to 10
-              of each). Subscribe to unlock everything.
+              {tl(requiredFeature)}{" "}{tx("auto.isAvailableForSubscribedUsers_00e2")}
             </p>
           </div>
 
@@ -227,10 +234,9 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
               <div className="feature-icon-wrapper">
                 <Users className="feature-icon" />
               </div>
-              <h3 className="feature-title">Client Management</h3>
+              <h3 className="feature-title">{tx("auto.clientManagement_9610")}</h3>
               <p className="feature-desc">
-                Advanced CRM tools to manage client relationships and loyalty
-                programs
+                {tx("auto.advancedCrmToolsToManage_f547")}
               </p>
             </div>
 
@@ -238,9 +244,9 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
               <div className="feature-icon-wrapper">
                 <TrendingUp className="feature-icon" />
               </div>
-              <h3 className="feature-title">Business Analytics</h3>
+              <h3 className="feature-title">{tx("auto.businessAnalytics_9442")}</h3>
               <p className="feature-desc">
-                Detailed insights and reports to grow your fashion business
+                {tx("auto.detailedInsightsAndReportsTo_1064")}
               </p>
             </div>
 
@@ -248,9 +254,9 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
               <div className="feature-icon-wrapper">
                 <Shield className="feature-icon" />
               </div>
-              <h3 className="feature-title">Priority Support</h3>
+              <h3 className="feature-title">{tx("auto.prioritySupport_ba43")}</h3>
               <p className="feature-desc">
-                Get dedicated support and priority assistance when you need it
+                {tx("auto.getDedicatedSupportAndPriority_7ffe")}
               </p>
             </div>
           </div>
@@ -273,35 +279,35 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
                     : "free"
                 }`}
               >
-                {subscriptionStatus?.subscriptionType === "trial" &&
+                {tl(subscriptionStatus?.subscriptionType === "trial" &&
                 subscriptionStatus?.isTrialActive
-                  ? "Free Trial Active"
-                  : "Current Status"}
+                  ? tx("auto.freeTrialActive_8306")
+                  : tx("auto.currentStatus_d08b"))}
               </div>
               <h3 className="status-title">
-                {subscriptionStatus?.planType || "Free"} Account
+                {tl(subscriptionStatus?.planType || tx("auto.free_75f5"))}{" "}{tx("auto.account_85df")}
               </h3>
               <p className="status-description">
                 {subscriptionStatus?.subscriptionType === "trial" &&
                 subscriptionStatus?.isTrialActive
                   ? `Your free trial is active! Enjoy full access to all features.`
                   : subscriptionStatus?.subscriptionType === "trial"
-                  ? "Your free trial has expired. Upgrade to continue using premium features."
+                  ? tx("auto.yourFreeTrialHasExpired_9454")
                   : subscriptionStatus?.subscriptionType === "paid"
-                  ? "Your paid subscription may have expired"
-                  : "You're currently using the free version of Fashion Tally"}
+                  ? tx("auto.yourPaidSubscriptionMayHave_401f")
+                  : tx("auto.youReCurrentlyUsingThe_2865")}
               </p>
-              <p className="user-email">Logged in as: {user.email}</p>
+              <p className="user-email">{tx("auto.loggedInAs_3049")}{" "}{tl(user.email)}</p>
               {subscriptionStatus?.subscriptionEndDate && (
                 <p className="subscription-date">
-                  {subscriptionStatus?.subscriptionType === "trial" &&
+                  {tl(subscriptionStatus?.subscriptionType === "trial" &&
                   subscriptionStatus?.isTrialActive
-                    ? `Trial ends: ${new Date(
+                    ? tx("tpl.trialEnds_536e", { v0: new Date(
                         subscriptionStatus.subscriptionEndDate
-                      ).toLocaleDateString()}`
-                    : `Subscription ended: ${new Date(
+                      ).toLocaleDateString(dateLocale()) })
+                    : tx("tpl.subscriptionEnded_96e7", { v0: new Date(
                         subscriptionStatus.subscriptionEndDate
-                      ).toLocaleDateString()}`}
+                      ).toLocaleDateString(dateLocale()) }))}
                 </p>
               )}
               <Button
@@ -310,7 +316,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
                 className="refresh-btn"
                 onClick={() => window.location.reload()}
               >
-                Refresh Status
+                {tx("auto.refreshStatus_28a0")}
               </Button>
               <Button
                 variant="outline"
@@ -319,7 +325,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
                 onClick={handleLogout}
               >
                 <LogOut size={16} />
-                Logout
+                {tx("auto.logout_e43d")}
               </Button>
             </div>
           )}
@@ -328,9 +334,9 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
           <div className="plans-preview">
             <div className="plans-header">
               <Crown className="plans-icon" />
-              <h2 className="plans-title">Choose Your Plan</h2>
+              <h2 className="plans-title">{tx("auto.chooseYourPlan_c197")}</h2>
               <p className="plans-description">
-                Start with any paid plan to unlock CRM features
+                {tx("auto.startWithAnyPaidPlan_e3ee")}
               </p>
             </div>
 
@@ -343,13 +349,13 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
                   } ${plan.popular ? "popular" : ""}`}
                   onClick={() => setSelectedPlan(plan.name)}
                 >
-                  {plan.popular && <div className="popular-badge">Popular</div>}
-                  <h3 className="plan-name">{plan.name}</h3>
+                  {plan.popular && <div className="popular-badge">{tx("auto.popular_9bc2")}</div>}
+                  <h3 className="plan-name">{tl(plan.name)}</h3>
                   <p className="plan-pricee">
                     ₦{plan.monthlyPrice.toLocaleString()}
                   </p>
-                  <p className="plan-period">/month</p>
-                  <p className="plan-description">{plan.description}</p>
+                  <p className="plan-period">{tx("auto.month_ab0c")}</p>
+                  <p className="plan-description">{tl(plan.description)}</p>
                 </div>
               ))}
             </div>
@@ -358,7 +364,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
             {selectedPlan && (
               <div className="selected-plan-features">
                 <h3 className="features-title">
-                  {selectedPlan} Plan Features:
+                  {tl(selectedPlan)}{" "}{tx("auto.planFeatures_fa20")}
                 </h3>
                 <div className="features-grid">
                   {pricingPlans
@@ -367,7 +373,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
                     .map((feature, index) => (
                       <div key={index} className="feature-item">
                         <CheckCircle className="check-icon" />
-                        <span className="feature-text">{feature}</span>
+                        <span className="feature-text">{tl(feature)}</span>
                       </div>
                     ))}
                 </div>
@@ -379,7 +385,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
                     selectedPlanData &&
                     selectedPlanData.features.length > 8 && (
                       <p className="more-features">
-                        +{selectedPlanData.features.length - 8} more features
+                        +{selectedPlanData.features.length - 8}{" "}{tx("auto.moreFeatures_2175")}
                       </p>
                     )
                   );
@@ -397,7 +403,7 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
               }
             >
               <Sparkles className="btn-icon" />
-              Upgrade to {selectedPlan}
+              {tx("auto.upgradeTo_2161")}{" "}{tl(selectedPlan)}
               <ArrowRight className="btn-icon" />
             </button>
             <Button
@@ -405,17 +411,17 @@ export function SubscriptionGate({ children, requiredFeature = "CRM Tools" }) {
               onClick={() => navigate(-1)}
               className="back-btn"
             >
-              Go Back
+              {tx("auto.goBack_f03e")}
             </Button>
           </div>
 
           {/* Help Text */}
           <p className="help-text">
-            Need help choosing a plan?{" "}
+            {tx("auto.needHelpChoosingAPlan_5387")}{" "}
             <a href="/support" className="help-link">
-              Contact our support team
+              {tx("auto.contactOurSupportTeam_6456")}
             </a>{" "}
-            for personalized recommendations.
+            {tx("auto.forPersonalizedRecommendations_2c03")}
           </p>
         </div>
       </div>

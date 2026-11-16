@@ -6,6 +6,11 @@ import { useNewAuth } from "../../contexts/NewAuthContext";
 import Button from "../../components/button/Button";
 import "./SubscriptionCallback.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 function getPlanFromStorage() {
   return localStorage.getItem("pending_plan") || "GROWTH";
 }
@@ -45,6 +50,7 @@ const POLL_INTERVAL_MS = 5000;
 const POLL_TIMEOUT_MS = 2 * 60 * 1000;
 
 const SubscriptionCallback = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { actualTheme } = useTheme();
@@ -91,8 +97,8 @@ const SubscriptionCallback = () => {
           setStatus("failed");
           setMessage(
             isFailedStatus(paymentStatus)
-              ? "Payment was cancelled or failed. Please try again."
-              : "Missing transaction details from Flutterwave.",
+              ? tx("auto.paymentWasCancelledOrFailed_5adb")
+              : tx("auto.missingTransactionDetailsFromFlu_32c0"),
           );
           return;
         }
@@ -104,7 +110,7 @@ const SubscriptionCallback = () => {
         const headers = { "Content-Type": "application/json" };
         if (token) headers.Authorization = `Bearer ${token}`;
 
-        setMessage("Saving your payment…");
+        setMessage(tx("auto.savingYourPayment_145e"));
 
         const backendUrl = import.meta.env.VITE_BACKEND_URL;
         const res = paystackRef
@@ -135,7 +141,7 @@ const SubscriptionCallback = () => {
         } catch {
           setStatus("failed");
           setMessage(
-            `Backend at ${backendUrl} did not accept the payment route (HTTP ${res.status}). Restart the Fashiontally_Backend server and try Check again.`,
+            tx("tpl.backendAtDidNotAccept_76e9", { v0: backendUrl, v1: res.status }),
           );
           return;
         }
@@ -147,8 +153,8 @@ const SubscriptionCallback = () => {
           setStatus("success");
           setMessage(
             alreadyProcessed
-              ? "Payment already saved. Your subscription is ready."
-              : "Payment successful! Your subscription has been activated.",
+              ? tx("auto.paymentAlreadySavedYourSubscript_c364")
+              : tx("auto.paymentSuccessfulYourSubscriptio_36a5"),
           );
           setTimeout(() => navigate("/dashboard"), 2500);
         };
@@ -159,7 +165,7 @@ const SubscriptionCallback = () => {
           setMessage(
             data.error ||
               data.message ||
-              "Could not save your payment yet. Tap Check again, or contact support with your receipt.",
+              tx("auto.couldNotSaveYourPayment_b09b"),
           );
           return;
         }
@@ -171,7 +177,7 @@ const SubscriptionCallback = () => {
 
         // Flutterwave hasn't confirmed it yet — wait for the webhook to activate the plan.
         // The pending details stay saved so "Check again" can pick up where this left off.
-        setMessage(data.message || "Confirming your payment…");
+        setMessage(data.message || tx("auto.confirmingYourPayment_572e"));
         const query = new URLSearchParams(
           paystackRef
             ? { txRef: paystackRef }
@@ -194,13 +200,13 @@ const SubscriptionCallback = () => {
         }
         setStatus("pending");
         setMessage(
-          "Your payment is still being confirmed. Bank transfers can take a few minutes. Your plan will activate automatically and we'll email your receipt. You can check again or go to your dashboard.",
+          tx("auto.yourPaymentIsStillBeing_147d"),
         );
       } catch (error) {
         console.error("Error handling payment callback:", error);
         setStatus("failed");
         setMessage(
-          error.message || "An error occurred while processing your payment.",
+          error.message || tx("auto.anErrorOccurredWhileProcessing_4941"),
         );
       }
     };
@@ -225,9 +231,9 @@ const SubscriptionCallback = () => {
               <div className="callback-icon loading">
                 <Loader className="spinner" />
               </div>
-              <h1 className="callback-title">Processing Payment...</h1>
+              <h1 className="callback-title">{tx("auto.processingPayment_d29b")}</h1>
               <p className="callback-message">
-                {message || "Please wait while we save your payment."}
+                {tl(message || tx("auto.pleaseWaitWhileWeSave_3114"))}
               </p>
             </>
           )}
@@ -237,11 +243,11 @@ const SubscriptionCallback = () => {
               <div className="callback-icon success">
                 <CheckCircle />
               </div>
-              <h1 className="callback-title">Payment Successful!</h1>
-              <p className="callback-message">{message}</p>
+              <h1 className="callback-title">{tx("auto.paymentSuccessful_8afc")}</h1>
+              <p className="callback-message">{tl(message)}</p>
               <div className="callback-actions">
                 <Button onClick={handleGoToDashboard} variant="primary">
-                  Go to Dashboard
+                  {tx("auto.goToDashboard_f7b5")}
                 </Button>
               </div>
             </>
@@ -252,14 +258,14 @@ const SubscriptionCallback = () => {
               <div className="callback-icon loading">
                 <Clock />
               </div>
-              <h1 className="callback-title">Payment still processing</h1>
-              <p className="callback-message">{message}</p>
+              <h1 className="callback-title">{tx("auto.paymentStillProcessing_3372")}</h1>
+              <p className="callback-message">{tl(message)}</p>
               <div className="callback-actions">
                 <Button onClick={handleRetry} variant="primary">
-                  Check again
+                  {tx("auto.checkAgain_e185")}
                 </Button>
                 <Button onClick={handleGoToDashboard} variant="secondary">
-                  Go to Dashboard
+                  {tx("auto.goToDashboard_f7b5")}
                 </Button>
               </div>
             </>
@@ -270,14 +276,14 @@ const SubscriptionCallback = () => {
               <div className="callback-icon failed">
                 <XCircle />
               </div>
-              <h1 className="callback-title">Payment not confirmed</h1>
-              <p className="callback-message">{message}</p>
+              <h1 className="callback-title">{tx("auto.paymentNotConfirmed_70ea")}</h1>
+              <p className="callback-message">{tl(message)}</p>
               <div className="callback-actions">
                 <Button onClick={handleRetry} variant="primary">
-                  Check again
+                  {tx("auto.checkAgain_e185")}
                 </Button>
                 <Button onClick={handleGoToDashboard} variant="secondary">
-                  Go to Dashboard
+                  {tx("auto.goToDashboard_f7b5")}
                 </Button>
               </div>
             </>

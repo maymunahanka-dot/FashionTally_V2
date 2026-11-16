@@ -1,6 +1,9 @@
 import { Cookie } from "lucide-react";
 import LegalPage from "../Home/LegalPage.jsx";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
 const policyData = {
   title: "Fashion Tally – Cookie Policy",
   lastUpdated: "28th January 2026",
@@ -109,13 +112,15 @@ const policyData = {
 /** Small label next to the cookie type headings. */
 const badgeFor = (title) => {
   const t = title.toLowerCase();
-  if (t.includes("essential")) return <span className="lx-legal-badge">Required</span>;
-  if (t.includes("analytics")) return <span className="lx-legal-badge">Analytics</span>;
-  if (t.includes("marketing")) return <span className="lx-legal-badge">Marketing</span>;
+  if (t.includes("essential")) return <span className="lx-legal-badge">{tx("auto.required_eed6")}</span>;
+  if (t.includes("analytics")) return <span className="lx-legal-badge">{tx("auto.analytics_25bc")}</span>;
+  if (t.includes("marketing")) return <span className="lx-legal-badge">{tx("auto.marketing_e0c5")}</span>;
   return null;
 };
 
-const CookiePolicy = () => (
+const CookiePolicy = () => {
+  const { t: tx } = useTranslation();
+  return (
   <LegalPage
     eyebrow="LEGAL / COOKIES"
     titleLines={["Cookie Policy."]}
@@ -127,14 +132,14 @@ const CookiePolicy = () => (
     <div className="lx-legal-highlight" data-reveal>
       <Cookie size={22} />
       <div>
-        <b>Cookie management</b>
+        <b>{tx("auto.cookieManagement_1504")}</b>
         <p>
-          You can manage your cookie preferences through your browser settings. Most browsers allow you to view, delete,
-          and block cookies. Blocking certain cookies may affect how our website works.
+          {tx("auto.youCanManageYourCookie_748a")}
         </p>
       </div>
     </div>
   </LegalPage>
 );
+};
 
 export default CookiePolicy;

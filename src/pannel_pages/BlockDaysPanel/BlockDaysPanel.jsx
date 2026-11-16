@@ -3,6 +3,13 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import "./BlockDaysPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+import { dateLocale } from "../../i18n";
+
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const toKey = (year, month, day) =>
@@ -15,6 +22,7 @@ const isWeekendKey = (key) => {
 };
 
 const BlockDaysPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const { user } = useContext(NewAuthContext);
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -39,7 +47,7 @@ const BlockDaysPanel = ({ onClose }) => {
           setDates(data.data?.dates || []);
         }
       } catch {
-        setError("Could not load blocked days.");
+        setError(tx("auto.couldNotLoadBlockedDays_cb01"));
       } finally {
         setLoading(false);
       }
@@ -81,7 +89,7 @@ const BlockDaysPanel = ({ onClose }) => {
       await persist(next, blockWeekends);
     } catch (err) {
       setDates(previous);
-      setError(err.message || "Could not update that day.");
+      setError(err.message || tx("auto.couldNotUpdateThatDay_9ef6"));
     } finally {
       setSaving(false);
     }
@@ -96,7 +104,7 @@ const BlockDaysPanel = ({ onClose }) => {
       await persist(dates, next);
     } catch (err) {
       setBlockWeekends(!next);
-      setError(err.message || "Could not update weekends.");
+      setError(err.message || tx("auto.couldNotUpdateWeekends_774d"));
     } finally {
       setSaving(false);
     }
@@ -113,7 +121,7 @@ const BlockDaysPanel = ({ onClose }) => {
     setHighlight(value);
   };
 
-  const monthLabel = cursor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const monthLabel = cursor.toLocaleDateString(dateLocale("en-US"), { month: "long", year: "numeric" });
   const todayKey = toKey(today.getFullYear(), today.getMonth(), today.getDate());
 
   return (
@@ -122,24 +130,24 @@ const BlockDaysPanel = ({ onClose }) => {
         <button type="button" className="block_days_close" onClick={onClose}>
           <X size={20} />
         </button>
-        <h2>Block days</h2>
+        <h2>{tx("auto.blockDays_bf76")}</h2>
       </div>
 
       <div className="block_days_body">
         {loading ? (
-          <p className="block_days_note">Loading...</p>
+          <p className="block_days_note">{tx("auto.loading_b04b")}</p>
         ) : (
           <>
             <label className="block_days_weekend">
               <input type="checkbox" checked={blockWeekends} onChange={toggleWeekends} />
               <span>
-                <strong>Block every weekend</strong>
-                <small>Saturday and Sunday cannot be booked</small>
+                <strong>{tx("auto.blockEveryWeekend_664f")}</strong>
+                <small>{tx("auto.saturdayAndSundayCannotBe_93a0")}</small>
               </span>
             </label>
 
             <label className="block_days_search">
-              Find a day
+              {tx("auto.findADay_0369")}
               <input
                 type="date"
                 value={search}
@@ -155,7 +163,7 @@ const BlockDaysPanel = ({ onClose }) => {
               >
                 <ChevronLeft size={18} />
               </button>
-              <strong>{monthLabel}</strong>
+              <strong>{tl(monthLabel)}</strong>
               <button
                 type="button"
                 aria-label="Next month"
@@ -167,7 +175,7 @@ const BlockDaysPanel = ({ onClose }) => {
 
             <div className="block_days_grid block_days_weekdays">
               {WEEKDAYS.map((day) => (
-                <span key={day}>{day}</span>
+                <span key={day}>{tl(day)}</span>
               ))}
             </div>
             <div className="block_days_grid">
@@ -188,16 +196,16 @@ const BlockDaysPanel = ({ onClose }) => {
                     onClick={() => toggleDate(key)}
                     disabled={saving}
                   >
-                    {day}
+                    {tl(day)}
                   </button>
                 );
               })}
             </div>
 
             <p className="block_days_note">
-              {saving ? "Saving..." : "Click a day to block it. Click again to open it."}
+              {tl(saving ? tx("auto.saving_ae7e") : tx("auto.clickADayToBlock_9b06"))}
             </p>
-            {error && <p className="block_days_error">{error}</p>}
+            {error && <p className="block_days_error">{tl(error)}</p>}
           </>
         )}
       </div>

@@ -5,7 +5,16 @@ import { getEffectiveUserEmail } from "../../../utils/teamUtils";
 import { getDesignsByClientId } from "../../../backend/services/crmService";
 import "./ClientDesigns.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+
+import { dateLocale } from "../../../i18n";
+
+
 const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
+  const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +54,7 @@ const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
   const formatDate = (timestamp) => {
     if (!timestamp) return "N/A";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale("en-US"), {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -60,7 +69,7 @@ const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
   if (loading) {
     return (
       <div className="client_details_designs">
-        <div className="client_designs_loading">Loading designs...</div>
+        <div className="client_designs_loading">{tx("auto.loadingDesigns_5a80")}</div>
       </div>
     );
   }
@@ -69,10 +78,10 @@ const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
     <div className="client_details_designs">
       {/* Designs Header */}
       <div className="client_designs_header">
-        <h3 className="client_designs_count">{designs.length} Designs</h3>
+        <h3 className="client_designs_count">{tl(designs.length)}{" "}{tx("auto.designs_fdea")}</h3>
         <button className="client_designs_new_btn" onClick={handleNewDesign}>
           <Plus size={18} />
-          New Design
+          {tx("auto.newDesign_f4bb")}
         </button>
       </div>
 
@@ -94,7 +103,7 @@ const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
                   />
                 ) : (
                   <div className="client_design_no_image">
-                    <span>No Image</span>
+                    <span>{tx("auto.noImage_33cf")}</span>
                   </div>
                 )}
                 <div
@@ -102,19 +111,19 @@ const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
                     design.status?.toLowerCase().replace(" ", "_") || "active"
                   }`}
                 >
-                  {design.status || "Active"}
+                  {tl(design.status || tx("auto.active_a733"))}
                 </div>
               </div>
 
               <div className="client_design_content">
-                <h4 className="client_design_title">{design.name}</h4>
-                <p className="client_design_category">{design.category}</p>
+                <h4 className="client_design_title">{tl(design.name)}</h4>
+                <p className="client_design_category">{tl(design.category)}</p>
                 <p className="client_design_date">
-                  {formatDate(design.createdAt)}
+                  {tl(formatDate(design.createdAt))}
                 </p>
                 <div className="client_design_footer">
                   <span className="client_design_price">
-                    {formatPrice(design.price)}
+                    {tl(formatPrice(design.price))}
                   </span>
                   <button className="client_design_arrow_btn">
                     <ChevronRight size={20} />
@@ -126,13 +135,13 @@ const ClientDesigns = ({ client, onOpenAddDesign, onDesignClick }) => {
         </div>
       ) : (
         <div className="client_designs_empty">
-          <p>No designs yet for this client</p>
+          <p>{tx("auto.noDesignsYetForThis_d0de")}</p>
           <button
             className="client_designs_empty_btn"
             onClick={handleNewDesign}
           >
             <Plus size={18} />
-            Create First Design
+            {tx("auto.createFirstDesign_aa40")}
           </button>
         </div>
       )}

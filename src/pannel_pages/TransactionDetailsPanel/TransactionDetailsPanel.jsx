@@ -4,12 +4,20 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { MoneyAmount } from "../../components/MoneyAmount/MoneyAmount";
 import "./TransactionDetailsPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
+import { dateLocale } from "../../i18n";
+
 const TransactionDetailsPanel = ({
   transaction,
   onClose,
   onEdit,
   onDelete,
 }) => {
+  const { t: tx } = useTranslation();
   const { isDark } = useTheme();
 
   if (!transaction) return null;
@@ -25,7 +33,7 @@ const TransactionDetailsPanel = ({
     date: transaction.date,
     referenceNumber: transaction.referenceNumber,
     transactionTime: transaction.createdAt
-      ? transaction.createdAt.toLocaleDateString("en-US", {
+      ? transaction.createdAt.toLocaleDateString(dateLocale("en-US"), {
           month: "long",
           day: "numeric",
           year: "numeric",
@@ -66,7 +74,7 @@ const TransactionDetailsPanel = ({
         <button className="tdp_close_btn" onClick={onClose}>
           <X size={20} />
         </button>
-        <h2 className="tdp_panel_title">Transaction Details</h2>
+        <h2 className="tdp_panel_title">{tx("auto.transactionDetails_ef1f")}</h2>
         <div className="tdp_header_actions">
           <button className="tdp_action_btn tdp_edit_btn" onClick={handleEdit}>
             <Edit3 size={16} />
@@ -122,8 +130,8 @@ const TransactionDetailsPanel = ({
             </div>
 
             <div className="tdp_card_info">
-              <h3 className="tdp_card_title">{transactionDetails.title}</h3>
-              <p className="tdp_card_subtitle">{transactionDetails.category}</p>
+              <h3 className="tdp_card_title">{tl(transactionDetails.title)}</h3>
+              <p className="tdp_card_subtitle">{tl(transactionDetails.category)}</p>
             </div>
 
             <div className="tdp_card_amount">
@@ -147,11 +155,11 @@ const TransactionDetailsPanel = ({
                 transactionDetails.isIncome ? "income" : "expense"
               }_badge`}
             >
-              <span>{transactionDetails.type}</span>
+              <span>{tl(transactionDetails.type)}</span>
             </div>
             <div className="tdp_date_info">
               <Calendar size={14} />
-              <span>{transactionDetails.date}</span>
+              <span>{tl(transactionDetails.date)}</span>
             </div>
           </div>
         </div>
@@ -159,52 +167,52 @@ const TransactionDetailsPanel = ({
         {/* Transaction Details */}
         <div className="tdp_details_list">
           <div className="tdp_detail_item">
-            <span className="tdp_detail_label">Reference Number</span>
+            <span className="tdp_detail_label">{tx("auto.referenceNumber_7419")}</span>
             <span className="tdp_detail_value">
-              {transactionDetails.referenceNumber}
+              {tl(transactionDetails.referenceNumber)}
             </span>
           </div>
 
           <div className="tdp_detail_item">
-            <span className="tdp_detail_label">Transaction Time</span>
+            <span className="tdp_detail_label">{tx("auto.transactionTime_fd82")}</span>
             <span className="tdp_detail_value">
-              {transactionDetails.transactionTime}
+              {tl(transactionDetails.transactionTime)}
             </span>
           </div>
 
           <div className="tdp_detail_item">
-            <span className="tdp_detail_label">Vendor</span>
+            <span className="tdp_detail_label">{tx("auto.vendor_d961")}</span>
             <span className="tdp_detail_value">
-              {transactionDetails.vendor}
+              {tl(transactionDetails.vendor)}
             </span>
           </div>
 
           <div className="tdp_detail_item">
-            <span className="tdp_detail_label">Payment Method</span>
+            <span className="tdp_detail_label">{tx("auto.paymentMethod_f383")}</span>
             <span className="tdp_detail_value">
-              {transactionDetails.paymentMethod}
+              {tl(transactionDetails.paymentMethod)}
             </span>
           </div>
 
           <div className="tdp_detail_item">
-            <span className="tdp_detail_label">Status</span>
-            <span className="tdp_status_badge completed">completed</span>
+            <span className="tdp_detail_label">{tx("auto.status_bae7")}</span>
+            <span className="tdp_status_badge completed">{tx("auto.completed_231e")}</span>
           </div>
         </div>
 
         {/* Amount Breakdown */}
         <div className="tdp_amount_breakdown_section">
-          <h4 className="tdp_breakdown_title">Amount Breakdown</h4>
+          <h4 className="tdp_breakdown_title">{tx("auto.amountBreakdown_5a1f")}</h4>
 
           <div className="tdp_breakdown_item">
-            <span className="tdp_breakdown_label">Subtotal</span>
+            <span className="tdp_breakdown_label">{tx("auto.subtotal_97f7")}</span>
             <span className="tdp_breakdown_value">
               <MoneyAmount amount={transactionDetails.subtotal} align="end" />
             </span>
           </div>
 
           <div className="tdp_breakdown_total">
-            <span className="tdp_total_label">Total Amount</span>
+            <span className="tdp_total_label">{tx("auto.totalAmount_490a")}</span>
             <span
               className={`tdp_total_value ${
                 transactionDetails.isIncome ? "income" : "expense"
@@ -222,8 +230,8 @@ const TransactionDetailsPanel = ({
         {/* Additional Details Section */}
         {transactionDetails.notes && (
           <div className="tdp_notes_section">
-            <h4 className="tdp_notes_title">Notes</h4>
-            <p className="tdp_notes_content">{transactionDetails.notes}</p>
+            <h4 className="tdp_notes_title">{tx("auto.notes_7044")}</h4>
+            <p className="tdp_notes_content">{tl(transactionDetails.notes)}</p>
           </div>
         )}
 
@@ -236,7 +244,7 @@ const TransactionDetailsPanel = ({
             onClick={() => console.log("Download receipt")}
             className="tdp_download_receipt_btn"
           >
-            Download Receipt
+            {tx("auto.downloadReceipt_dae6")}
           </Button>
         </div>
       </div>

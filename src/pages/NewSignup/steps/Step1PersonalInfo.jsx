@@ -8,6 +8,11 @@ import Button from "../../../components/button/Button";
 import OTPVerificationModal from "../../../components/OTPVerificationModal/OTPVerificationModal";
 import toast from "react-hot-toast";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../../i18n";
+
+import { tl } from "../../../i18n";
+
 const Step1PersonalInfo = ({
   formData,
   errors,
@@ -15,6 +20,7 @@ const Step1PersonalInfo = ({
   onInputChange,
   onNext,
 }) => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
@@ -24,22 +30,22 @@ const Step1PersonalInfo = ({
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = tx("auto.nameIsRequired_222c");
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = tx("auto.emailIsRequired_4da1");
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        newErrors.email = "Please enter a valid email address";
+        newErrors.email = tx("auto.pleaseEnterAValidEmail_0802");
       }
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
+      newErrors.phone = tx("auto.phoneNumberIsRequired_f845");
     } else if (formData.phone.length < 8) {
-      newErrors.phone = "Please enter a valid phone number";
+      newErrors.phone = tx("auto.pleaseEnterAValidPhone_4986");
     }
 
     setErrors(newErrors);
@@ -82,10 +88,10 @@ const Step1PersonalInfo = ({
 
       try {
         await sendOTP();
-        toast.success("OTP sent to your email!");
+        toast.success(tx("auto.otpSentToYourEmail_c65b"));
       } catch (error) {
         console.error("❌ Error sending OTP:", error);
-        toast.error(error.message || "Failed to send OTP. Please try again.");
+        toast.error(error.message || tx("auto.failedToSendOtpPlease_6e4b"));
         setShowOTPModal(false);
       } finally {
         setIsSendingOTP(false);
@@ -95,14 +101,14 @@ const Step1PersonalInfo = ({
 
   const handleResendOTP = async () => {
     await sendOTP();
-    toast.success("A new code has been sent to your email.");
+    toast.success(tx("auto.aNewCodeHasBeen_7f50"));
   };
 
   const handleOTPVerify = async (otp) => {
     const data = await postAuth("verify-email-otp", { email: formData.email, otp });
     onInputChange("emailVerificationToken", data.verificationToken);
     setShowOTPModal(false);
-    toast.success("Email verified successfully!");
+    toast.success(tx("auto.emailVerifiedSuccessfully_7d8b"));
     onNext();
   };
 
@@ -116,9 +122,9 @@ const Step1PersonalInfo = ({
   return (
     <>
       <div className="n_s_u_s-s-title-con">
-        <h1 className="n_s_u_s-s-title">Create Account</h1>
+        <h1 className="n_s_u_s-s-title">{tx("auto.createAccount_eff4")}</h1>
         <p className="n_s_u_s-s-subtitle">
-          Set up your Fashiontally account today!
+          {tx("auto.setUpYourFashiontallyAccount_3dd5")}
         </p>
       </div>
 
@@ -130,7 +136,7 @@ const Step1PersonalInfo = ({
       >
         {errors.general && (
           <div className="n_s_u_error-message" style={{ marginBottom: "1rem" }}>
-            {errors.general}
+            {tl(errors.general)}
           </div>
         )}
 
@@ -139,7 +145,7 @@ const Step1PersonalInfo = ({
           label=""
           value={formData.name}
           onChange={(e) => onInputChange("name", e.target.value)}
-          placeholder="Full Name"
+          placeholder={tx("auto.fullName_6434")}
           required
           error={errors.name}
           active={!!formData.name}
@@ -150,7 +156,7 @@ const Step1PersonalInfo = ({
           label=""
           value={formData.email}
           onChange={(e) => onInputChange("email", e.target.value)}
-          placeholder="Email Address"
+          placeholder={tx("auto.emailAddress_09ba")}
           required
           error={errors.email}
           active={!!formData.email}
@@ -165,7 +171,7 @@ const Step1PersonalInfo = ({
             country={"ng"}
             value={formData.phone}
             onChange={(phone) => onInputChange("phone", phone)}
-            placeholder="Phone Number"
+            placeholder={tx("auto.phoneNumber_ab25")}
             inputClass="phone-input-field"
             containerClass="phone-input-container"
             buttonClass="phone-input-button"
@@ -177,7 +183,7 @@ const Step1PersonalInfo = ({
             specialLabel=""
           />
           {errors.phone && (
-            <span className="phone-input-error">{errors.phone}</span>
+            <span className="phone-input-error">{tl(errors.phone)}</span>
           )}
         </div>
 
@@ -189,13 +195,13 @@ const Step1PersonalInfo = ({
             disabled={!isFormValid}
             className={isFormValid ? "" : "n_s_u_s-s-btn-inactive"}
           >
-            Next
+            {tx("auto.next_bc98")}
           </Button>
         </div>
 
         {/* Divider */}
         <div className="n_s_u_auth-divider">
-          <span>or</span>
+          <span>{tx("auto.or_1758")}</span>
         </div>
 
         {/* Google Sign Up Button */}
@@ -246,23 +252,23 @@ const Step1PersonalInfo = ({
               </svg>
             )}
           </div>
-          {isGoogleLoading ? "Connecting..." : "Continue with Google"}
+          {tl(isGoogleLoading ? tx("auto.connecting_b98e") : tx("auto.continueWithGoogle_ccc5"))}
         </button>
 
         <p className="n_s_u_s-s-term">
-          By signing up, you agree to the{" "}
+          {tx("auto.bySigningUpYouAgree_d580")}{" "}
           <span
             className="n_s_u_s-s-terml-link"
             onClick={() => navigate("/terms-of-service")}
           >
-            Terms of Service
+            {tx("auto.termsOfService_0c8a")}
           </span>{" "}
-          and{" "}
+          {tx("auto.and_cffa")}{" "}
           <span
             className="n_s_u_s-s-terml-link"
             onClick={() => navigate("/privacy-policy")}
           >
-            Data Processing Agreement
+            {tx("auto.dataProcessingAgreement_a061")}
           </span>
         </p>
       </form>
@@ -273,11 +279,11 @@ const Step1PersonalInfo = ({
         onClose={handleCloseOTPModal}
         onVerify={handleOTPVerify}
         onResend={handleResendOTP}
-        title="Verify Your Account"
+        title={tx("auto.verifyYourAccount_ddee")}
         message={
           isSendingOTP
-            ? "Sending verification code..."
-            : `We've sent a verification code to your email (${formData.email}). Please enter it below.`
+            ? tx("auto.sendingVerificationCode_b96b")
+            : tx("tpl.weVeSentAVerification_c834", { v0: formData.email })
         }
         otpLength={6}
       />

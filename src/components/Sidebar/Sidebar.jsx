@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
 
@@ -18,10 +19,16 @@ import { MdSupportAgent } from "react-icons/md";
 import "./Sidebar.css";
 import logo from "../../assets/Image/logog.png";
 
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const Sidebar = () => {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useNewAuth();
+  const { t } = useTranslation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -38,61 +45,61 @@ const Sidebar = () => {
   const menuItems = [
     {
       id: "dashboard",
-      label: "Dashboard Overview",
+      label: t("nav.dashboard"),
       icon: <RiApps2AiLine className="sidebar-icon" />,
       path: "/dashboard",
     },
     {
       id: "clients",
-      label: "Clients Management",
+      label: t("nav.clients"),
       icon: <TbUsersGroup className="sidebar-icon" />,
       path: "/dashboard/clients",
     },
     {
       id: "inventory",
-      label: "Inventory",
+      label: t("nav.inventory"),
       icon: <SiHackthebox className="sidebar-icon" />,
       path: "/dashboard/inventory",
     },
     {
       id: "designs",
-      label: "Designs",
+      label: t("nav.designs"),
       icon: <MdOutlineColorLens className="sidebar-icon" />,
       path: "/dashboard/designs",
     },
     {
       id: "orders",
-      label: "Order Management",
+      label: t("nav.orders"),
       icon: <CiDeliveryTruck className="sidebar-icon" />,
       path: "/dashboard/orders",
     },
     {
       id: "invoice",
-      label: "Invoice",
+      label: t("nav.invoice"),
       icon: <TbInvoice className="sidebar-icon" />,
       path: "/dashboard/invoice",
     },
     {
       id: "appointments",
-      label: "Appointments",
+      label: t("nav.appointments"),
       icon: <SlCalender className="sidebar-icon" />,
       path: "/dashboard/appointments",
     },
     {
       id: "finances",
-      label: "Finances",
+      label: t("nav.finances"),
       icon: <FaArrowTrendUp className="sidebar-icon" />,
       path: "/dashboard/finances",
     },
     {
       id: "crm",
-      label: "CRM",
+      label: t("nav.crm"),
       icon: <TbUserStar className="sidebar-icon" />,
       path: "/dashboard/crm",
     },
     {
       id: "settings",
-      label: "More Settings",
+      label: t("nav.settings"),
       icon: <IoSettingsOutline className="sidebar-icon" />,
       path: "/dashboard/settings",
     },
@@ -260,15 +267,15 @@ const Sidebar = () => {
                 )}
               </div>
               <div className="brand-details">
-                <h3 className="brand-name">{brandData.businessName}</h3>
+                <h3 className="brand-name">{tl(brandData.businessName)}</h3>
                 {brandData.businessAddress && (
-                  <p className="brand-address">{brandData.businessAddress}</p>
+                  <p className="brand-address">{tl(brandData.businessAddress)}</p>
                 )}
                 {brandData.businessPhone && (
-                  <p className="brand-contact">{brandData.businessPhone}</p>
+                  <p className="brand-contact">{tl(brandData.businessPhone)}</p>
                 )}
                 {brandData.businessEmail && (
-                  <p className="brand-contact">{brandData.businessEmail}</p>
+                  <p className="brand-contact">{tl(brandData.businessEmail)}</p>
                 )}
               </div>
             </div>
@@ -285,8 +292,8 @@ const Sidebar = () => {
                   }`}
                   onClick={() => handleNavigation(item.path)}
                 >
-                  {item.icon}
-                  <span className="sidebar-label">{item.label}</span>
+                  {tl(item.icon)}
+                  <span className="sidebar-label">{tl(item.label)}</span>
                 </button>
               </li>
             ))}
@@ -304,7 +311,7 @@ const Sidebar = () => {
                 className="sidebar-support-btn"
               >
                 <MdSupportAgent className="support-icon" />
-                <span className="support-label">Expert Support</span>
+                <span className="support-label">{t("nav.support")}</span>
               </a>
 
               <a
@@ -321,8 +328,8 @@ const Sidebar = () => {
                   <path d="M114.8 36.5L333 173.8l-67.8 50.6L47 58.7c5.3-17.1 21-28.8 36.5-28.8 10.8 0 21.8 4.3 31.3 6.6z" fill="#00DB00"/>
                 </svg>
                 <div className="store-btn-text">
-                  <span className="store-btn-sub">Get it on</span>
-                  <span className="store-btn-main">Google Play</span>
+                  <span className="store-btn-sub">{tx("auto.getItOn_bd8e")}</span>
+                  <span className="store-btn-main">{tx("auto.googlePlay_da68")}</span>
                 </div>
               </a>
               <a
@@ -336,8 +343,8 @@ const Sidebar = () => {
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="currentColor"/>
                 </svg>
                 <div className="store-btn-text">
-                  <span className="store-btn-sub">Download on the</span>
-                  <span className="store-btn-main">App Store</span>
+                  <span className="store-btn-sub">{tx("auto.downloadOnThe_aa63")}</span>
+                  <span className="store-btn-main">{tx("auto.appStore_c3e0")}</span>
                 </div>
               </a>
             </div>

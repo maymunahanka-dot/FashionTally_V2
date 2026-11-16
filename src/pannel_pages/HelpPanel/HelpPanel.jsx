@@ -12,7 +12,13 @@ import {
 import Button from "../../components/button/Button";
 import "./HelpPanel.css";
 
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../../i18n";
+
+import { tl } from "../../i18n";
+
 const HelpPanel = ({ onClose }) => {
+  const { t: tx } = useTranslation();
   const supportOptions = [
     {
       id: "live-chat",
@@ -119,7 +125,7 @@ const HelpPanel = ({ onClose }) => {
 
   const HelpSection = ({ title, options }) => (
     <div className="help_section">
-      <h3 className="help_section_title">{title}</h3>
+      <h3 className="help_section_title">{tl(title)}</h3>
       <div className="help_options">
         {options.map((option) => {
           const IconComponent = option.icon;
@@ -130,9 +136,9 @@ const HelpPanel = ({ onClose }) => {
                   <IconComponent size={20} />
                 </div>
                 <div className="help_option_info">
-                  <h4 className="help_option_title">{option.title}</h4>
+                  <h4 className="help_option_title">{tl(option.title)}</h4>
                   <p className="help_option_description">
-                    {option.description}
+                    {tl(option.description)}
                   </p>
                 </div>
               </div>
@@ -142,7 +148,7 @@ const HelpPanel = ({ onClose }) => {
                 className="help_option_action"
                 style={{ color: option.actionColor }}
               >
-                {option.action}
+                {tl(option.action)}
               </Button>
             </div>
           );
@@ -159,21 +165,21 @@ const HelpPanel = ({ onClose }) => {
           <ArrowLeft size={20} />
         </button>
         <div className="help_header_content">
-          <h2 className="help_title">Help</h2>
-          <p className="help_subtitle">Support & resources</p>
+          <h2 className="help_title">{tx("auto.help_c47a")}</h2>
+          <p className="help_subtitle">{tx("auto.supportResources_68ca")}</p>
         </div>
       </div>
 
       {/* Content */}
       <div className="help_content">
         {/* Support Section */}
-        <HelpSection title="Support" options={supportOptions} />
+        <HelpSection title={tx("auto.support_f32d")} options={supportOptions} />
 
         {/* Feedback Section */}
-        <HelpSection title="Feedback" options={feedbackOptions} />
+        <HelpSection title={tx("auto.feedback_c8d7")} options={feedbackOptions} />
 
         {/* Community Section */}
-        <HelpSection title="Community" options={communityOptions} />
+        <HelpSection title={tx("auto.community_bfd5")} options={communityOptions} />
       </div>
     </div>
   );

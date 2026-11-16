@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
@@ -7,8 +8,12 @@ import Button from "../../components/button/Button";
 import logo from "../../assets/Image/logo.png";
 import "./NewLogin.css";
 
+import { tl } from "../../i18n";
+
+import LanguageSwitch from "../../components/LanguageSwitch/LanguageSwitch.jsx";
 const NewLogin = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { signInWithEmail, signInWithGoogle } = useNewAuth();
   const [formData, setFormData] = useState({
     email: "",
@@ -56,16 +61,16 @@ const NewLogin = () => {
 
     const newErrors = {};
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = t("login.errors.emailRequired");
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        newErrors.email = "Please enter a valid email address";
+        newErrors.email = t("login.errors.emailInvalid");
       }
     }
 
     if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
+      newErrors.password = t("login.errors.passwordRequired");
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -104,31 +109,32 @@ const NewLogin = () => {
         <div className="new-login-left-content">
           <img src={logo} alt="FashionTally Logo" className="new-login-logo" />
           <h2 className="new-login-tagline">
-            Empowering African Fashion Entrepreneurs With Smart Tools
+            {t("login.tagline")}
           </h2>
         </div>
       </div>
 
       <div className="new-login-right-section">
+        <LanguageSwitch className="lang-switch-corner" />
         <div className="new-login-right-content">
           <div className="new-login-header">
             <button
               type="button"
               className="new-login-back-btn"
               onClick={() => navigate("/")}
-              title="Back to Home"
+              title={t("login.backHome")}
             >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="new-login-title">Welcome Back</h1>
+            <h1 className="new-login-title">{t("login.title")}</h1>
             <p className="new-login-subtitle">
-              Sign in to your FashionTally account
+              {t("login.subtitle")}
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
             {errors.general && (
-              <div className="new-login-error-message">{errors.general}</div>
+              <div className="new-login-error-message">{tl(errors.general)}</div>
             )}
 
             {googleOnlyError && (
@@ -138,9 +144,9 @@ const NewLogin = () => {
                   <path d="M12 8v4M12 16h.01" stroke="#e67e22" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 <div>
-                  <p style={{ margin: 0, fontWeight: 600 }}>This account uses Google Sign-In</p>
+                  <p style={{ margin: 0, fontWeight: 600 }}>{t("login.googleOnlyTitle")}</p>
                   <p style={{ margin: '4px 0 0', fontSize: '13px' }}>
-                    Please use the <strong>Continue with Google</strong> button below.
+                    <Trans i18nKey="login.googleOnlyHint" components={{ 1: <strong /> }} />
                   </p>
                 </div>
               </div>
@@ -151,7 +157,7 @@ const NewLogin = () => {
               label=""
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="Email Address"
+              placeholder={t("login.email")}
               required
               error={errors.email}
               active={!!formData.email}
@@ -162,7 +168,7 @@ const NewLogin = () => {
               label=""
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
-              placeholder="Password"
+              placeholder={t("login.password")}
               required
               error={errors.password}
               active={!!formData.password}
@@ -177,7 +183,7 @@ const NewLogin = () => {
                     handleInputChange("rememberMe", e.target.checked)
                   }
                 />
-                <span className="new-login-remember-text">Remember me</span>
+                <span className="new-login-remember-text">{t("login.rememberMe")}</span>
               </label>
 
               <button
@@ -185,7 +191,7 @@ const NewLogin = () => {
                 className="new-login-forgot-link"
                 onClick={() => navigate("/forgot-password")}
               >
-                Forgot Password?
+                {t("login.forgot")}
               </button>
             </div>
 
@@ -198,12 +204,12 @@ const NewLogin = () => {
                 disabled={!isFormValid}
                 className={isFormValid ? "" : "new-login-btn-inactive"}
               >
-                Sign In
+                {t("login.signIn")}
               </Button>
             </div>
 
             <div className="new-login-divider">
-              <span>or</span>
+              <span>{t("login.or")}</span>
             </div>
 
             <button
@@ -253,33 +259,33 @@ const NewLogin = () => {
                   </svg>
                 )}
               </div>
-              {googleLoading ? "Connecting..." : "Continue with Google"}
+              {tl(googleLoading ? t("login.connecting") : t("login.google"))}
             </button>
 
             <p className="new-login-terms">
-              By signing in, you agree to the{" "}
+              {t("login.termsPrefix")}{" "}
               <span
                 className="new-login-terms-link"
                 onClick={() => navigate("/terms-of-service")}
               >
-                Terms of Service
+                {t("login.terms")}
               </span>{" "}
-              and{" "}
+              {t("login.and")}{" "}
               <span
                 className="new-login-terms-link"
                 onClick={() => navigate("/privacy-policy")}
               >
-                Data Processing Agreement
+                {t("login.dpa")}
               </span>
             </p>
 
             <p className="new-login-signup-link">
-              Don't have an account?{" "}
+              {t("login.noAccount")}{" "}
               <span
                 className="new-login-link"
                 onClick={() => navigate("/signup")}
               >
-                Sign up
+                {t("login.signUp")}
               </span>
             </p>
           </form>

@@ -3,6 +3,11 @@ import { useGoogleLogin } from "@react-oauth/google";
 import toast, { Toaster } from "react-hot-toast";
 import { requestAndRegisterToken, removeDeviceToken } from "../backend/services/notification.service";
 
+import { applyAccountLanguage, chosenLanguage } from "../i18n";
+
+import { useTranslation } from "react-i18next";
+import { t as tx } from "../i18n";
+
 const NewAuthContext = createContext();
 
 function getTokenExpiryMs(token) {
@@ -56,6 +61,7 @@ export const useNewAuth = () => {
 };
 
 export const NewAuthProvider = ({ children }) => {
+  const { t: tx } = useTranslation();
   const [user, setUser]                   = useState(null);
   const [loading, setLoading]             = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -71,7 +77,7 @@ export const NewAuthProvider = ({ children }) => {
   const expireSession = () => {
     if (!localStorage.getItem("authToken")) return;
     clearSession();
-    toast.error("Your session has expired. Please log in again.", { id: "session-expired" });
+    toast.error(tx("auto.yourSessionHasExpiredPlease_488f"), { id: "session-expired" });
     if (isProtectedPath(window.location.pathname)) {
       window.location.replace("/login");
     }
@@ -139,6 +145,10 @@ export const NewAuthProvider = ({ children }) => {
   // ── Shared helper: persist session ──────────────────────────
   const persistSession = (token, userData) => {
     localStorage.setItem("authToken", token);
+    // Language picked on the login/sign-up page wins (and is saved to the account);
+    // otherwise the account's language, so it follows the user to every device
+    const language = applyAccountLanguage(userData?.language);
+    if (language && userData) userData = { ...userData, language };
     localStorage.setItem("newAuthUser", JSON.stringify(userData));
     setUser(userData);
     setIsAuthenticated(true);
@@ -166,6 +176,8 @@ export const NewAuthProvider = ({ children }) => {
       body.append("category", (category || "").trim());
       if (logoFile) body.append("logo", logoFile);
       if (emailVerificationToken) body.append("emailVerificationToken", emailVerificationToken);
+      // Language picked on the sign-up page beats the country default
+      if (chosenLanguage()) body.append("language", chosenLanguage());
 
       const signupRes  = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, { method: "POST", body });
       const signupData = await signupRes.json();
@@ -181,13 +193,13 @@ export const NewAuthProvider = ({ children }) => {
       if (!loginData.success) throw new Error(loginData.error || "Auto-login failed");
 
       persistSession(loginData.token, loginData.user);
-      toast.success(`Welcome ${name}! Account created. Your free trial has started.`);
+      toast.success(tx("tpl.welcomeAccountCreatedYourFree_367a", { v0: name }));
 
       setTimeout(() => { window.location.href = checkoutUrlFromSignup() || "/dashboard"; }, 1000);
 
       return { success: true };
     } catch (error) {
-      toast.error(error.message || "Failed to create account");
+      toast.error(error.message || tx("auto.failedToCreateAccount_6264"));
       return { success: false, error: error.message };
     }
   };
@@ -206,12 +218,12 @@ export const NewAuthProvider = ({ children }) => {
       if (!data.success) throw new Error(data.error || "Invalid email or password");
 
       persistSession(data.token, data.user);
-      toast.success("Welcome back!");
+      toast.success(tx("auto.welcomeBack_1c5b"));
       setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
 
       return { success: true };
     } catch (error) {
-      toast.error(error.message || "Failed to sign in");
+      toast.error(error.message || tx("auto.failedToSignIn_b343"));
       return { success: false, error: error.message };
     }
   };
@@ -264,7 +276,7 @@ export const NewAuthProvider = ({ children }) => {
         persistSession(data.token, data.user);
 
         const name = data.user?.name || "";
-        toast.success(`Welcome ${name}!${data.isNewUser ? " Your free trial has started." : ""}`);
+        toast.success(tx("tpl.welcome_a402", { v0: name, v1: data.isNewUser ? tx("auto.yourFreeTrialHasStarted_2f19") : "" }));
 
         const checkoutUrl = checkoutUrlFromSignup();
         setTimeout(() => {
@@ -279,13 +291,13 @@ export const NewAuthProvider = ({ children }) => {
 
         if (_googleResolve) _googleResolve({ success: true });
       } catch (err) {
-        toast.error(err.message || "Google sign-in failed");
+        toast.error(err.message || tx("auto.googleSignInFailed_44c2"));
         if (_googleReject) _googleReject(err);
       }
     },
     onError: (err) => {
       console.error("[googleAuth] OAuth error:", err);
-      toast.error("Google sign-in failed");
+      toast.error(tx("auto.googleSignInFailed_44c2"));
       if (_googleReject) _googleReject(new Error("Google OAuth failed"));
     },
     flow: "implicit",
@@ -305,7 +317,7 @@ export const NewAuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     localStorage.removeItem("newAuthUser");
     localStorage.removeItem("authToken");
-    toast.success("Signed out successfully");
+    toast.success(tx("auto.signedOutSuccessfully_f8ca"));
     return { success: true };
   };
 
@@ -320,10 +332,10 @@ export const NewAuthProvider = ({ children }) => {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Failed to send reset email");
 
-      toast.success("Password reset email sent!");
+      toast.success(tx("auto.passwordResetEmailSent_79e5"));
       return { success: true };
     } catch (error) {
-      toast.error(error.message || "Failed to send reset email");
+      toast.error(error.message || tx("auto.failedToSendResetEmail_11ab"));
       return { success: false, error: error.message };
     }
   };
