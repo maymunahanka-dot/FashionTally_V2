@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, useRef } from "react";
 import { X } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Input from "../../components/Input";
+import SearchableSelect from "../../components/SearchableSelect";
 import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import "./NewOrderPanel.css";
@@ -11,7 +12,8 @@ import { t as tx } from "../../i18n";
 
 import { tl } from "../../i18n";
 
-const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSuccess }) => {
+/** `isOpen`: the slide-in panel stays mounted, so clients are reloaded each time it opens. */
+const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSuccess, isOpen }) => {
   const { t: tx } = useTranslation();
   // Individual useState for each input field
   const [client, setClient] = useState("");
@@ -31,6 +33,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [additionalItems, setAdditionalItems] = useState([]);
   const [clients, setClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [errors, setErrors] = useState({});
@@ -39,10 +42,11 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
   const pricesTouched = useRef(false);
   const { currency, usdToNgn, symbol, toNaira } = useDisplayCurrency();
 
-  // Load clients from backend
+  // Load clients each time the panel opens, so a client added a moment ago is listed
   useEffect(() => {
     const loadClients = async () => {
-      if (!user?.email) return;
+      if (!user?.email || isOpen === false) return;
+      setClientsLoading(true);
       try {
         const token = localStorage.getItem("authToken");
         const res = await fetch(
@@ -53,10 +57,12 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
         if (data.success) setClients(data.data);
       } catch (error) {
         console.error("❌ NewOrderPanel: Error loading clients:", error);
+      } finally {
+        setClientsLoading(false);
       }
     };
     loadClients();
-  }, [user?.email]);
+  }, [user?.email, isOpen]);
 
   // Initialize form data when in edit mode or when client data is provided
   useEffect(() => {
@@ -329,7 +335,7 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
         setClient(value);
         // Auto-fill client details when client is selected
         if (value) {
-          const selectedClient = clients.find((c) => c.id === value);
+          const selectedClient = clients.find((c) => (c.id || c._id) === value);
           if (selectedClient) {
             setClientName(selectedClient.name || "");
             setClientEmail(selectedClient.email || "");
@@ -630,34 +636,23 @@ const NewOrderPanel = ({ onClose, editMode = false, initialData = null, onSucces
         <div className="new_oda_form_content">
           {/* Client Selection with Existing Button */}
           <div className="new_oda_form_group">
-            <label className="new_oda_client_label">{tx("auto.clientOptional_4042")}</label>
-            <div className="new_oda_client_row">
-              <div className="new_oda_client_select">
-                <Input
-                  type="select"
-                  value={client}
-                  onChange={(e) => handleInputChange("client", e)}
-                  options={[
-                    { value: "", label: "Select client" },
-                    ...clients.map((c) => ({
-                      value: c.id,
-                      label: `${c.name} - ${c.phone}`,
-                    })),
-                  ]}
-                  error={errors.client}
-                  variant="rounded"
-                />
-              </div>
-              <button
-                type="button"
-                className="new_oda_existing_btn"
-                onClick={() => {
-                  /* Handle existing client selection */
-                }}
-              >
-                {tx("auto.existing_dc50")}
-              </button>
-            </div>
+            <SearchableSelect
+              label={tx("auto.clientOptional_4042")}
+              placeholder={clientsLoading && !clients.length ? tl("Loading clients...") : tl("Search clients by name or phone")}
+              value={client}
+              onChange={(v) => handleInputChange("client", v)}
+              loading={clientsLoading}
+              loadingText={tl("Loading clients...")}
+              emptyText={tl("No clients yet. Add one in Clients, or type the details below.")}
+              clearable
+              error={errors.client}
+              options={clients.map((c) => ({
+                value: c.id || c._id,
+                label: c.name || c.email || c.phone,
+                hint: c.phone,
+                search: c.email,
+              }))}
+            />
           </div>
           {/* New Client Details */}
           <div className="new_oda_client_details">

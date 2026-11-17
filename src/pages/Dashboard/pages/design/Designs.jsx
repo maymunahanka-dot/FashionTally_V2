@@ -408,6 +408,7 @@ const Designs = () => {
         width="400px"
       >
         <AddDesignPanel
+          isOpen={showAddDesignPanel}
           onClose={handleCloseAddPanel}
           onSubmit={handleDesignSubmit}
           editMode={editMode}

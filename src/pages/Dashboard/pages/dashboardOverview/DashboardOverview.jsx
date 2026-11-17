@@ -317,7 +317,7 @@ const DashboardOverview = () => {
         position="rightt"
         width="500px"
       >
-        <NewOrderPanel onClose={() => setShowNewOrder(false)} />
+        <NewOrderPanel isOpen={showNewOrder} onClose={() => setShowNewOrder(false)} />
       </SlideInMenu>
 
       {/* Add Client Panel */}

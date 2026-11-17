@@ -812,6 +812,7 @@ const Invoice = () => {
         width="480px"
       >
         <CreateInvoicePanel
+          isOpen={showCreateInvoice}
           onClose={handleCloseCreateInvoice}
           selectedInvoice={selectedInvoice}
           isEditMode={isEditMode}

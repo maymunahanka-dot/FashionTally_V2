@@ -10,6 +10,7 @@ import {
   getInvoices,
 } from "../../backend/services/crmService";
 import Input from "../../components/Input";
+import SearchableSelect from "../../components/SearchableSelect";
 import "./AddFeedbackPanel.css";
 
 import { useTranslation } from "react-i18next";
@@ -17,11 +18,13 @@ import { t as tx } from "../../i18n";
 
 import { tl } from "../../i18n";
 
-const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
+/** `isOpen`: the slide-in panel stays mounted, so clients are reloaded each time it opens. */
+const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode, isOpen }) => {
   const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -49,8 +52,9 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
   // Fetch clients, orders, and invoices on component mount
   useEffect(() => {
     const fetchData = async () => {
-      if (!user?.email) return;
+      if (!user?.email || isOpen === false) return;
 
+      setClientsLoading(true);
       try {
         // Get effective email (main admin's email for team members)
         const effectiveEmail = getEffectiveUserEmail(user);
@@ -78,11 +82,13 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setClientsLoading(false);
       }
     };
 
     fetchData();
-  }, [user?.email, editingFeedback]);
+  }, [user?.email, editingFeedback, isOpen]);
 
   const clearError = (fieldName) => {
     if (errors[fieldName]) {
@@ -99,7 +105,7 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
   };
 
   const handleClientSelect = (clientId) => {
-    const client = clients.find((c) => c.id === clientId);
+    const client = clientId ? clients.find((c) => (c.id || c._id) === clientId) : null;
     if (client) {
       setSelectedClient(client);
       setFormData((prev) => ({
@@ -290,19 +296,21 @@ const AddFeedbackPanel = ({ onClose, onSubmit, editingFeedback, editMode }) => {
       <form className="add_feedback_form" onSubmit={handleSubmit}>
         {/* Client Selection */}
         <div className="add_feedback_form_group">
-          <Input
+          <SearchableSelect
             label={tx("auto.selectClient_bed9")}
-            type="select"
-            value={selectedClient?.id || "manual"}
-            onChange={(e) => handleClientSelect(e.target.value)}
-            variant="rounded"
-            options={[
-              { value: "manual", label: "Enter manually" },
-              ...clients.map((client) => ({
-                value: client.id,
-                label: `${client.name} (${client.email})`,
-              })),
-            ]}
+            placeholder={clientsLoading && !clients.length ? tl("Loading clients...") : tl("Search clients by name or phone")}
+            value={selectedClient ? selectedClient.id || selectedClient._id : ""}
+            onChange={handleClientSelect}
+            loading={clientsLoading}
+            loadingText={tl("Loading clients...")}
+            emptyText={tl("No clients yet. Add one in Clients, or type the details below.")}
+            clearable
+            options={clients.map((client) => ({
+              value: client.id || client._id,
+              label: client.name || client.email || client.phone,
+              hint: client.phone || client.email,
+              search: `${client.email || ""} ${client.phone || ""}`,
+            }))}
           />
         </div>
 

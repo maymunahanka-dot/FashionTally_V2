@@ -391,6 +391,7 @@ const LoyaltyTab = () => {
         width="480px"
       >
         <AddLoyaltyMemberPanel
+          isOpen={isAddPanelOpen}
           onSubmit={handleSubmitMember}
           editingMember={editingMember}
           isLoading={isSubmitting}

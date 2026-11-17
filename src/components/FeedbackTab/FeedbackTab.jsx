@@ -491,6 +491,7 @@ const FeedbackTab = () => {
         width="480px"
       >
         <AddFeedbackPanel
+          isOpen={showFeedbackForm}
           onClose={() => {
             setShowFeedbackForm(false);
             setEditingFeedback(null);

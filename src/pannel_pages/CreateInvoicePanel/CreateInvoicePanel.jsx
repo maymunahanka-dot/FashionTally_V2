@@ -3,6 +3,7 @@ import { X, Plus } from "lucide-react";
 import NewAuthContext from "../../contexts/NewAuthContext";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
+import SearchableSelect from "../../components/SearchableSelect";
 import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
 import { formatMoney } from "../../utils/exchangeRate";
@@ -13,7 +14,8 @@ import { t as tx } from "../../i18n";
 
 import { tl } from "../../i18n";
 
-const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess }) => {
+/** `isOpen`: the slide-in panel stays mounted, so clients are reloaded each time it opens. */
+const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess, isOpen }) => {
   const { t: tx } = useTranslation();
   // Form state
   const [clientName, setClientName] = useState("");
@@ -45,6 +47,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clients, setClients] = useState([]);
+  const [clientsLoading, setClientsLoading] = useState(false);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [, setRecordAsIncome] = useState(false); // Default to false (commented out feature)
@@ -54,13 +57,14 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   const pricesTouched = useRef(false);
   const { currency, usdToNgn, symbol, toNaira } = useDisplayCurrency();
 
-  // Load clients and inventory when component mounts
+  // Load clients and inventory when the panel opens (and when it is first shown),
+  // so a client added a moment ago is in the list
   useEffect(() => {
-    if (user?.email) {
+    if (user?.email && isOpen !== false) {
       loadClients();
       loadInventoryItems();
     }
-  }, [user?.email]);
+  }, [user?.email, isOpen]);
 
   // Populate form when editing or when client data is provided
   useEffect(() => {
@@ -161,6 +165,7 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   }, [currency, usdToNgn, isEditMode, selectedInvoice]);
 
   const loadClients = async () => {
+    setClientsLoading(true);
     try {
       const token = localStorage.getItem("authToken");
       const res = await fetch(
@@ -171,6 +176,8 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
       if (data.success) setClients(data.data);
     } catch (error) {
       console.error("❌ CreateInvoicePanel: Error loading clients:", error);
+    } finally {
+      setClientsLoading(false);
     }
   };
 
@@ -205,7 +212,12 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
   };
 
   const handleClientSelection = (clientId) => {
-    const selectedClient = clients.find((c) => c.id === clientId);
+    // × on the picker: back to typing the client's details by hand
+    if (!clientId) {
+      setSelectedClientId("");
+      return;
+    }
+    const selectedClient = clients.find((c) => (c.id || c._id) === clientId);
     if (selectedClient) {
       setSelectedClientId(clientId);
       setClientName(selectedClient.name);
@@ -499,20 +511,21 @@ const CreateInvoicePanel = ({ onClose, selectedInvoice, isEditMode, onSuccess })
           <h3 className="create_invoice_section_title">{tx("auto.clientDetails_7f08")}</h3>
 
           <div className="create_invoice_form_group">
-            <Input
+            <SearchableSelect
               label={tx("auto.selectExistingClient_7b2b")}
-              type="select"
-              placeholder={tx("auto.chooseAClientOrEnter_77d4")}
+              placeholder={clientsLoading && !clients.length ? tl("Loading clients...") : tl("Search clients by name or phone")}
               value={selectedClientId}
-              onChange={(e) => handleClientSelection(e.target.value)}
-              variant="rounded"
-              options={[
-                { value: "", label: "Choose a client or enter manually" },
-                ...clients.map((client) => ({
-                  value: client.id,
-                  label: `${client.name} - ${client.phone}`,
-                })),
-              ]}
+              onChange={handleClientSelection}
+              loading={clientsLoading}
+              loadingText={tl("Loading clients...")}
+              emptyText={tl("No clients yet. Add one in Clients, or type the details below.")}
+              clearable
+              options={clients.map((client) => ({
+                value: client.id || client._id,
+                label: client.name || client.email || client.phone,
+                hint: client.phone,
+                search: client.email,
+              }))}
             />
           </div>
 

@@ -480,6 +480,7 @@ const ClientsManagement = () => {
         width="500px"
       >
         <AddDesignPanel
+          isOpen={showAddDesign}
           onClose={handleCloseAddDesign}
           onSubmit={handleCloseAddDesign}
           editMode={false}
@@ -511,6 +512,7 @@ const ClientsManagement = () => {
         width="500px"
       >
         <CreateInvoicePanel
+          isOpen={showCreateInvoice}
           onClose={handleCloseCreateInvoice}
           selectedInvoice={{
             clientName: selectedClient?.name,
@@ -543,6 +545,7 @@ const ClientsManagement = () => {
         width="500px"
       >
         <NewOrderPanel
+          isOpen={showNewOrder}
           onClose={handleCloseNewOrder}
           editMode={false}
           initialData={{

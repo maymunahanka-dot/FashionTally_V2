@@ -7,14 +7,13 @@ import {
   DollarSign,
   Calendar,
   Tag,
-  Users,
-  Search,
 } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import { getClients } from "../../backend/services/crmService";
 import Button from "../../components/button/Button";
 import Input from "../../components/Input/Input";
+import SearchableSelect from "../../components/SearchableSelect";
 import "./AddLoyaltyMemberPanel.css";
 
 import { useTranslation } from "react-i18next";
@@ -22,11 +21,13 @@ import { t as tx } from "../../i18n";
 
 import { tl } from "../../i18n";
 
+/** `isOpen`: the slide-in panel stays mounted, so clients are reloaded each time it opens. */
 const AddLoyaltyMemberPanel = ({
   onSubmit,
   editingMember = null,
   isLoading = false,
   onClose,
+  isOpen,
 }) => {
   const { t: tx } = useTranslation();
   const { user } = useNewAuth();
@@ -42,18 +43,16 @@ const AddLoyaltyMemberPanel = ({
   });
 
   const [errors, setErrors] = useState({});
-  const [showClientSelector, setShowClientSelector] = useState(false);
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [fillMode, setFillMode] = useState("manual"); // "manual" or "client"
+  const [selectedClientId, setSelectedClientId] = useState("");
 
-  // Load clients when component mounts
+  // Load clients each time the panel opens, so a client added a moment ago is listed
   useEffect(() => {
-    if (user?.email) {
+    if (user?.email && isOpen !== false) {
       loadClients();
     }
-  }, [user?.email]);
+  }, [user?.email, isOpen]);
 
   const loadClients = async () => {
     try {
@@ -69,34 +68,15 @@ const AddLoyaltyMemberPanel = ({
     }
   };
 
-  // Handle client selection
-  const handleClientSelect = (client) => {
-    setFormData((prev) => ({
-      ...prev,
-      name: client.name || "",
-      email: client.email || "",
-      // Keep existing loyalty-specific fields
-      level: prev.level,
-      points: prev.points,
-      totalSpent: prev.totalSpent,
-      birthday: prev.birthday,
-      tags: prev.tags,
-      notes: prev.notes,
-    }));
-    setFillMode("client");
-    setShowClientSelector(false);
-    setClientSearchTerm("");
+  // Picking a client fills name and email; × goes back to typing them by hand
+  const handleClientSelect = (clientId) => {
+    setSelectedClientId(clientId || "");
+    if (!clientId) return;
+    const client = clients.find((c) => (c.id || c._id) === clientId);
+    if (!client) return;
+    setFormData((prev) => ({ ...prev, name: client.name || "", email: client.email || "" }));
+    setErrors((prev) => ({ ...prev, name: "", email: "" }));
   };
-
-  // Filter clients based on search
-  const filteredClients = clients.filter((client) => {
-    const searchLower = clientSearchTerm.toLowerCase();
-    return (
-      client.name?.toLowerCase().includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower) ||
-      client.phone?.toLowerCase().includes(searchLower)
-    );
-  });
 
   // Populate form when editing
   useEffect(() => {
@@ -218,9 +198,7 @@ const AddLoyaltyMemberPanel = ({
       notes: "",
     });
     setErrors({});
-    setShowClientSelector(false);
-    setClientSearchTerm("");
-    setFillMode("manual");
+    setSelectedClientId("");
     onClose();
   };
 
@@ -238,32 +216,24 @@ const AddLoyaltyMemberPanel = ({
         <div className="add_loyalty_member_section">
           <h3>{tx("auto.basicInformation_b0d5")}</h3>
 
-          {/* Fill Mode Selection */}
-          <div className="add_loyalty_member_field">
-            <label>{tx("auto.informationSource_ee1b")}</label>
-            <div className="fill_mode_options">
-              <button
-                type="button"
-                className={`fill_mode_btn ${
-                  fillMode === "manual" ? "active" : ""
-                }`}
-                onClick={() => setFillMode("manual")}
-              >
-                <User size={16} />
-                {tx("auto.manualEntry_a116")}
-              </button>
-              <button
-                type="button"
-                className={`fill_mode_btn ${
-                  fillMode === "client" ? "active" : ""
-                }`}
-                onClick={() => setShowClientSelector(true)}
-              >
-                <Users size={16} />
-                {tx("auto.selectFromClients_44d3")}
-              </button>
-            </div>
-          </div>
+          {!editingMember && (
+            <SearchableSelect
+              label={tx("auto.selectExistingClient_7b2b")}
+              placeholder={clientsLoading && !clients.length ? tl("Loading clients...") : tl("Search clients by name or phone")}
+              value={selectedClientId}
+              onChange={handleClientSelect}
+              loading={clientsLoading}
+              loadingText={tl("Loading clients...")}
+              emptyText={tl("No clients yet. Add one in Clients, or type the details below.")}
+              clearable
+              options={clients.map((client) => ({
+                value: client.id || client._id,
+                label: client.name || client.email || client.phone,
+                hint: client.phone,
+                search: client.email,
+              }))}
+            />
+          )}
 
           <Input
             type="text"
@@ -444,68 +414,6 @@ const AddLoyaltyMemberPanel = ({
         </div>
       </form>
 
-      {/* Client Selector Slide-in Menu */}
-      {showClientSelector && (
-        <div className="client_selector_overlay">
-          <div className="client_selector_panel">
-            <div className="client_selector_header">
-              <h3>{tx("auto.selectClient_bed9")}</h3>
-              <button
-                className="client_selector_close"
-                onClick={() => {
-                  setShowClientSelector(false);
-                  setClientSearchTerm("");
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="client_selector_search">
-              <Search size={16} />
-              <input
-                type="text"
-                placeholder={tx("auto.searchClientsByNameEmail_872d")}
-                value={clientSearchTerm}
-                onChange={(e) => setClientSearchTerm(e.target.value)}
-                className="client_search_input"
-              />
-            </div>
-
-            <div className="client_selector_list">
-              {clientsLoading ? (
-                <div className="client_selector_loading">
-                  <p>{tx("auto.loadingClients_48a2")}</p>
-                </div>
-              ) : filteredClients.length > 0 ? (
-                filteredClients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="client_selector_item"
-                    onClick={() => handleClientSelect(client)}
-                  >
-                    <div className="client_info">
-                      <h4>{tl(client.name)}</h4>
-                      <p>{tl(client.email)}</p>
-                      {client.phone && (
-                        <span className="client_phone">{tl(client.phone)}</span>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="client_selector_empty">
-                  <p>
-                    {tl(clientSearchTerm
-                      ? tx("auto.noClientsFoundMatchingYour_4323")
-                      : tx("auto.noClientsAvailable_58aa"))}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -414,6 +414,7 @@ const OrderManagement = () => {
         width="600px"
       >
         <NewOrderPanel
+          isOpen={showNewOrder}
           onClose={handleCloseNewOrderPanel}
           editMode={editMode}
           initialData={editingOrder}

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Upload, User, Users, Search, Phone, Mail } from "lucide-react";
+import { X, Upload } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Input from "../../components/Input/Input";
+import SearchableSelect from "../../components/SearchableSelect";
 import Button from "../../components/button/Button";
 import { CurrencyHint } from "../../components/MoneyAmount/MoneyAmount";
 import { useDisplayCurrency } from "../../utils/useDisplayCurrency";
@@ -13,7 +14,8 @@ import { t as tx } from "../../i18n";
 
 import { tl } from "../../i18n";
 
-const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = null }) => {
+/** `isOpen`: the slide-in panel stays mounted, so clients are reloaded each time it opens. */
+const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = null, isOpen }) => {
   const { t: tx } = useTranslation();
   const { user } = useNewAuth();
   const { isDark } = useTheme();
@@ -32,15 +34,13 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState(null);
-  const [showClientSelector, setShowClientSelector] = useState(false);
   const [clients, setClients] = useState([]);
   const [clientsLoading, setClientsLoading] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [fillMode, setFillMode] = useState("manual");
 
   const categories = ["Uniforms","Shirts","Children's Wear","Dresses","Tops","Bottoms","Others"];
 
-  useEffect(() => { if (user?.email) loadClients(); }, [user?.email]);
+  // Load clients each time the panel opens, so a client added a moment ago is listed
+  useEffect(() => { if (user?.email && isOpen !== false) loadClients(); }, [user?.email, isOpen]);
 
   const loadClients = async () => {
     try {
@@ -58,27 +58,15 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
     }
   };
 
-  const handleClientSelect = (client) => {
-    setFormData((prev) => ({
-      ...prev,
-      clientId: client.id,
-      clientName: client.name || "",
-      clientPhone: client.phone || "",
-    }));
-    setFillMode("client");
-    setShowClientSelector(false);
-    setClientSearchTerm("");
+  // Picking a client fills name and phone; × unlinks the client (the typed details stay editable)
+  const handleClientSelect = (clientId) => {
+    const client = clientId ? clients.find((c) => (c.id || c._id) === clientId) : null;
+    setFormData((prev) =>
+      client
+        ? { ...prev, clientId: client.id || client._id, clientName: client.name || "", clientPhone: client.phone || "" }
+        : { ...prev, clientId: "" }
+    );
   };
-
-  const handleManualEntry = () => {
-    setFillMode("manual");
-    setFormData((prev) => ({ ...prev, clientId: "", clientName: "", clientPhone: "" }));
-  };
-
-  const filteredClients = clients.filter((c) => {
-    const s = clientSearchTerm.toLowerCase();
-    return c.name?.toLowerCase().includes(s) || c.email?.toLowerCase().includes(s) || c.phone?.toLowerCase().includes(s);
-  });
 
   useEffect(() => {
     priceTouched.current = false;
@@ -98,7 +86,6 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
       if (initialData.imageUrl || initialData.images?.[0]) {
         setImagePreview(initialData.imageUrl || initialData.images[0]);
       }
-      if (initialData.clientId) setFillMode("client");
     } else if (initialData?.clientId || initialData?.clientName) {
       setFormData((prev) => ({
         ...prev,
@@ -106,7 +93,6 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         clientName: initialData.clientName || "",
         clientPhone: initialData.clientPhone || "",
       }));
-      setFillMode("client");
     } else {
       setFormData({ name: "", category: "Uniforms", customCategory: "", description: "", price: "", imageUrl: "", images: [], clientId: "", clientName: "", clientPhone: "" });
     }
@@ -206,9 +192,6 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
     setErrors({});
     setImagePreview(null);
     setImageFile(null);
-    setShowClientSelector(false);
-    setClientSearchTerm("");
-    setFillMode("manual");
     onClose();
   };
 
@@ -227,56 +210,39 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         {/* Client Section */}
         <div className="adp_section">
           <p className="adp_section_label">{tx("auto.clientOptional_4042")}</p>
-          <div className="adp_mode_btns">
-            <button
-              type="button"
-              className={`adp_mode_btn ${fillMode === "manual" ? "active" : ""}`}
-              onClick={handleManualEntry}
-            >
-              <User size={15} />{" "}{tx("auto.manualEntry_a116")}
-            </button>
-            <button
-              type="button"
-              className={`adp_mode_btn ${fillMode === "client" ? "active" : ""}`}
-              onClick={() => setShowClientSelector(true)}
-            >
-              <Users size={15} />{" "}{tx("auto.selectClient_bed9")}
-            </button>
+          <SearchableSelect
+              placeholder={clientsLoading && !clients.length ? tl("Loading clients...") : tl("Search clients by name or phone")}
+              value={formData.clientId || ""}
+              onChange={handleClientSelect}
+              loading={clientsLoading}
+              loadingText={tl("Loading clients...")}
+              emptyText={tl("No clients yet. Add one in Clients, or type the details below.")}
+              clearable
+              options={clients.map((c) => ({
+                value: c.id || c._id,
+                label: c.name || c.email || c.phone,
+                hint: c.phone,
+                search: c.email,
+              }))}
+            />
+          <div className="adp_row">
+            <Input
+              type="text"
+              label={tx("auto.clientName_130c")}
+              placeholder={tx("auto.enterClientName_9691")}
+              value={formData.clientName}
+              onChange={handleInputChange("clientName")}
+              variant="rounded"
+            />
+            <Input
+              type="tel"
+              label={tx("auto.clientPhone_93d9")}
+              placeholder={tx("auto.eG08034567890_5ce3")}
+              value={formData.clientPhone}
+              onChange={handleInputChange("clientPhone")}
+              variant="rounded"
+            />
           </div>
-
-          {fillMode === "client" && formData.clientName ? (
-            <div className="adp_selected_client">
-              <div className="adp_selected_client_info">
-                <div className="adp_client_avatar">{formData.clientName.charAt(0).toUpperCase()}</div>
-                <div>
-                  <p className="adp_client_name">{tl(formData.clientName)}</p>
-                  {formData.clientPhone && <p className="adp_client_phone"><Phone size={12} /> {tl(formData.clientPhone)}</p>}
-                </div>
-              </div>
-              <button type="button" className="adp_clear_client" onClick={handleManualEntry}>
-                <X size={14} />
-              </button>
-            </div>
-          ) : fillMode === "manual" ? (
-            <div className="adp_row">
-              <Input
-                type="text"
-                label={tx("auto.clientName_130c")}
-                placeholder={tx("auto.enterClientName_9691")}
-                value={formData.clientName}
-                onChange={handleInputChange("clientName")}
-                variant="rounded"
-              />
-              <Input
-                type="tel"
-                label={tx("auto.clientPhone_93d9")}
-                placeholder={tx("auto.eG08034567890_5ce3")}
-                value={formData.clientPhone}
-                onChange={handleInputChange("clientPhone")}
-                variant="rounded"
-              />
-            </div>
-          ) : null}
         </div>
 
         {/* Design Name */}
@@ -387,51 +353,6 @@ const AddDesignPanel = ({ onClose, onSubmit, editMode = false, initialData = nul
         </Button>
       </form>
 
-      {/* Client Selector Modal */}
-      {showClientSelector && (
-        <div className="adp_client_modal_overlay" onClick={() => setShowClientSelector(false)}>
-          <div className="adp_client_modal" onClick={(e) => e.stopPropagation()}>
-            <div className="adp_client_modal_header">
-              <h3>{tx("auto.selectClient_bed9")}</h3>
-              <button type="button" onClick={() => { setShowClientSelector(false); setClientSearchTerm(""); }}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="adp_client_modal_search">
-              <Search size={16} />
-              <input
-                type="text"
-                placeholder={tx("auto.searchByNameEmailOr_e1b2")}
-                value={clientSearchTerm}
-                onChange={(e) => setClientSearchTerm(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="adp_client_modal_list">
-              {clientsLoading ? (
-                <p className="adp_client_modal_empty">{tx("auto.loadingClients_48a2")}</p>
-              ) : filteredClients.length > 0 ? (
-                filteredClients.map((client) => (
-                  <div key={client.id} className="adp_client_modal_item" onClick={() => handleClientSelect(client)}>
-                    <div className="adp_client_modal_avatar">{client.name?.charAt(0).toUpperCase()}</div>
-                    <div className="adp_client_modal_info">
-                      <p className="adp_client_modal_name">{tl(client.name)}</p>
-                      <div className="adp_client_modal_meta">
-                        {client.email && <span><Mail size={11} /> {tl(client.email)}</span>}
-                        {client.phone && <span><Phone size={11} /> {tl(client.phone)}</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="adp_client_modal_empty">
-                  {tl(clientSearchTerm ? tx("auto.noClientsFound_b875") : tx("auto.noClientsAvailable_58aa"))}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
