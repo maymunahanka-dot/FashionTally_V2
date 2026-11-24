@@ -18,6 +18,7 @@ import { SubscriptionDemo } from "./components/SubscriptionDemo";
 import SubscriptionCallback from "./pages/SubscriptionCallback/SubscriptionCallback";
 import Pay from "./pages/Pay/Pay";
 import ScheduleDemo from "./pages/ScheduleDemo/ScheduleDemo";
+import Scraps from "./pages/Scraps/Scraps";
 import Loading from "./components/Loading/Loading";
 
 import { useTranslation } from "react-i18next";
@@ -59,6 +60,9 @@ function App() {
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/cookie-policy" element={<CookiePolicy />} />
       <Route path="/schedule-demo" element={<ScheduleDemo />} />
+      {/* Fashion Refab (leftover fabric marketplace); /scraps was its first address */}
+      <Route path="/refab" element={<Scraps />} />
+      <Route path="/scraps" element={<Navigate to="/refab" replace />} />
       <Route
         path="/login"
         element={!currentUser ? <NewLogin /> : <Navigate to="/dashboard" />}

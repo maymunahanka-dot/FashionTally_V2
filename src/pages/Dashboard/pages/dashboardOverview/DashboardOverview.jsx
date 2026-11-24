@@ -18,6 +18,7 @@ import AddInventoryPanel from "../../../../pannel_pages/AddInventoryPanel";
 import NewOrderPanel from "../../../../pannel_pages/NewOrderPanel";
 import AddClientPanel from "../../../../pannel_pages/AddClientPanel";
 import SlideInMenu from "../../../../components/SlideInMenu/SlideInMenu";
+import ReferralBanner from "./ReferralBanner";
 import "./DashboardOverview.css";
 
 import { useTranslation } from "react-i18next";
@@ -329,6 +330,8 @@ const DashboardOverview = () => {
       >
         <AddClientPanel onClose={() => setShowAddClient(false)} />
       </SlideInMenu>
+
+      <ReferralBanner />
 
       <div className="main-grid">
         {/* Schedule Section */}

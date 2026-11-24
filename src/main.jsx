@@ -1,4 +1,5 @@
 import { StrictMode } from "react";
+import { captureReferralFromUrl } from "./utils/referral";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -24,3 +25,6 @@ createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </StrictMode>
 );
+
+// Refer & Earn: remember a ?ref=CODE link for sign-up
+captureReferralFromUrl();

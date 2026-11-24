@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { getStoredReferral } from "../utils/referral";
 import { useGoogleLogin } from "@react-oauth/google";
 import toast, { Toaster } from "react-hot-toast";
 import { requestAndRegisterToken, removeDeviceToken } from "../backend/services/notification.service";
@@ -176,6 +177,7 @@ export const NewAuthProvider = ({ children }) => {
       body.append("category", (category || "").trim());
       if (logoFile) body.append("logo", logoFile);
       if (emailVerificationToken) body.append("emailVerificationToken", emailVerificationToken);
+      if (formData.referralCode) body.append("referralCode", String(formData.referralCode).trim().toUpperCase());
       // Language picked on the sign-up page beats the country default
       if (chosenLanguage()) body.append("language", chosenLanguage());
 
@@ -267,6 +269,8 @@ export const NewAuthProvider = ({ children }) => {
             name:        userInfo.name,
             picture:     userInfo.picture,
             sub:         userInfo.sub,
+            // Refer & Earn: only used if this Google sign-in creates a new account
+            referralCode: getStoredReferral() || undefined,
           }),
         });
         const data = await res.json();

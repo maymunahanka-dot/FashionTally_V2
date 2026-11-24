@@ -4,6 +4,8 @@
   display: flex;
   flex: 1;
   height: 100vh;
+  height: 100dvh;
+  overflow: hidden; /* the left panel stays put; the form side scrolls on its own */
   box-sizing: border-box;
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
@@ -35,8 +37,10 @@
   border-bottom-left-radius: 20px;
   margin-left: -25px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  overflow-y: auto;
+  padding: 24px 32px;
   box-shadow: var(--shadow-lg);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   z-index: 1000;
@@ -44,15 +48,19 @@
 
 .n_s_u_signup-step-right-sec-content {
   min-width: 350px;
+  width: 100%;
+  max-width: 440px;
+  margin: auto 0; /* centred when it fits, scrolls from the top when it doesn't */
 }
 
 .n_s_u_s-s-logo {
-  height: 200px;
+  height: 130px;
 }
 
 .n_s_u_s-s-logo-text {
   color: #ffffff;
-  font-size: 50px;
+  font-size: 36px;
+  line-height: 1.15;
   font-weight: bold;
   font-family: "Baloo 2", sans-serif;
 }
@@ -63,17 +71,17 @@
   font-size: 15px;
   line-height: 16px;
   color: var(--primary-color);
-  margin-bottom: 25px;
+  margin-bottom: 12px;
   transition: color 0.3s ease;
 }
 
 .n_s_u_s-s-title-con {
-  margin-bottom: 40px;
+  margin-bottom: 22px;
 }
 
 .n_s_u_s-s-title {
   font-family: poppins, sans-serif;
-  font-style: 28px;
+  font-size: 24px;
   margin: 0;
   color: var(--text-primary);
   transition: color 0.3s ease;
@@ -82,17 +90,17 @@
 .n_s_u_s-s-subtitle {
   font-family: "Baloo 2", sans-serif;
   font-weight: 400;
-  font-size: 16px;
+  font-size: 14px;
   margin: 0;
   color: var(--text-secondary);
   transition: color 0.3s ease;
 }
 
 .n_s_u_s-s-term {
-  margin-top: 10px;
+  margin-top: 8px;
   font-family: sans-serif;
   font-weight: 100;
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   transition: color 0.3s ease;
 }
@@ -109,7 +117,7 @@
 }
 
 .n_s_u_s-s-already-have-account {
-  font-size: 14px;
+  font-size: 13px;
   font-family: sans-serif;
   color: var(--text-secondary);
   transition: color 0.3s ease;
@@ -127,8 +135,8 @@
 }
 
 .n_s_u_s-s-submitbutton {
-  margin-top: 40px;
-  margin-bottom: 20px;
+  margin-top: 22px;
+  margin-bottom: 14px;
 }
 
 /* Header with back button and step indicator */
@@ -401,13 +409,13 @@
 .n_s_u_logo-upload-area {
   border: 2px dashed var(--border-primary);
   border-radius: 12px;
-  padding: 2rem;
+  padding: 1.1rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   background: var(--bg-card);
   position: relative;
-  min-height: 130px;
+  min-height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -476,8 +484,8 @@
 }
 
 .n_s_u_logo-preview {
-  max-width: 150px;
-  max-height: 150px;
+  max-width: 96px;
+  max-height: 96px;
   width: auto;
   height: auto;
   border-radius: 8px;
@@ -577,8 +585,8 @@
 /* Mobile responsive styles for logo upload */
 @media (max-width: 768px) {
   .n_s_u_logo-upload-area {
-    padding: 1.5rem;
-    min-height: 160px;
+    padding: 1rem;
+    min-height: 96px;
   }
 
   .n_s_u_upload-icon svg {
@@ -642,15 +650,16 @@
     flex-direction: column;
     height: auto;
     min-height: 100vh;
+    overflow: visible;
   }
 
   .n_s_u_signup-step-left-sec {
     flex: none;
-    height: 200px;
+    height: auto;
     background-size: cover;
     background-position: center;
-    padding-top: 50px;
-    padding-bottom: 50px;
+    padding-top: 28px;
+    padding-bottom: 40px;
   }
 
   .n_s_u_signup-step-left-sec-content {
@@ -659,11 +668,11 @@
   }
 
   .n_s_u_s-s-logo {
-    height: 80px;
+    height: 60px;
   }
 
   .n_s_u_s-s-logo-text {
-    font-size: 24px;
+    font-size: 20px;
     text-align: center;
     line-height: 1.2;
   }
@@ -673,9 +682,10 @@
     border-radius: 20px 20px 0 0;
     margin-left: 0;
     margin-top: -20px;
-    padding: 2rem 1rem;
-    min-height: calc(100vh - 180px);
-    align-items: start;
+    padding: 1.5rem 1rem 2rem;
+    min-height: 0;
+    overflow: visible;
+    align-items: stretch;
   }
 
   .n_s_u_signup-step-right-sec-content {
@@ -1090,4 +1100,55 @@ body.light-theme .react-tel-input .country-list .country {
 
 body.light-theme .react-tel-input .country-list .country:hover {
   background-color: var(--hover-bg) !important;
+}
+
+/* Refer & Earn: "Referred by …" under the referral code field */
+.n_s_u_referral-ok { margin: -10px 0 14px; font-size: 13px; color: var(--primary-color, #16988d); }
+
+/* ── Compact sign-up (fits a laptop screen without scrolling) ── */
+.n_s_u_signup-step-right-sec ._in_com_input_wrapper,
+.n_s_u_signup-step-right-sec .phone-input-wrapper {
+  margin-bottom: 14px;
+}
+.n_s_u_signup-step-right-sec .phone-input-container .form-control,
+.n_s_u_signup-step-right-sec .phone-input-field {
+  height: 44px !important;
+}
+.n_s_u_signup-step-right-sec .new-signup-back-btn {
+  margin-bottom: 6px;
+}
+.n_s_u_signup-step-right-sec .n_s_u_s-s-step {
+  margin-top: 0;
+}
+.n_s_u_signup-step-right-sec .n_s_u_referral + .n_s_u_s-s-submitbutton,
+.n_s_u_signup-step-right-sec .n_s_u_s-s-submitbutton {
+  margin-top: 10px;
+}
+.n_s_u_signup-step-right-sec .n_s_u_auth-divider {
+  margin: 14px 0;
+}
+.n_s_u_signup-step-right-sec .n_s_u_google-signup-btn {
+  min-height: 0;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  margin-bottom: 10px;
+}
+.n_s_u_signup-step-right-sec .new-signup-signin-link {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+/* Left panel: tagline scales with the screen and stays clear of the form panel's overlap */
+@media (min-width: 1009px) {
+  .n_s_u_signup-step-left-sec-content {
+    padding: 0 48px 0 28px;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  .n_s_u_s-s-logo-text {
+    font-size: clamp(26px, 2.6vw, 36px);
+    text-align: center;
+  }
+  .n_s_u_s-s-logo {
+    height: clamp(90px, 10vw, 130px);
+  }
 }

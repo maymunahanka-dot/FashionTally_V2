@@ -1,0 +1,120 @@
+.rp-panel { height: 100%; display: flex; flex-direction: column; background: var(--bg-card); color: var(--text-primary); }
+.rp-header { display: flex; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--border-primary); position: relative; }
+.rp-close { position: absolute; left: 16px; background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--text-secondary); display: flex; }
+.rp-close:hover { background: var(--hover-bg); color: var(--text-primary); }
+.rp-title { flex: 1; text-align: center; font-size: 17px; font-weight: 600; margin: 0; }
+.rp-body { flex: 1; overflow-y: auto; padding: 18px 20px 28px; display: flex; flex-direction: column; gap: 14px; }
+
+.rp-muted { color: var(--text-secondary); }
+.rp-small { font-size: 12.5px; margin: 0; line-height: 1.5; }
+.rp-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+
+.rp-hero {
+  border-radius: 16px;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #0d6b62 100%);
+  color: #fff;
+}
+.rp-hero h3 { margin: 8px 0 4px; font-size: 18px; line-height: 1.3; }
+.rp-hero p { margin: 0 0 12px; font-size: 13px; opacity: 0.9; }
+.rp-rewards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rp-rewards div { background: rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 8px; text-align: center; display: flex; flex-direction: column; }
+.rp-rewards b { font-size: 16px; }
+.rp-rewards span { font-size: 12px; opacity: 0.9; }
+
+.rp-card { border: 1px solid var(--border-primary); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg-primary); }
+.rp-code-row, .rp-link-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.rp-code { font-size: 22px; font-weight: 800; letter-spacing: 0.06em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.rp-linktext { font-size: 13px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.rp-copy {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rp-copy:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.rp-share { display: flex; flex-wrap: wrap; gap: 8px; }
+.rp-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.rp-share-btn.is-wa { background: #25d366; border-color: #25d366; color: #fff; }
+
+.rp-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.rp-stats div { border: 1px solid var(--border-primary); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; background: var(--bg-primary); }
+.rp-stats b { font-size: 20px; }
+.rp-stats span { font-size: 12px; color: var(--text-secondary); }
+
+.rp-money-main { display: flex; align-items: center; gap: 10px; color: var(--primary-color); }
+.rp-money-main div { display: flex; flex-direction: column; }
+.rp-big { font-size: 26px; color: var(--text-primary); }
+.rp-meter { height: 6px; border-radius: 999px; background: var(--border-primary); overflow: hidden; }
+.rp-meter span { display: block; height: 100%; background: var(--primary-color); border-radius: inherit; transition: width 0.4s ease; }
+.rp-money-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 13px; color: var(--text-secondary); }
+.rp-money-grid div { display: flex; align-items: center; gap: 5px; }
+.rp-money-grid b { color: var(--text-primary); margin-left: auto; }
+
+.rp-bank-head { display: flex; justify-content: space-between; align-items: center; }
+.rp-bank { margin: 0; font-size: 14px; line-height: 1.5; }
+.rp-bank-form { display: flex; flex-direction: column; gap: 8px; }
+.rp-bank-form input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+.rp-row { display: flex; align-items: center; gap: 12px; }
+.rp-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--primary-color);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rp-btn-wide { width: 100%; }
+.rp-link { background: none; border: none; color: var(--primary-color); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; }
+
+.rp-note { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: var(--primary-light); color: var(--text-primary); line-height: 1.5; }
+.rp-note.is-ok { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.rp-note.is-error { background: rgba(239, 68, 68, 0.1); color: #b91c1c; }
+
+.rp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rp-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border-secondary); }
+.rp-list li:last-child { border-bottom: none; }
+.rp-list li div { display: flex; flex-direction: column; min-width: 0; }
+.rp-list li b { font-size: 14px; }
+.rp-list .rp-muted { font-size: 12px; }
+.rp-pill { flex-shrink: 0; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--bg-tertiary); color: var(--text-secondary); white-space: nowrap; }
+.rp-pill.is-pending, .rp-pill.is-requested, .rp-pill.is-approved { background: #fef3c7; color: #92400e; }
+.rp-pill.is-eligible { background: #dbeafe; color: #1e40af; }
+.rp-pill.is-paid { background: #dcfce7; color: #166534; }
+.rp-pill.is-reversed, .rp-pill.is-rejected { background: #fee2e2; color: #991b1b; }
+.rp-rules { padding: 0 2px; }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   User,
   Building,
@@ -8,6 +9,7 @@ import {
   Users,
   CreditCard,
   HelpCircle,
+  Gift,
   ChevronRight,
   LogOut,
 } from "lucide-react";
@@ -23,6 +25,7 @@ import SecurityPanel from "../../../../pannel_pages/SecurityPanel";
 import TeamPanel from "../../../../pannel_pages/TeamPanel";
 import SubscriptionPanel from "../../../../pannel_pages/SubscriptionPanel";
 import HelpPanel from "../../../../pannel_pages/HelpPanel";
+import ReferralPanel from "../../../../pannel_pages/ReferralPanel";
 import "./Settings.css";
 import { useTranslation } from "react-i18next";
 
@@ -47,6 +50,14 @@ const Settings = () => {
   const [showTeamPanel, setShowTeamPanel] = useState(false);
   const [showSubscriptionPanel, setShowSubscriptionPanel] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  // Refer & Earn opens from the list, or from links like /dashboard/settings?panel=referral (emails, banner)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [referralClicked, setShowReferralPanel] = useState(false);
+  const showReferralPanel = referralClicked || searchParams.get("panel") === "referral";
+  const handleCloseReferral = () => {
+    setShowReferralPanel(false);
+    if (searchParams.get("panel")) setSearchParams({}, { replace: true });
+  };
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState(null);
 
@@ -347,6 +358,13 @@ const Settings = () => {
         color: "var(--primary-color)",
       },
       {
+        id: "referral",
+        title: "Refer & Earn",
+        description: "Invite designers, earn cash",
+        icon: Gift,
+        color: "var(--primary-color)",
+      },
+      {
         id: "help",
         title: "Help Center",
         description: "FAQs and documentation",
@@ -485,6 +503,8 @@ const Settings = () => {
                     handleTeamClick();
                   } else if (section.id === "subscription") {
                     handleSubscriptionClick();
+                  } else if (section.id === "referral") {
+                    setShowReferralPanel(true);
                   } else if (section.id === "help") {
                     handleHelpClick();
                   } else {
@@ -589,6 +609,11 @@ const Settings = () => {
           width="480px"
         >
           <HelpPanel onClose={handleCloseHelp} />
+        </SlideInMenu>
+
+        {/* Refer & Earn Panel */}
+        <SlideInMenu isShow={showReferralPanel} onClose={handleCloseReferral} position="rightt" width="480px">
+          <ReferralPanel onClose={handleCloseReferral} />
         </SlideInMenu>
       </div>
     </div>

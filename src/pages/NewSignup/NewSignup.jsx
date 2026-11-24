@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getStoredReferral } from "../../utils/referral";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useNewAuth } from "../../contexts/NewAuthContext";
@@ -38,6 +39,9 @@ const NewSignup = () => {
     country: "",
     logo: "",
     logoFile: null,
+
+    // Refer & Earn: from the ?ref= link (remembered 30 days) or typed in
+    referralCode: getStoredReferral(),
   });
 
   const [errors, setErrors] = useState({});

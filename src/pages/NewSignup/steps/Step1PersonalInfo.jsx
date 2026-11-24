@@ -6,6 +6,7 @@ import { useNewAuth } from "../../../contexts/NewAuthContext";
 import Input from "../../../components/Input";
 import Button from "../../../components/button/Button";
 import OTPVerificationModal from "../../../components/OTPVerificationModal/OTPVerificationModal";
+import ReferralCodeField from "./ReferralCodeField";
 import toast from "react-hot-toast";
 
 import { useTranslation } from "react-i18next";
@@ -186,6 +187,9 @@ const Step1PersonalInfo = ({
             <span className="phone-input-error">{tl(errors.phone)}</span>
           )}
         </div>
+
+        {/* Refer & Earn: optional, filled in automatically from a ?ref= link */}
+        <ReferralCodeField value={formData.referralCode || ""} onChange={(v) => onInputChange("referralCode", v)} />
 
         <div className="n_s_u_s-s-submitbutton">
           <Button

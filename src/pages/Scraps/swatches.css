@@ -1,0 +1,64 @@
+/* ── fabric swatches (CSS stand-ins for photos) ── */
+.sc-swatch {
+  position: absolute;
+  inset: 0;
+}
+.sc-sw-ankara {
+  background:
+    radial-gradient(circle at 25% 25%, #f7b733 0 14%, transparent 15%),
+    radial-gradient(circle at 75% 75%, #f7b733 0 14%, transparent 15%),
+    radial-gradient(circle at 75% 25%, #1e5aa8 0 9%, transparent 10%),
+    radial-gradient(circle at 25% 75%, #1e5aa8 0 9%, transparent 10%),
+    radial-gradient(circle at 50% 50%, #e8541e 0 22%, #fc8f3a 23% 30%, transparent 31%),
+    #c93d14;
+  background-size: 64px 64px;
+}
+.sc-sw-ankara2 {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 14px, rgba(0, 0, 0, 0.85) 14px 18px),
+    radial-gradient(circle at 50% 50%, #f2c230 0 30%, #1c7a3b 31% 52%, transparent 53%),
+    #b8221f;
+  background-size: 52px 52px, 52px 52px, auto;
+}
+.sc-sw-lace {
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 7px, rgba(232, 200, 120, 0.95) 8px 10px, transparent 11px),
+    radial-gradient(circle at 0 0, transparent 0 7px, rgba(232, 200, 120, 0.7) 8px 10px, transparent 11px),
+    radial-gradient(circle at 100% 100%, transparent 0 7px, rgba(232, 200, 120, 0.7) 8px 10px, transparent 11px),
+    #6e1630;
+  background-size: 30px 30px;
+}
+.sc-sw-cotton {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.035) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.035) 0 2px, transparent 2px 4px),
+    linear-gradient(135deg, #f5f1e8 0 33%, #e6e1d6 33% 66%, #d2d2cf 66%);
+}
+.sc-sw-asooke {
+  background:
+    repeating-linear-gradient(90deg, #d4a017 0 6px, #135e3a 6px 22px, #e9c14f 22px 25px, #0d4a2c 25px 40px);
+}
+.sc-sw-silk {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.35) 45%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(135deg, #0f6b4f 0 34%, #5a2a83 34% 68%, #1d2f6b 68%);
+}
+.sc-sw-denim {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 4px),
+    linear-gradient(135deg, #2c4a7c 0 55%, #7d9cc4 55%);
+}
+.sc-sw-chiffon {
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.55), transparent 45%),
+    radial-gradient(ellipse at 80% 70%, rgba(255, 255, 255, 0.4), transparent 45%),
+    linear-gradient(135deg, #f7c6d6 0 35%, #d9c6f2 35% 70%, #bfeedd 70%);
+}
+.sc-sw-adire {
+  background:
+    radial-gradient(circle at 50% 50%, #f1f3f8 0 4px, transparent 5px),
+    radial-gradient(circle at 50% 50%, transparent 0 12px, rgba(241, 243, 248, 0.85) 13px 15px, transparent 16px),
+    #233a7a;
+  background-size: 36px 36px;
+}

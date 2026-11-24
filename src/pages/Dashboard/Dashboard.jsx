@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useNewAuth } from "../../contexts/NewAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import Sidebar from "../../components/Sidebar";
@@ -13,6 +13,7 @@ import Appointments from "./pages/apointments/Appointments";
 import Finances from "./pages/finance/Finances";
 import CRM from "./pages/crm/CRM";
 import Settings from "./pages/settings/Settings";
+import MyScraps from "./pages/scraps/MyScraps";
 import TicketingWidget from "../../components/TicketingWidget/TicketingWidget";
 import { useNotificationSetup } from "../../hooks/useNotificationSetup";
 import "./Dashboard.css";
@@ -126,6 +127,8 @@ export const Dashboard = () => {
               </AdminPermissionGate>
             }
           />
+          <Route path="refab" element={<MyScraps />} />
+          <Route path="scraps" element={<Navigate to="/dashboard/refab" replace />} />
           <Route
             path="settings"
             element={
