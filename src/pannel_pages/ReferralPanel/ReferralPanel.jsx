@@ -325,7 +325,7 @@ export default function ReferralPanel({ onClose }) {
             )}
 
             <p className="rp-muted rp-small rp-rules">
-              {tl("Rules: rewards are for new FashionTally customers only, once per customer, for their first successful payment. Renewals, refunds and self-referrals don't count. Payouts are made by bank transfer by the FashionTally team.")}
+              {tl("Rules: rewards are for new FashionTally customers only, once per customer, after they pay for two months in a row (or one year). Renewals, refunds and self-referrals don't count. Payouts are made by bank transfer by the FashionTally team.")}
             </p>
           </>
         )}
