@@ -64,14 +64,15 @@ export default function ReferralBanner() {
 
   return (
     <section className="rf-banner" aria-label={tl("Refer & Earn")}>
-      <span className="rf-banner-glow" aria-hidden="true" />
-
       <div className="rf-banner-badge" aria-hidden="true">
-        <Gift size={26} strokeWidth={1.8} />
+        <Gift size={22} strokeWidth={1.8} />
       </div>
 
       <div className="rf-banner-copy">
-        <span className="rf-banner-eyebrow">{tl("Refer & Earn")}</span>
+        <div className="rf-banner-tag">
+          <span className="rf-banner-eyebrow">{tl("Growth Partner")}</span>
+          <span className="rf-banner-tag-sub">{tl("Refer & Earn")}</span>
+        </div>
         <h3 className="rf-banner-title">
           {tl("Earn up to")} <span>{naira(top)}</span> {tl("for every designer you bring")}
         </h3>

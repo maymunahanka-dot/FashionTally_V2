@@ -41,6 +41,23 @@ export const checkReferralCode = async (code) => {
   return data?.data || { valid: false };
 };
 
+/**
+ * A random id kept in this browser, sent at sign-up so the team can spot several referred
+ * accounts created on one device (it is only used to flag for review, never to block).
+ */
+export const getDeviceId = () => {
+  try {
+    let id = localStorage.getItem("ft.device");
+    if (!id) {
+      id = (crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`).toLowerCase();
+      localStorage.setItem("ft.device", id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+};
+
 export const clearStoredReferral = () => {
   try {
     localStorage.removeItem(KEY);

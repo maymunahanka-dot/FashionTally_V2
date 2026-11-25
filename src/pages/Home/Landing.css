@@ -4286,3 +4286,58 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Hero: Growth Partner (Refer & Earn) announcement pill */
+.lx-hero-promo {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 0 auto 14px;
+  padding: 5px 12px 5px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, transform 0.2s;
+}
+.lx-hero-promo:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+.lx-hero-promo:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.lx-hero-promo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: #0d6a61;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lx-hero-promo-text { min-width: 0; text-align: left; }
+.lx-hero-promo-text b { font-weight: 700; }
+.lx-hero-promo svg.lx-hero-promo-arrow { flex-shrink: 0; transition: transform 0.2s; }
+.lx-hero-promo:hover svg.lx-hero-promo-arrow { transform: translateX(2px); }
+@media (max-width: 600px) {
+  .lx-hero-promo { font-size: 11.5px; gap: 6px; padding: 4px 10px 4px 4px; }
+  .lx-hero-promo-tag { font-size: 9.5px; padding: 3px 8px; }
+  .lx-hero-promo-long { display: none; }
+  .lx-hero-promo-text { white-space: nowrap; }
+}
+@media (max-width: 420px) {
+  .lx-hero-promo-sub { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lx-hero-promo, .lx-hero-promo svg.lx-hero-promo-arrow { transition: none; }
+}

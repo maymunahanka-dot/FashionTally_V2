@@ -27,6 +27,7 @@ const REWARD_LABEL = {
   eligible: "Ready",
   paid: "Paid out",
   reversed: "Reversed",
+  review: "Being checked",
 };
 const PAYOUT_LABEL = { requested: "Requested", approved: "Approved", paid: "Paid", rejected: "Not approved" };
 
@@ -122,7 +123,7 @@ export default function ReferralPanel({ onClose }) {
         <button className="rp-close" onClick={onClose} type="button" aria-label={tl("Close")}>
           <X size={20} />
         </button>
-        <h2 className="rp-title">{tl("Refer & Earn")}</h2>
+        <h2 className="rp-title">{tl("Growth Partner")}</h2>
       </div>
 
       <div className="rp-body">
@@ -142,7 +143,7 @@ export default function ReferralPanel({ onClose }) {
             <section className="rp-hero">
               <Gift size={22} />
               <h3>{tl("Earn cash for every designer you bring")}</h3>
-              <p>{tl("When someone signs up with your code and pays for their first plan, you earn:")}</p>
+              <p>{tl("When someone signs up with your code and pays for two months in a row (or one year), you earn:")}</p>
               <div className="rp-rewards">
                 {["STARTER", "GROWTH", "PROFESSIONAL"].map((p) => (
                   <div key={p}>
@@ -287,6 +288,8 @@ export default function ReferralPanel({ onClose }) {
                         <span className={`rp-pill is-${r.rewardStatus}`}>
                           {naira(r.reward)} · {tl(REWARD_LABEL[r.rewardStatus] || r.rewardStatus)}
                         </span>
+                      ) : r.status === "first_payment" ? (
+                        <span className="rp-pill is-pending">{tl("Paid 1 of 2 months")}</span>
                       ) : r.status === "registered" ? (
                         <span className="rp-pill">{tl("Not subscribed yet")}</span>
                       ) : (

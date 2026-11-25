@@ -32,6 +32,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  Gift,
 } from "lucide-react";
 import {
   IntroTitle,
@@ -601,6 +602,31 @@ const Home = () => {
       {/* ── Hero ── */}
       <section className="lx-hero" id="top">
         <div className="lx-hero-glow" aria-hidden="true" />
+        {/* Growth Partner (Refer & Earn): signed-in users open their code, visitors sign up first */}
+        <div className="lx-fade" style={{ animationDelay: "0.05s" }}>
+          <button
+            type="button"
+            className="lx-hero-promo"
+            onClick={() => {
+              let signedIn = false;
+              try {
+                signedIn = Boolean(localStorage.getItem("authToken"));
+              } catch {
+                /* storage blocked */
+              }
+              navigate(signedIn ? "/dashboard/settings?panel=referral" : "/signup");
+            }}
+          >
+            <span className="lx-hero-promo-tag">
+              <Gift size={12} strokeWidth={2.4} /> Growth Partner
+            </span>
+            <span className="lx-hero-promo-text">
+              Earn up to <b>₦3,000</b> <span className="lx-hero-promo-long">for every designer you refer</span>
+              <span className="lx-hero-promo-sub"> · Refer &amp; Earn</span>
+            </span>
+            <ArrowRight size={14} className="lx-hero-promo-arrow" />
+          </button>
+        </div>
         <p className="lx-eyebrow lx-fade" style={{ animationDelay: "0.1s" }}>
           {tx("auto.fashionBusinessManagement_3197")}
         </p>

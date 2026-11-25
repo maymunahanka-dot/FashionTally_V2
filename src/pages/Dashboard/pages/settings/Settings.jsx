@@ -359,7 +359,7 @@ const Settings = () => {
       },
       {
         id: "referral",
-        title: "Refer & Earn",
+        title: "Growth Partner",
         description: "Invite designers, earn cash",
         icon: Gift,
         color: "var(--primary-color)",
