@@ -15,7 +15,8 @@ import { TbUserStar } from "react-icons/tb";
 import { IoSettingsOutline } from "react-icons/io5";
 import { RiApps2AiLine } from "react-icons/ri";
 import { MdSupportAgent } from "react-icons/md";
-import { GiRolledCloth } from "react-icons/gi";
+// FASHION REFAB (paused): uncomment to turn it back on
+// import { GiRolledCloth } from "react-icons/gi";
 
 import "./Sidebar.css";
 import logo from "../../assets/Image/logog.png";
@@ -98,12 +99,13 @@ const Sidebar = () => {
       icon: <TbUserStar className="sidebar-icon" />,
       path: "/dashboard/crm",
     },
-    {
-      id: "refab",
-      label: tl("Fashion Refab"),
-      icon: <GiRolledCloth className="sidebar-icon" />,
-      path: "/dashboard/refab",
-    },
+    // FASHION REFAB (paused): uncomment to turn it back on
+    // {
+    //   id: "refab",
+    //   label: tl("Fashion Refab"),
+    //   icon: <GiRolledCloth className="sidebar-icon" />,
+    //   path: "/dashboard/refab",
+    // },
     {
       id: "settings",
       label: t("nav.settings"),

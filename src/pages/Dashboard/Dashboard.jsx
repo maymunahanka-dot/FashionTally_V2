@@ -13,7 +13,8 @@ import Appointments from "./pages/apointments/Appointments";
 import Finances from "./pages/finance/Finances";
 import CRM from "./pages/crm/CRM";
 import Settings from "./pages/settings/Settings";
-import MyScraps from "./pages/scraps/MyScraps";
+// FASHION REFAB (paused): uncomment to turn it back on
+// import MyScraps from "./pages/scraps/MyScraps";
 import TicketingWidget from "../../components/TicketingWidget/TicketingWidget";
 import { useNotificationSetup } from "../../hooks/useNotificationSetup";
 import "./Dashboard.css";
@@ -127,8 +128,10 @@ export const Dashboard = () => {
               </AdminPermissionGate>
             }
           />
+          {/* FASHION REFAB (paused): uncomment to turn it back on
           <Route path="refab" element={<MyScraps />} />
           <Route path="scraps" element={<Navigate to="/dashboard/refab" replace />} />
+          */}
           <Route
             path="settings"
             element={

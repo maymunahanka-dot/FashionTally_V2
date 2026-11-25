@@ -22,7 +22,8 @@ const NAV = [
   { label: "Features", section: "workflows" },
   { label: "Pricing", section: "pricing" },
   { label: "Reviews", section: "stories" },
-  { label: "Fashion Refab", href: "/refab" },
+  // FASHION REFAB (paused): uncomment to turn it back on
+  // { label: "Fashion Refab", href: "/refab" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -261,7 +262,9 @@ export function LandingFooter({ onHome = false }) {
             <h4>{tx("auto.company_7a19")}</h4>
             <a href="/about">{tx("auto.about_6b21")}</a>
             <a href="/contact">{tx("auto.contact_b374")}</a>
+            {/* FASHION REFAB (paused): uncomment to turn it back on
             <a href="/refab">{tl("Fashion Refab")}</a>
+            */}
             <a href="/schedule-demo">{tx("auto.bookADemo_a83d")}</a>
             <a href="/login">{tx("auto.logIn_f7c4")}</a>
           </div>
