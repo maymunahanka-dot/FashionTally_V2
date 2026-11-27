@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Camera, Loader2 } from "lucide-react";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
-import { updateProfile } from "firebase/auth";
-import { auth, db } from "../../backend/firebase.config";
 import { useNewAuth } from "../../contexts/NewAuthContext";
-import { getEffectiveUserEmail } from "../../utils/teamUtils";
 import Input from "../../components/Input";
 import toast from "react-hot-toast";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload";
@@ -14,6 +10,11 @@ import { useTranslation } from "react-i18next";
 import { t as tx } from "../../i18n";
 
 import { tl } from "../../i18n";
+
+// Profile is stored on the backend; requests use the login token from NewAuthContext
+const API = import.meta.env.VITE_BACKEND_URL;
+const authToken = () => localStorage.getItem("authToken");
+
 const ProfilePanel = ({ onClose }) => {
   const { t: tx } = useTranslation();
   const { user, updateUserProfile, refreshUserData } = useNewAuth();
@@ -39,19 +40,14 @@ const ProfilePanel = ({ onClose }) => {
     const loadUserData = async () => {
       if (user) {
         try {
-          // Get effective email (main admin's email for team members)
-          const effectiveEmail = getEffectiveUserEmail(user);
-          console.log(
-            "📧 ProfilePanel: Using effective email:",
-            effectiveEmail
-          );
+          // Get the latest profile from the backend
+          const res = await fetch(`${API}/api/user/get`, {
+            headers: { Authorization: `Bearer ${authToken()}` },
+          });
+          const json = res.ok ? await res.json() : null;
 
-          // Get user data from Firestore
-          const userDocRef = doc(db, "fashiontally_users", effectiveEmail);
-          const userDoc = await getDoc(userDocRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
+          if (json?.success && json.data) {
+            const userData = json.data;
             setFullName(
               userData.name || userData.displayName || user.displayName || ""
             );
@@ -140,9 +136,7 @@ const ProfilePanel = ({ onClose }) => {
     try {
       setImageUploading(true);
 
-      // Check if user is authenticated
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      if (!authToken()) {
         throw new Error("You must be logged in to upload images.");
       }
 
@@ -181,7 +175,7 @@ const ProfilePanel = ({ onClose }) => {
     if (!validateForm()) return;
 
     // Check if user is authenticated
-    if (!user || !auth.currentUser) {
+    if (!user || !authToken()) {
       toast.error(tx("auto.youMustBeLoggedIn_fbf8"));
       return;
     }
@@ -217,29 +211,25 @@ const ProfilePanel = ({ onClose }) => {
         phone: phone,
         phoneNumber: phone,
         address: address,
-        location: address,
         bio: bio,
         photoURL: imageUrl,
-        updatedAt: new Date().toISOString(),
       };
 
-      // Get effective email (main admin's email for team members)
-      const effectiveEmail = getEffectiveUserEmail(user);
-
-      // Update Firestore document
-      const userDocRef = doc(db, "fashiontally_users", effectiveEmail);
-      await updateDoc(userDocRef, userData);
-
-      // Update Firebase Auth profile using the current authenticated user
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await updateProfile(currentUser, {
-          displayName: fullName,
-          photoURL: imageUrl,
-        });
+      // Save on the backend
+      const res = await fetch(`${API}/api/user/edit`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken()}`,
+        },
+        body: JSON.stringify(userData),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || tx("auto.failedToUpdateProfilePlease_e7c3"));
       }
 
-      // Refresh user data from Firestore to get the latest data
+      // Refresh user data from the backend so the whole app shows the change
       const refreshedData = await refreshUserData();
 
       // If refresh failed, fallback to manual update
